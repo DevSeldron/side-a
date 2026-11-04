@@ -5,10 +5,10 @@ export interface AccentPreset {
   value: string
 }
 
-export const FALLBACK_ACCENT = '#66e0cc'
+export const FALLBACK_ACCENT = '#2ad4c0'
 
 export const ACCENT_PRESETS: AccentPreset[] = [
-  { name: 'Teal', value: '#66e0cc' },
+  { name: 'Teal', value: '#2ad4c0' },
   { name: 'Ember', value: '#ff8a5c' },
   { name: 'Violet', value: '#b39cff' },
   { name: 'Sky', value: '#7bb7ff' },

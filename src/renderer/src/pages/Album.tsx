@@ -111,7 +111,7 @@ export function AlbumPage(): ReactElement {
     <div className="page album-page">
       <div className="album-hero">
         <div className="album-hero-art">
-          <Artwork src={art} alt={`${album.bandName} — ${album.title}`} eager />
+          <Artwork src={art} alt={`${album.bandName}, ${album.title}`} eager />
           {offlineReady ? <span className="album-hero-offline"><OfflineBadge label="Saved offline" /></span> : null}
         </div>
 

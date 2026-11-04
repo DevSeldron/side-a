@@ -28,7 +28,7 @@ export function Downloads(): ReactElement {
       <PageIntro
         kicker="Original files"
         title="Downloads"
-        description="Keep the files you paid for, or grab a single track. Purchases download the exact format Bandcamp stores — FLAC, WAV, AIFF, MP3 and more; individual tracks save as MP3 in the quality you pick in Settings."
+        description="Keep the files you paid for, or grab a single track. Purchases download the exact format Bandcamp stores, FLAC, WAV, AIFF, MP3 and more; individual tracks save as MP3 in the quality you pick in Settings."
         actions={
           <button type="button" className="button ghost" onClick={() => void chooseDownloadDir()}>
             <FolderOpen size={16} />
@@ -58,7 +58,7 @@ export function Downloads(): ReactElement {
             <div key={entry.key} className="download-active-row">
               <Loader2 size={17} className="spin" />
               <div className="download-active-copy">
-                <strong>{entry.bandName} — {entry.title}</strong>
+                <strong>{entry.bandName}, {entry.title}</strong>
                 <span>
                   {entry.status === 'preparing'
                     ? 'Preparing your download…'
@@ -85,7 +85,7 @@ export function Downloads(): ReactElement {
                 <CheckCircle2 size={17} />
               )}
               <div className="download-active-copy">
-                <strong>{entry.artist} — {entry.title}</strong>
+                <strong>{entry.artist}, {entry.title}</strong>
                 <span>
                   {entry.status === 'downloading'
                     ? `${Math.round(entry.progress * 100)}% · ${entry.actualQuality ?? entry.quality}`
@@ -155,7 +155,7 @@ export function Downloads(): ReactElement {
                     <span className="download-band">{album.bandName}</span>
                   </div>
                 </div>
-                <span className="download-format">{purchase?.format?.toUpperCase() ?? '—'}</span>
+                <span className="download-format">{purchase?.format?.toUpperCase() ?? '--'}</span>
                 <span className="download-state">
                   {done ? (
                     <><CheckCircle2 size={14} /> {formatBytes(purchase.bytes)}</>

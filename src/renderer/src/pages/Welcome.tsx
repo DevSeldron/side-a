@@ -46,19 +46,14 @@ export function Welcome(): ReactElement {
       <section className="welcome-editorial">
         <Brand />
         <div className="welcome-editorial-body">
-          <span className="welcome-kicker">
-            <Sparkles size={13} /> A quieter way to listen
-          </span>
           <h1>
-            Your Bandcamp
+            Your Bandcamp collection,
             <br />
-            collection,
-            <br />
-            <em>finally yours.</em>
+            <em>redesigned.</em>
           </h1>
           <p>
-            Side A is a native player for the music you already own. Your collection and wishlist, rendered in an
-            interface that gets out of the way — with offline copies for the flights, trains and dead zones.
+            A redesigned player for the music you already own. Your collection and wishlist, available in a
+            modernized interface, with offline copies for traveling and for... well, offline play.
           </p>
           <div className="welcome-features">
             <div>
@@ -85,7 +80,7 @@ export function Welcome(): ReactElement {
           </div>
         </div>
         <footer className="welcome-foot">
-          <span>Side A 1.0</span>
+          <span>Side A 1.1</span>
           <span>Not affiliated with Bandcamp</span>
         </footer>
       </section>
@@ -98,7 +93,7 @@ export function Welcome(): ReactElement {
             <p>
               {needsUsername
                 ? 'Bandcamp signed you in, but did not share a profile name. Enter your Bandcamp username so Side A can find your collection.'
-                : 'Sign in with Bandcamp in a secure window. Side A reads your own collection, wishlist and purchases — nothing else.'}
+                : 'Sign in with Bandcamp in a secure window. Side A reads your own collection, wishlist and purchases. Nothing else.'}
             </p>
           </div>
 

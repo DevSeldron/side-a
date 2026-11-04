@@ -5,6 +5,7 @@ import '@fontsource-variable/inter'
 import '@fontsource-variable/space-grotesk'
 import App from './App'
 import './styles.css'
+import './redesign.css'
 
 const root = document.getElementById('root')
 if (!root) throw new Error('Missing root element')

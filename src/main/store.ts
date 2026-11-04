@@ -43,7 +43,7 @@ export function defaultSettings(downloadDir: string): Settings {
     downloadDir,
     prefetchDetails: false,
     reduceMotion: false,
-    accent: '#66e0cc',
+    accent: '#2ad4c0',
     theme: 'dark',
     showWishlist: true,
     trackQuality: 'mp3-128'
@@ -51,18 +51,18 @@ export function defaultSettings(downloadDir: string): Settings {
 }
 
 const LEGACY_ACCENTS: Record<string, string> = {
-  teal: '#66e0cc',
+  teal: '#2ad4c0',
   ember: '#ff8a5c',
   violet: '#b39cff'
 }
 
 /** Presets from older builds were ids; everything is stored as a hex colour now. */
 export function normalizeAccent(value: unknown): string {
-  if (typeof value !== 'string') return '#66e0cc'
+  if (typeof value !== 'string') return '#2ad4c0'
   const trimmed = value.trim()
   const legacy = LEGACY_ACCENTS[trimmed.toLowerCase()]
   if (legacy) return legacy
-  return /^#[0-9a-f]{6}$/i.test(trimmed) ? trimmed.toLowerCase() : '#66e0cc'
+  return /^#[0-9a-f]{6}$/i.test(trimmed) ? trimmed.toLowerCase() : '#2ad4c0'
 }
 
 export function emptySync(): SyncState {
@@ -88,7 +88,7 @@ function defaultIntegrations(): IntegrationsConfig {
       enabled: false,
       clientId: '',
       detailsTemplate: '{title}',
-      stateTemplate: '{artist} — {album}',
+      stateTemplate: '{artist}, {album}',
       showTimestamps: true,
       showButton: true,
       activityType: 'listening'

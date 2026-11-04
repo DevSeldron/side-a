@@ -1,7 +1,6 @@
 const REPO = 'DevSeldron/side-a'
 
 const versionTargets = document.querySelectorAll('[data-version]')
-const versionChip = document.querySelector('[data-version-chip]')
 const notesBody = document.querySelector('[data-release-notes]')
 
 const ASSET_MATCHERS = {
@@ -41,7 +40,7 @@ function renderNotes(markdown) {
     }
     list = null
     const paragraph = document.createElement('p')
-    paragraph.textContent = line
+    paragraph.textContent = line.replace(/\s*[\u2014\u2013]\s*/g, ', ')
     notesBody.append(paragraph)
   }
 }
@@ -59,7 +58,6 @@ async function hydrateRelease() {
     versionTargets.forEach((element) => {
       element.textContent = version
     })
-    if (versionChip) versionChip.textContent = version
 
     const assets = Array.isArray(release.assets) ? release.assets : []
     for (const [key, matches] of Object.entries(ASSET_MATCHERS)) {
@@ -75,22 +73,7 @@ async function hydrateRelease() {
 
     renderNotes(String(release.body ?? ''))
   } catch (error) {
-    // Offline, rate-limited or blocked: the static links still go to Releases.
-  }
-}
-
-function wirePlatform() {
-  const platform = `${navigator.userAgentData?.platform ?? navigator.platform ?? ''} ${navigator.userAgent}`
-  const isMac = /mac/i.test(platform)
-  const isWindows = /win/i.test(platform)
-  const label = isMac ? 'Download for macOS' : isWindows ? 'Download for Windows' : 'See downloads'
-  document.querySelectorAll('[data-hero-cta]').forEach((element) => {
-    element.textContent = label
-  })
-  const meta = document.querySelector('[data-platform-label]')
-  if (meta) {
-    if (isMac) meta.textContent = 'macOS 12+ · Apple silicon'
-    else if (isWindows) meta.textContent = 'Windows 10+ · 64-bit'
+    // Offline, rate limited or blocked: the static links still go to Releases.
   }
 }
 
@@ -136,31 +119,7 @@ function wireScrollState() {
   window.addEventListener('scroll', update, { passive: true })
 }
 
-function wireReveals() {
-  const targets = document.querySelectorAll(
-    '.feature, .download-card, .split-copy, .discover-demo, .notes-body, .faq-list details, .cta-inner'
-  )
-  if (!('IntersectionObserver' in window)) return
-  const observer = new IntersectionObserver(
-    (entries) => {
-      for (const entry of entries) {
-        if (!entry.isIntersecting) continue
-        entry.target.classList.add('is-visible')
-        observer.unobserve(entry.target)
-      }
-    },
-    { rootMargin: '0px 0px -8% 0px', threshold: 0.08 }
-  )
-  targets.forEach((target, index) => {
-    target.classList.add('reveal')
-    target.style.transitionDelay = `${Math.min(index % 4, 3) * 60}ms`
-    observer.observe(target)
-  })
-}
-
-wirePlatform()
 wireCopyButtons()
 wireMenu()
 wireScrollState()
-wireReveals()
 void hydrateRelease()

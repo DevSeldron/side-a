@@ -325,7 +325,7 @@ export function Settings(): ReactElement {
                 type="text"
                 value={apiKey}
                 onChange={(event) => setApiKey(event.target.value)}
-                placeholder={lastfm.configured ? 'Saved — enter a new key to replace it' : 'Last.fm API key'}
+                placeholder={lastfm.configured ? 'Saved, enter a new key to replace it' : 'Last.fm API key'}
                 spellCheck={false}
                 autoComplete="off"
               />
@@ -336,7 +336,7 @@ export function Settings(): ReactElement {
                 type="password"
                 value={apiSecret}
                 onChange={(event) => setApiSecret(event.target.value)}
-                placeholder={lastfm.configured ? 'Saved — enter a new secret to replace it' : 'Last.fm shared secret'}
+                placeholder={lastfm.configured ? 'Saved, enter a new secret to replace it' : 'Last.fm shared secret'}
                 autoComplete="off"
               />
             </label>
@@ -408,7 +408,7 @@ export function Settings(): ReactElement {
                 inputMode="numeric"
                 value={clientId}
                 onChange={(event) => setClientId(event.target.value)}
-                placeholder={discord.configured ? 'Saved — enter a new ID to replace it' : 'Paste your Discord application ID'}
+                placeholder={discord.configured ? 'Saved, enter a new ID to replace it' : 'Paste your Discord application ID'}
                 spellCheck={false}
                 autoComplete="off"
               />

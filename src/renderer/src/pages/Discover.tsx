@@ -165,7 +165,7 @@ export function Discover(): ReactElement {
       <PageIntro
         kicker="Browse"
         title="Discover"
-        description="Search all of Bandcamp, open an artist's discography, and listen to anything with a stream — no purchase needed."
+        description="Search all of Bandcamp, open an artist's discography, and listen to anything with a stream, no purchase needed."
       />
 
       <form className="discover-search" onSubmit={(event) => event.preventDefault()}>
@@ -197,7 +197,7 @@ export function Discover(): ReactElement {
         <section className="discover-album">
           <div className="discover-album-head">
             <div className="discover-album-art">
-              <Artwork src={album.artUrl} alt={`${album.bandName} — ${album.title}`} eager />
+              <Artwork src={album.artUrl} alt={`${album.bandName}, ${album.title}`} eager />
             </div>
             <div className="discover-album-copy">
               <span className="discover-kicker">Release</span>

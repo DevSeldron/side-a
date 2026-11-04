@@ -35,7 +35,7 @@ export function Offline(): ReactElement {
         title="Offline"
         description={
           ready.length
-            ? `${plural(ready.length, 'release')} and ${plural(tracks, 'track')} stored locally — ${formatBytes(bytes)} of music that plays without a connection.`
+            ? `${plural(ready.length, 'release')} and ${plural(tracks, 'track')} stored locally, ${formatBytes(bytes)} of music that plays without a connection.`
             : 'Save releases for flights, trains and dead zones. Side A stores a 128 kbps copy locally; purchases can also be kept as original files.'
         }
         actions={

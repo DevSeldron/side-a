@@ -423,7 +423,7 @@ export const useApp = create<AppState>()((set, get) => ({
       get().pushToast('Connected to Bandcamp', { tone: 'success' })
     }
     if (auth.status === 'needs-username') {
-      get().pushToast('Signed in — one more step', {
+      get().pushToast('Signed in, one more step', {
         description: 'Enter your Bandcamp username so Side A can find your collection.',
         tone: 'info'
       })
@@ -447,7 +447,7 @@ export const useApp = create<AppState>()((set, get) => ({
       const state = get().snapshot
       const album = state?.collection.find((item) => item.key === entry.key) ?? state?.wishlist.find((item) => item.key === entry.key)
       get().pushToast('Saved for offline listening', {
-        description: album ? `${album.bandName} — ${album.title}` : undefined,
+        description: album ? `${album.bandName}, ${album.title}` : undefined,
         tone: 'success'
       })
     }
@@ -489,7 +489,7 @@ export const useApp = create<AppState>()((set, get) => ({
     }))
     if (entry.status === 'done') {
       get().pushToast('Track saved', {
-        description: `${entry.artist} — ${entry.title} · ${entry.actualQuality ?? entry.quality}`,
+        description: `${entry.artist}, ${entry.title} · ${entry.actualQuality ?? entry.quality}`,
         tone: 'success'
       })
     }

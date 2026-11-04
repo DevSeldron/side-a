@@ -40,7 +40,7 @@ export function AlbumCard({ album, priority, compact }: AlbumCardProps): ReactEl
       onDoubleClick={() => void playAlbum(album.key)}
     >
       <div className="album-art">
-        <Artwork src={coverUrl(album, compact ? 9 : 10)} alt={`${album.bandName} — ${album.title}`} eager={priority} />
+        <Artwork src={coverUrl(album, compact ? 9 : 10)} alt={`${album.bandName}, ${album.title}`} eager={priority} />
         <button
           type="button"
           className={cx('album-play', isPlaying && 'is-playing')}

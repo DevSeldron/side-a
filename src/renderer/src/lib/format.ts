@@ -5,7 +5,7 @@ export function cx(...values: Array<string | false | null | undefined>): string 
 }
 
 export function formatDuration(seconds: number, forceHours = false): string {
-  if (!Number.isFinite(seconds) || seconds < 0) return '—'
+  if (!Number.isFinite(seconds) || seconds < 0) return '--:--'
   const total = Math.round(seconds)
   const hours = Math.floor(total / 3600)
   const minutes = Math.floor((total % 3600) / 60)
@@ -17,7 +17,7 @@ export function formatDuration(seconds: number, forceHours = false): string {
 }
 
 export function formatLongDuration(seconds: number): string {
-  if (!Number.isFinite(seconds) || seconds <= 0) return '—'
+  if (!Number.isFinite(seconds) || seconds <= 0) return '--:--'
   const hours = Math.floor(seconds / 3600)
   const minutes = Math.round((seconds % 3600) / 60)
   if (hours > 0) return `${hours} hr ${minutes} min`

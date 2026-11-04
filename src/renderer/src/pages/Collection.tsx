@@ -53,7 +53,7 @@ export function Collection(): ReactElement {
         title="Collection"
         description={
           collection.length
-            ? `${plural(collection.length, 'release')} from ${plural(artists, 'artist')} — everything you have bought or added on Bandcamp.`
+            ? `${plural(collection.length, 'release')} from ${plural(artists, 'artist')}, everything you have bought or added on Bandcamp.`
             : 'Everything you own on Bandcamp will appear here once you sync.'
         }
         actions={

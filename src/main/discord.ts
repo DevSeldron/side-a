@@ -43,7 +43,7 @@ function activityTypeFor(value: string): DiscordActivityType {
 }
 
 /**
- * Renders a user template such as `{artist} — {album}`. Unknown tokens are left
+ * Renders a user template such as `{artist} / {album}`. Unknown tokens are left
  * alone so a typo is visible instead of silently disappearing.
  */
 function renderTemplate(template: string, input: PresenceInput): string {
@@ -263,7 +263,7 @@ export class DiscordService {
 
     const details = truncate(renderTemplate(config.detailsTemplate || '{title}', input) || input.title, 128)
     const stateText = truncate(
-      renderTemplate(config.stateTemplate || '{artist} — {album}', input) || input.artist,
+      renderTemplate(config.stateTemplate || '{artist} / {album}', input) || input.artist,
       128
     )
     const pausedPrefix = input.playing ? '' : 'Paused · '
