@@ -1,6 +1,8 @@
 import { create } from 'zustand'
 import type {
   AuthState,
+  DiscordPatch,
+  IntegrationsState,
   LibrarySnapshot,
   OfflineEntry,
   PurchaseDownload,
@@ -39,6 +41,11 @@ interface AppState {
   updateSettings: (patch: Partial<Settings>) => Promise<void>
   chooseDownloadDir: () => Promise<void>
   clearCaches: () => Promise<void>
+  updateLastfm: (patch: { enabled?: boolean; apiKey?: string; apiSecret?: string }) => Promise<void>
+  connectLastfm: () => Promise<void>
+  disconnectLastfm: () => Promise<void>
+  updateDiscord: (patch: DiscordPatch) => Promise<void>
+  retryIntegrations: () => Promise<void>
   pushToast: (title: string, options?: { description?: string; tone?: ToastTone }) => void
   dismissToast: (id: number) => void
   setPaletteOpen: (open: boolean) => void
@@ -47,6 +54,7 @@ interface AppState {
   applyOffline: (entry: OfflineEntry) => void
   applyPurchase: (entry: PurchaseDownload) => void
   applySettings: (settings: Settings) => void
+  applyIntegrations: (integrations: IntegrationsState) => void
 }
 
 let toastCounter = 1
@@ -78,6 +86,7 @@ export const useApp = create<AppState>()((set, get) => ({
       window.sideA.on(IPC.eventOffline, (entry) => get().applyOffline(entry))
       window.sideA.on(IPC.eventPurchase, (entry) => get().applyPurchase(entry))
       window.sideA.on(IPC.eventSettings, (settings) => get().applySettings(settings))
+      window.sideA.on(IPC.eventIntegration, (integrations) => get().applyIntegrations(integrations))
       window.sideA.on(IPC.eventLibrary, () => {
         void get().refresh()
       })
@@ -261,6 +270,83 @@ export const useApp = create<AppState>()((set, get) => ({
     }
   },
 
+  updateLastfm: async (patch) => {
+    try {
+      const integrations = await window.sideA.integrations.updateLastfm(patch)
+      get().applyIntegrations(integrations)
+    } catch (error) {
+      get().pushToast('Could not save Last.fm settings', {
+        description: errorMessage(error),
+        tone: 'error'
+      })
+    }
+  },
+
+  connectLastfm: async () => {
+    try {
+      const integrations = await window.sideA.integrations.connectLastfm()
+      get().applyIntegrations(integrations)
+      get().pushToast('Last.fm connected', {
+        description: integrations.lastfm.username
+          ? `Scrobbling as @${integrations.lastfm.username}.`
+          : 'New plays are being scrobbled.',
+        tone: 'success'
+      })
+    } catch (error) {
+      get().pushToast('Could not connect Last.fm', {
+        description: errorMessage(error),
+        tone: 'error'
+      })
+    }
+  },
+
+  disconnectLastfm: async () => {
+    try {
+      const integrations = await window.sideA.integrations.disconnectLastfm()
+      get().applyIntegrations(integrations)
+      get().pushToast('Last.fm disconnected', { tone: 'info' })
+    } catch (error) {
+      get().pushToast('Could not disconnect Last.fm', {
+        description: errorMessage(error),
+        tone: 'error'
+      })
+    }
+  },
+
+  updateDiscord: async (patch) => {
+    try {
+      const integrations = await window.sideA.integrations.updateDiscord(patch)
+      get().applyIntegrations(integrations)
+    } catch (error) {
+      get().pushToast('Could not save Discord settings', {
+        description: errorMessage(error),
+        tone: 'error'
+      })
+    }
+  },
+
+  retryIntegrations: async () => {
+    try {
+      const integrations = await window.sideA.integrations.retryPending()
+      get().applyIntegrations(integrations)
+      get().pushToast(
+        integrations.lastfm.pending === 0 ? 'Scrobble queue flushed' : 'Some scrobbles are still waiting',
+        {
+          description:
+            integrations.lastfm.pending === 0
+              ? 'Everything queued has reached Last.fm.'
+              : `${integrations.lastfm.pending} scrobble${integrations.lastfm.pending === 1 ? '' : 's'} still queued.`,
+          tone: integrations.lastfm.pending === 0 ? 'success' : 'info'
+        }
+      )
+    } catch (error) {
+      get().pushToast('Could not reach Last.fm', {
+        description: errorMessage(error),
+        tone: 'error'
+      })
+    }
+  },
+
   pushToast: (title, options) => {
     const toast: ToastItem = {
       id: toastCounter++,
@@ -348,5 +434,19 @@ export const useApp = create<AppState>()((set, get) => ({
 
   applySettings: (settings) => {
     set((state) => ({ ...withSnapshot(state, (snapshot) => ({ ...snapshot, settings })) }))
+  },
+
+  applyIntegrations: (integrations) => {
+    set((state) => ({
+      ...withSnapshot(state, (snapshot) => ({
+        ...snapshot,
+        // Merge per service: a partial payload must never wipe the other card
+        // (or blank the settings page).
+        integrations: {
+          lastfm: integrations?.lastfm ?? snapshot.integrations.lastfm,
+          discord: integrations?.discord ?? snapshot.integrations.discord
+        }
+      }))
+    }))
   }
 }))

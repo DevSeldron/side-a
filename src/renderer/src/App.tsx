@@ -3,6 +3,7 @@ import { Navigate, Route, Routes } from 'react-router-dom'
 import { AlertTriangle, RefreshCw } from 'lucide-react'
 import { useApp } from './store/app'
 import { usePlayer } from './store/player'
+import { startIntegrations } from './lib/integrations'
 import { Sidebar } from './components/Sidebar'
 import { TopBar } from './components/TopBar'
 import { PlayerBar, PlayerSpacer } from './components/PlayerBar'
@@ -29,6 +30,7 @@ export default function App(): ReactElement {
   useEffect(() => {
     void init()
     initPlayer()
+    startIntegrations()
   }, [init, initPlayer])
 
   const accent = snapshot?.settings.accent ?? 'teal'

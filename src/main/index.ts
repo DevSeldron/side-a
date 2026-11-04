@@ -3,6 +3,8 @@ import type { MenuItemConstructorOptions } from 'electron'
 import { join } from 'node:path'
 import { AuthManager } from './auth'
 import { BandcampClient } from './bandcamp'
+import { DiscordService } from './discord'
+import { LastfmService } from './lastfm'
 import { Library } from './library'
 import { MediaGateway, registerMediaScheme } from './media'
 import { PurchaseManager } from './purchases'
@@ -26,6 +28,8 @@ if (!gotLock) {
   let purchases: PurchaseManager
   let media: MediaGateway
   let auth: AuthManager
+  let lastfm: LastfmService
+  let discord: DiscordService
 
   const createWindow = async (): Promise<void> => {
     const win = new BrowserWindow({
@@ -163,6 +167,12 @@ if (!gotLock) {
         })
       }
     })
+    lastfm = new LastfmService(store, (state) =>
+      broadcastEvent(IPC.eventIntegration, { lastfm: state, discord: discord?.state() ?? { configured: false, enabled: false, connected: false } })
+    )
+    discord = new DiscordService(store, (state) =>
+      broadcastEvent(IPC.eventIntegration, { lastfm: lastfm?.state() ?? { configured: false, connected: false, enabled: false, pending: 0 }, discord: state })
+    )
 
     await library.initOffline()
     purchases.init()
@@ -174,10 +184,16 @@ if (!gotLock) {
       purchases,
       auth,
       media,
+      lastfm,
+      discord,
       getMainWindow: () => mainWindow
     })
     buildMenu()
     wireEvents()
+    // Connect straight away so Settings reflects Discord's real state, and drain
+    // any scrobbles left over from the previous session.
+    void discord.ensureConnected()
+    void lastfm.flush().catch(() => undefined)
     await createWindow()
 
     if (process.env.SIDEA_DEMO === '1') {
@@ -226,5 +242,7 @@ if (!gotLock) {
     store?.flush()
     auth?.dispose()
     media?.dispose()
+    lastfm?.dispose()
+    discord?.dispose()
   })
 }

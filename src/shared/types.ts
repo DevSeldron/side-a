@@ -121,6 +121,97 @@ export interface SyncState {
 
 export type Accent = 'teal' | 'ember' | 'violet'
 
+export interface ScrobbleInput {
+  artist: string
+  title: string
+  album?: string
+  albumArtist?: string
+  duration?: number
+  trackNumber?: number
+  /** Unix timestamp (seconds) for when the track started playing. */
+  timestamp: number
+  /** Stable key used to de-duplicate queued scrobbles. */
+  key: string
+}
+
+export interface PresenceInput {
+  playing: boolean
+  title: string
+  artist: string
+  album?: string
+  /** Band or label the release belongs to. */
+  band?: string
+  duration?: number
+  position: number
+  coverUrl?: string
+  itemUrl?: string
+}
+
+export interface LastfmConfig {
+  apiKey: string
+  apiSecret: string
+  sessionKey: string
+  username?: string
+  enabled: boolean
+  pending: ScrobbleInput[]
+}
+
+export type DiscordActivityType = 'listening' | 'playing' | 'watching'
+
+export interface DiscordPatch {
+  enabled?: boolean
+  clientId?: string
+  detailsTemplate?: string
+  stateTemplate?: string
+  showTimestamps?: boolean
+  showButton?: boolean
+  activityType?: DiscordActivityType
+}
+
+export interface DiscordConfig {
+  enabled: boolean
+  clientId: string
+  /** Template for the first line. Tokens: {title} {artist} {album} {band}. */
+  detailsTemplate: string
+  /** Template for the second line. Tokens: {title} {artist} {album} {band}. */
+  stateTemplate: string
+  showTimestamps: boolean
+  showButton: boolean
+  activityType: DiscordActivityType
+}
+
+export interface IntegrationsConfig {
+  lastfm: LastfmConfig
+  discord: DiscordConfig
+}
+
+export interface LastfmState {
+  configured: boolean
+  connected: boolean
+  username?: string
+  enabled: boolean
+  pending: number
+  error?: string
+}
+
+export interface DiscordState {
+  configured: boolean
+  enabled: boolean
+  connected: boolean
+  clientId?: string
+  error?: string
+  detailsTemplate: string
+  stateTemplate: string
+  showTimestamps: boolean
+  showButton: boolean
+  activityType: DiscordActivityType
+}
+
+export interface IntegrationsState {
+  lastfm: LastfmState
+  discord: DiscordState
+}
+
 export interface Settings {
   purchaseFormat: string
   downloadDir: string
@@ -139,6 +230,7 @@ export interface LibrarySnapshot {
   purchases: Record<string, PurchaseDownload>
   sync: SyncState
   settings: Settings
+  integrations: IntegrationsState
   demo: boolean
   appVersion: string
 }
@@ -159,6 +251,7 @@ export interface LibraryEventMap {
   'offline:changed': OfflineEntry
   'purchase:changed': PurchaseDownload
   'settings:changed': Settings
+  'integration:changed': IntegrationsState
   'library:changed': { collectionCount: number; wishlistCount: number; lastSyncedAt?: number }
 }
 
@@ -195,6 +288,16 @@ export interface SideAAPI {
     update: (patch: Partial<Settings>) => Promise<Settings>
     chooseDownloadDir: () => Promise<string | null>
     clearCaches: () => Promise<void>
+  }
+  integrations: {
+    updateLastfm: (patch: { enabled?: boolean; apiKey?: string; apiSecret?: string }) => Promise<IntegrationsState>
+    connectLastfm: () => Promise<IntegrationsState>
+    disconnectLastfm: () => Promise<IntegrationsState>
+    updateDiscord: (patch: DiscordPatch) => Promise<IntegrationsState>
+    nowPlaying: (input: ScrobbleInput) => Promise<IntegrationsState>
+    scrobble: (input: ScrobbleInput) => Promise<IntegrationsState>
+    presence: (input: PresenceInput | null) => Promise<IntegrationsState>
+    retryPending: () => Promise<IntegrationsState>
   }
   on: <K extends LibraryEvent>(
     event: K,

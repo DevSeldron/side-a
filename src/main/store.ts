@@ -4,6 +4,7 @@ import type {
   Album,
   AlbumDetail,
   AuthState,
+  IntegrationsConfig,
   OfflineEntry,
   PurchaseDownload,
   Settings,
@@ -29,6 +30,7 @@ export interface PersistedState {
   purchases: Record<string, PurchaseDownload>
   sync: SyncState
   settings: Settings
+  integrations: IntegrationsConfig
   redownloads: Record<string, string>
 }
 
@@ -53,6 +55,27 @@ export function emptySync(): SyncState {
   }
 }
 
+function defaultIntegrations(): IntegrationsConfig {
+  return {
+    lastfm: {
+      apiKey: '',
+      apiSecret: '',
+      sessionKey: '',
+      enabled: true,
+      pending: []
+    },
+    discord: {
+      enabled: false,
+      clientId: '',
+      detailsTemplate: '{title}',
+      stateTemplate: '{artist} — {album}',
+      showTimestamps: true,
+      showButton: true,
+      activityType: 'listening'
+    }
+  }
+}
+
 function defaults(downloadDir: string): PersistedState {
   return {
     version: VERSION,
@@ -64,6 +87,7 @@ function defaults(downloadDir: string): PersistedState {
     purchases: {},
     sync: emptySync(),
     settings: defaultSettings(downloadDir),
+    integrations: defaultIntegrations(),
     redownloads: {}
   }
 }
@@ -91,6 +115,10 @@ export class Store {
         auth: { ...base.auth, ...parsed.auth },
         settings: { ...base.settings, ...parsed.settings, downloadDir: parsed.settings?.downloadDir || this.downloadDir },
         sync: { ...base.sync, ...parsed.sync },
+        integrations: {
+          lastfm: { ...base.integrations.lastfm, ...parsed.integrations?.lastfm },
+          discord: { ...base.integrations.discord, ...parsed.integrations?.discord }
+        },
         details: parsed.details ?? {},
         offline: parsed.offline ?? {},
         purchases: parsed.purchases ?? {},
@@ -176,6 +204,13 @@ export class Store {
       state.settings = { ...state.settings, ...patch }
     })
     return this.state.settings
+  }
+
+  setIntegrations(mutator: (integrations: IntegrationsConfig) => void): IntegrationsConfig {
+    this.update((state) => {
+      mutator(state.integrations)
+    })
+    return this.state.integrations
   }
 
   getAuth(): AuthState {

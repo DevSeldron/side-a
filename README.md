@@ -25,6 +25,11 @@ Built with Electron, React, TypeScript and Vite. Targets **arm64 macOS**.
 - **Modern player** — persistent player bar, full-screen Now Playing, waveform
   scrubber, queue, shuffle/repeat, volume and macOS media-key integration.
 - **Command palette** — `⌘K` to search releases or jump to any page.
+- **Last.fm scrobbling** — optional. Side A authorises against your own Last.fm API
+  account, sends now-playing updates, and queues scrobbles locally so plays survive a
+  dropped connection. Keys and the session are sealed with the macOS keychain.
+- **Discord Rich Presence** — optional "Listening to" status with the release, track and
+  a live progress bar, using your own Discord application ID.
 - **Three accents** — teal, ember and violet, applied instantly.
 - **Demo mode** — load a public Bandcamp fan collection to explore the app without
   connecting an account.
@@ -83,7 +88,7 @@ All application data is under:
 
 ```
 ~/Library/Application Support/Side A/
-├── side-a.json        # library, details cache, settings, offline manifest
+├── side-a.json        # library, details cache, settings, integration state
 ├── offline/           # cached 128 kbps tracks + cover art per release
 ├── media/             # reserved for local media
 └── logs/
@@ -105,6 +110,35 @@ If Bandcamp does not expose a re-download link for a purchase (common for very o
 purchases, gift codes or region restrictions), the app says so instead of guessing.
 Downloads can be resumed after an interruption by starting them again.
 
+## Integrations
+
+Both integrations are configured in **Settings** and stay disabled until you turn them on.
+
+**Last.fm**
+
+1. Create an API account at [last.fm/api/account/create](https://www.last.fm/api/account/create).
+2. Paste the API key and shared secret into **Settings → Last.fm scrobbling**.
+3. Press **Connect Last.fm** and approve access in the window that opens.
+
+Plays are scrobbled once a track has been heard for half its length or four minutes,
+whichever comes first (Last.fm ignores tracks under 30 seconds). If Last.fm is
+unreachable the scrobble is queued in `side-a.json` and retried every minute and on the
+next launch.
+
+**Discord**
+
+1. Create an application at [discord.com/developers/applications](https://discord.com/developers/applications).
+2. Copy its **Application ID** into **Settings → Discord Rich Presence** and enable the toggle.
+
+Presence needs the Discord desktop app running; Side A reconnects automatically when it
+starts. Artwork is passed as an external Bandcamp image, so no Rich Presence assets need
+to be uploaded.
+
+The two activity lines are templates — `{title}`, `{artist}`, `{album}` and `{band}` are
+replaced with the current track — and you can choose whether the activity reads
+*Listening to*, *Playing* or *Watching*, plus turn the progress bar and the “Listen on
+Bandcamp” button on or off.
+
 ## Design notes
 
 - Dark charcoal canvas, cream login panel, teal accent by default.
@@ -119,7 +153,8 @@ Downloads can be resumed after an interruption by starting them again.
 - IPC handlers validate release keys, track IDs, formats and URLs.
 - External links open in the system browser, never inside the app.
 - The renderer CSP allows only the app, Bandcamp, `f4.bcbits.com`, and `bcmedia:`.
-- No analytics, telemetry, or third-party services are involved.
+- No analytics and no telemetry. The Last.fm and Discord integrations are opt-in, off
+  until you configure them, and only ever receive the track you are currently playing.
 
 ## Limitations
 
@@ -143,6 +178,9 @@ src/main/        Electron main process
   library.ts     sync, album cache, offline save/remove
   media.ts       bcmedia:// stream, local range requests, covers
   purchases.ts   re-download resolution and file streaming
+  discord.ts     Discord Rich Presence client and presence formatting
+  lastfm.ts      Last.fm authorisation, now-playing and the scrobble queue
+  secrets.ts     keychain-backed sealing for API keys and sessions
   ipc.ts         validated IPC surface and snapshots
 src/preload/     contextBridge API
 src/renderer/    React UI (pages, components, stores, styles)

@@ -96,9 +96,33 @@ interface MobileTralbum {
   tracks?: RawTrack[]
   about?: string
   credits?: string
-  release_date?: string
+  release_date?: string | number
   error?: boolean
   error_message?: string
+}
+
+/**
+ * Bandcamp reports `release_date` as Unix seconds on the mobile tralbum API but
+ * as a date string elsewhere. Normalise both to ISO so the renderer only ever
+ * deals with real dates.
+ */
+function normalizeReleaseDate(value: unknown): string | undefined {
+  if (typeof value === 'number') {
+    if (!Number.isFinite(value) || value <= 0) return undefined
+    const date = new Date(value < 1e11 ? value * 1000 : value)
+    return Number.isNaN(date.getTime()) ? undefined : date.toISOString()
+  }
+  if (typeof value !== 'string') return undefined
+  const trimmed = value.trim()
+  if (!trimmed) return undefined
+  if (/^\d+$/.test(trimmed)) {
+    const numeric = Number(trimmed)
+    if (!Number.isFinite(numeric) || numeric <= 0) return undefined
+    const date = new Date(numeric < 1e11 ? numeric * 1000 : numeric)
+    return Number.isNaN(date.getTime()) ? undefined : date.toISOString()
+  }
+  const date = new Date(trimmed)
+  return Number.isNaN(date.getTime()) ? undefined : date.toISOString()
 }
 
 interface CollectionApiPage {
@@ -690,7 +714,7 @@ export class BandcampClient {
       artUrl: artUrl(artId, 10) ?? album.artUrl,
       about: stripHtml(data.about),
       credits: stripHtml(data.credits),
-      releaseDate: data.release_date,
+      releaseDate: normalizeReleaseDate(data.release_date),
       itemUrl: data.bandcamp_url ?? album.itemUrl,
       tracks,
       fetchedAt: Date.now()

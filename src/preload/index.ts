@@ -34,6 +34,16 @@ const api: SideAAPI = {
     chooseDownloadDir: () => ipcRenderer.invoke(IPC.settingsChooseDir),
     clearCaches: () => ipcRenderer.invoke(IPC.settingsClearCaches)
   },
+  integrations: {
+    updateLastfm: (patch) => ipcRenderer.invoke(IPC.lastfmUpdate, patch),
+    connectLastfm: () => ipcRenderer.invoke(IPC.lastfmConnect),
+    disconnectLastfm: () => ipcRenderer.invoke(IPC.lastfmDisconnect),
+    updateDiscord: (patch) => ipcRenderer.invoke(IPC.discordUpdate, patch),
+    nowPlaying: (input) => ipcRenderer.invoke(IPC.lastfmNowPlaying, input),
+    scrobble: (input) => ipcRenderer.invoke(IPC.lastfmScrobble, input),
+    presence: (input) => ipcRenderer.invoke(IPC.discordPresence, input),
+    retryPending: () => ipcRenderer.invoke(IPC.integrationsRetry)
+  },
   on: <K extends LibraryEvent>(event: K, callback: (payload: LibraryEventMap[K]) => void) => {
     const listener = (_event: Electron.IpcRendererEvent, payload: LibraryEventMap[K]): void => {
       callback(payload)

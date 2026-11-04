@@ -37,9 +37,29 @@ export function formatBytes(bytes: number): string {
   return `${value.toFixed(digits)} ${units[index]}`
 }
 
-export function parseBandcampDate(value?: string): Date | null {
-  if (!value) return null
-  const date = new Date(value)
+export function parseBandcampDate(value?: string | number): Date | null {
+  if (value === undefined || value === null || value === '') return null
+  const raw = String(value).trim()
+  if (!raw) return null
+
+  // Bandcamp's tralbum API reports `release_date` as Unix seconds. Older cached
+  // details still hold that number, so normalise here as well as in the main
+  // process: treating seconds as milliseconds would land in January 1970.
+  if (typeof value === 'number' || /^\d+$/.test(raw)) {
+    const numeric = Number(raw)
+    if (!Number.isFinite(numeric) || numeric <= 0) return null
+    const date = new Date(numeric < 1e11 ? numeric * 1000 : numeric)
+    if (Number.isNaN(date.getTime()) || date.getUTCFullYear() < 1990) return null
+    return date
+  }
+
+  // A bare four-digit year (some fan pages report only this).
+  if (/^\d{4}$/.test(raw)) {
+    const date = new Date(`${raw}-01-01T00:00:00Z`)
+    return Number.isNaN(date.getTime()) ? null : date
+  }
+
+  const date = new Date(raw)
   return Number.isNaN(date.getTime()) ? null : date
 }
 

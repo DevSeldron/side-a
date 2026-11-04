@@ -1,13 +1,15 @@
-import type { ReactElement } from 'react'
+import { useState, type FormEvent, type ReactElement } from 'react'
 import {
   ArrowDownToLine,
   Check,
   ExternalLink,
   FolderOpen,
+  Gamepad2,
   HardDrive,
   Info,
   LogOut,
   Palette,
+  Radio,
   RefreshCw,
   ShieldCheck,
   Sliders,
@@ -16,7 +18,7 @@ import {
   UserRound
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
-import type { Accent } from '@shared/types'
+import type { Accent, DiscordActivityType } from '@shared/types'
 import { useApp } from '../store/app'
 import { usePlayer } from '../store/player'
 import { PageIntro } from '../components/Page'
@@ -48,8 +50,17 @@ export function Settings(): ReactElement {
   const login = useApp((state) => state.login)
   const logout = useApp((state) => state.logout)
   const startDemo = useApp((state) => state.startDemo)
+  const updateLastfm = useApp((state) => state.updateLastfm)
+  const connectLastfm = useApp((state) => state.connectLastfm)
+  const disconnectLastfm = useApp((state) => state.disconnectLastfm)
+  const updateDiscord = useApp((state) => state.updateDiscord)
+  const retryIntegrations = useApp((state) => state.retryIntegrations)
   const navigate = useNavigate()
   const stopPlayer = usePlayer((state) => state.stop)
+  const [apiKey, setApiKey] = useState('')
+  const [apiSecret, setApiSecret] = useState('')
+  const [clientId, setClientId] = useState('')
+  const [connecting, setConnecting] = useState(false)
 
   if (!snapshot) return <div className="page" />
 
@@ -59,11 +70,49 @@ export function Settings(): ReactElement {
   const username = snapshot.auth.username ?? 'bandcamp'
   const isDemo = snapshot.demo
 
+  const { lastfm, discord } = snapshot.integrations
+
   const signOut = async (): Promise<void> => {
     stopPlayer()
     await logout()
     navigate('/')
   }
+
+  const saveLastfm = async (event: FormEvent): Promise<void> => {
+    event.preventDefault()
+    const patch: { apiKey?: string; apiSecret?: string } = {}
+    if (apiKey.trim()) patch.apiKey = apiKey.trim()
+    if (apiSecret.trim()) patch.apiSecret = apiSecret.trim()
+    if (!patch.apiKey && !patch.apiSecret) return
+    await updateLastfm(patch)
+    setApiKey('')
+    setApiSecret('')
+  }
+
+  const saveDiscord = async (event: FormEvent): Promise<void> => {
+    event.preventDefault()
+    const next = clientId.trim()
+    if (!next) return
+    await updateDiscord({ clientId: next })
+    setClientId('')
+  }
+
+  const connect = async (): Promise<void> => {
+    setConnecting(true)
+    try {
+      await connectLastfm()
+    } finally {
+      setConnecting(false)
+    }
+  }
+
+  const discordStatus = !discord.enabled
+    ? 'Off'
+    : discord.connected
+      ? 'Connected'
+      : discord.configured
+        ? 'Waiting for Discord'
+        : 'Needs an application ID'
 
   return (
     <div className="page settings-page">
@@ -186,6 +235,201 @@ export function Settings(): ReactElement {
             <button type="button" className="button ghost" onClick={() => void saveAllPurchased()}>
               <ArrowDownToLine size={16} />
               Save all purchases offline
+            </button>
+          </div>
+        </section>
+
+        <section className="settings-card">
+          <header className="settings-head">
+            <span className="settings-icon"><Radio size={17} /></span>
+            <div>
+              <h2>Last.fm scrobbling</h2>
+              <p>Send the tracks you play to your Last.fm listening history.</p>
+            </div>
+          </header>
+          <SettingToggle
+            title="Scrobble plays"
+            description="A play counts after half the track or four minutes, whichever comes first."
+            checked={lastfm.enabled}
+            onChange={(value) => void updateLastfm({ enabled: value })}
+          />
+          <div className="storage-rows">
+            <div>
+              <span>Profile</span>
+              <strong>{lastfm.connected ? `@${lastfm.username ?? 'connected'}` : 'Not connected'}</strong>
+            </div>
+            <div>
+              <span>Queued scrobbles</span>
+              <strong>{lastfm.pending}</strong>
+            </div>
+          </div>
+          <form className="integration-form" onSubmit={(event) => void saveLastfm(event)}>
+            <label className="field">
+              <span>API key</span>
+              <input
+                type="text"
+                value={apiKey}
+                onChange={(event) => setApiKey(event.target.value)}
+                placeholder={lastfm.configured ? 'Saved — enter a new key to replace it' : 'Last.fm API key'}
+                spellCheck={false}
+                autoComplete="off"
+              />
+            </label>
+            <label className="field">
+              <span>Shared secret</span>
+              <input
+                type="password"
+                value={apiSecret}
+                onChange={(event) => setApiSecret(event.target.value)}
+                placeholder={lastfm.configured ? 'Saved — enter a new secret to replace it' : 'Last.fm shared secret'}
+                autoComplete="off"
+              />
+            </label>
+            <button type="submit" className="button ghost" disabled={!apiKey.trim() && !apiSecret.trim()}>
+              Save credentials
+            </button>
+          </form>
+          <div className="settings-actions">
+            <button
+              type="button"
+              className="button primary"
+              disabled={!lastfm.configured || connecting}
+              onClick={() => void connect()}
+            >
+              <Radio size={16} />
+              {connecting ? 'Waiting for authorisation…' : lastfm.connected ? 'Re-authorise' : 'Connect Last.fm'}
+            </button>
+            {lastfm.connected ? (
+              <button type="button" className="button ghost quiet" onClick={() => void disconnectLastfm()}>
+                <LogOut size={16} />
+                Disconnect
+              </button>
+            ) : null}
+            {lastfm.pending > 0 ? (
+              <button type="button" className="button ghost quiet" onClick={() => void retryIntegrations()}>
+                <RefreshCw size={16} />
+                Retry queue
+              </button>
+            ) : null}
+            <button
+              type="button"
+              className="button ghost quiet"
+              onClick={() => void window.sideA.library.openExternal('https://www.last.fm/api/account/create')}
+            >
+              <ExternalLink size={16} />
+              Last.fm API
+            </button>
+          </div>
+          {lastfm.error ? <p className="integration-error">{lastfm.error}</p> : null}
+          <p className="settings-hint">
+            Create a free API account on Last.fm, paste its key and shared secret, then connect to authorise Side A in a
+            Last.fm window. The credentials and session are encrypted with the macOS keychain.
+          </p>
+        </section>
+
+        <section className="settings-card">
+          <header className="settings-head">
+            <span className="settings-icon"><Gamepad2 size={17} /></span>
+            <div>
+              <h2>Discord Rich Presence</h2>
+              <p>Show the release you are playing on your Discord profile.</p>
+            </div>
+          </header>
+          <SettingToggle
+            title="Show what I am playing"
+            description="Updates Discord with the track and live progress while Side A plays."
+            checked={discord.enabled}
+            onChange={(value) => void updateDiscord({ enabled: value })}
+          />
+          <div className="storage-rows">
+            <div><span>Connection</span><strong>{discordStatus}</strong></div>
+            <div><span>Application</span><strong>{discord.configured ? 'Saved' : 'Not set'}</strong></div>
+          </div>
+          <form className="integration-form" onSubmit={(event) => void saveDiscord(event)}>
+            <label className="field">
+              <span>Application ID</span>
+              <input
+                type="text"
+                inputMode="numeric"
+                value={clientId}
+                onChange={(event) => setClientId(event.target.value)}
+                placeholder={discord.configured ? 'Saved — enter a new ID to replace it' : 'Paste your Discord application ID'}
+                spellCheck={false}
+                autoComplete="off"
+              />
+            </label>
+            <button type="submit" className="button ghost" disabled={!clientId.trim()}>
+              Save application ID
+            </button>
+          </form>
+          <div className="setting-row">
+            <div className="setting-copy">
+              <strong>Activity type</strong>
+              <span>How Discord labels the status line.</span>
+            </div>
+            <label className="select-wrap compact">
+              <select
+                value={discord.activityType}
+                onChange={(event) => void updateDiscord({ activityType: event.target.value as DiscordActivityType })}
+                aria-label="Discord activity type"
+              >
+                <option value="listening">Listening to</option>
+                <option value="playing">Playing</option>
+                <option value="watching">Watching</option>
+              </select>
+            </label>
+          </div>
+          <SettingToggle
+            title="Progress bar"
+            description="Show elapsed and remaining time while a track plays."
+            checked={discord.showTimestamps}
+            onChange={(value) => void updateDiscord({ showTimestamps: value })}
+          />
+          <SettingToggle
+            title="Release button"
+            description="Add a “Listen on Bandcamp” button when the release has a link."
+            checked={discord.showButton}
+            onChange={(value) => void updateDiscord({ showButton: value })}
+          />
+          <div className="integration-form">
+            <label className="field">
+              <span>Title line</span>
+              <input
+                key={`details-${discord.detailsTemplate}`}
+                defaultValue={discord.detailsTemplate}
+                onBlur={(event) => void updateDiscord({ detailsTemplate: event.target.value })}
+                spellCheck={false}
+                autoComplete="off"
+              />
+            </label>
+            <label className="field">
+              <span>Subtitle line</span>
+              <input
+                key={`state-${discord.stateTemplate}`}
+                defaultValue={discord.stateTemplate}
+                onBlur={(event) => void updateDiscord({ stateTemplate: event.target.value })}
+                spellCheck={false}
+                autoComplete="off"
+              />
+            </label>
+            <p className="settings-hint">
+              Tokens: <code>{'{title}'}</code>, <code>{'{artist}'}</code>, <code>{'{album}'}</code> and{' '}
+              <code>{'{band}'}</code>. Lines save when you leave the field.
+            </p>
+          </div>
+          {discord.error ? <p className="integration-error">{discord.error}</p> : null}
+          <p className="settings-hint">
+            Create an application at Discord's developer portal and copy its Application ID. The Discord desktop app must
+            be running; artwork is sent as a Bandcamp image URL, so no assets need uploading.
+          </p>
+          <div className="settings-actions">
+            <button
+              type="button"
+              className="button ghost quiet"
+              onClick={() => void window.sideA.library.openExternal('https://discord.com/developers/applications')}
+            >
+              <ExternalLink size={16} />
+              Discord developers
             </button>
           </div>
         </section>

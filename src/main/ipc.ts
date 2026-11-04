@@ -1,9 +1,20 @@
 import { app, BrowserWindow, dialog, ipcMain, shell } from 'electron'
+import { existsSync } from 'node:fs'
 import { mkdir } from 'node:fs/promises'
-import type { Accent, LibrarySnapshot, OfflineEntry, Settings } from '@shared/types'
+import type {
+  Accent,
+  IntegrationsState,
+  LibrarySnapshot,
+  OfflineEntry,
+  PresenceInput,
+  ScrobbleInput,
+  Settings
+} from '@shared/types'
 import { IPC } from '@shared/ipc'
 import type { AuthManager } from './auth'
 import type { BandcampClient } from './bandcamp'
+import type { DiscordService, DiscordUpdate } from './discord'
+import type { LastfmService } from './lastfm'
 import type { Library } from './library'
 import type { MediaGateway } from './media'
 import type { PurchaseManager } from './purchases'
@@ -16,12 +27,68 @@ interface IpcContext {
   purchases: PurchaseManager
   auth: AuthManager
   media: MediaGateway
+  lastfm: LastfmService
+  discord: DiscordService
   getMainWindow: () => BrowserWindow | null
 }
 
 function publicOffline(entry: OfflineEntry): OfflineEntry {
   const { files: _files, coverPath: _coverPath, ...rest } = entry
   return rest
+}
+
+function readText(value: unknown, limit: number): string | undefined {
+  if (typeof value !== 'string') return undefined
+  const trimmed = value.trim()
+  return trimmed ? trimmed.slice(0, limit) : undefined
+}
+
+function readScrobble(value: unknown): ScrobbleInput {
+  if (!value || typeof value !== 'object') throw new Error('Invalid scrobble payload.')
+  const input = value as Record<string, unknown>
+  const artist = readText(input.artist, 300)
+  const title = readText(input.title, 300)
+  if (!artist || !title) throw new Error('A scrobble needs an artist and a title.')
+  const timestamp = Number(input.timestamp)
+  const duration = Number(input.duration)
+  const trackNumber = Number(input.trackNumber)
+  const seconds = Number.isFinite(timestamp) ? Math.floor(timestamp) : Math.floor(Date.now() / 1000)
+  return {
+    artist,
+    title,
+    album: readText(input.album, 300),
+    albumArtist: readText(input.albumArtist, 300),
+    duration: Number.isFinite(duration) && duration > 0 ? Math.round(duration) : undefined,
+    trackNumber: Number.isFinite(trackNumber) && trackNumber > 0 ? Math.round(trackNumber) : undefined,
+    timestamp: seconds,
+    key: readText(input.key, 300) ?? `${artist}\u0000${title}\u0000${seconds}`
+  }
+}
+
+function readPresence(value: unknown): PresenceInput | null {
+  if (value === null) return null
+  if (!value || typeof value !== 'object') throw new Error('Invalid presence payload.')
+  const input = value as Record<string, unknown>
+  const artist = readText(input.artist, 300)
+  const title = readText(input.title, 300)
+  if (!artist || !title) throw new Error('Presence needs an artist and a title.')
+  const position = Number(input.position)
+  const duration = Number(input.duration)
+  return {
+    playing: input.playing === true,
+    artist,
+    title,
+    album: readText(input.album, 300),
+    band: readText(input.band, 300),
+    duration: Number.isFinite(duration) && duration > 0 ? duration : undefined,
+    position: Number.isFinite(position) && position > 0 ? position : 0,
+    coverUrl: readText(input.coverUrl, 2048),
+    itemUrl: readText(input.itemUrl, 2048)
+  }
+}
+
+function integrationState(lastfm: LastfmService, discord: DiscordService): IntegrationsState {
+  return { lastfm: lastfm.state(), discord: discord.state() }
 }
 
 function broadcast(channel: string, payload: unknown): void {
@@ -31,7 +98,7 @@ function broadcast(channel: string, payload: unknown): void {
 }
 
 export function registerIpc(context: IpcContext): void {
-  const { client, store, library, purchases, auth, media, getMainWindow } = context
+  const { client, store, library, purchases, auth, media, lastfm, discord, getMainWindow } = context
 
   const snapshot = async (): Promise<LibrarySnapshot> => {
     const state = store.get()
@@ -47,6 +114,7 @@ export function registerIpc(context: IpcContext): void {
       purchases: state.purchases,
       sync: state.sync,
       settings: state.settings,
+      integrations: integrationState(lastfm, discord),
       demo: authState.status === 'demo',
       appVersion: app.getVersion()
     }
@@ -151,16 +219,18 @@ export function registerIpc(context: IpcContext): void {
     broadcast(IPC.eventSettings, settings)
     return settings
   })
-  ipcMain.handle(IPC.settingsChooseDir, async (event) => {
-    const parent = BrowserWindow.fromWebContents(event.sender) ?? getMainWindow()
-    const options = {
+  ipcMain.handle(IPC.settingsChooseDir, async () => {
+    // Opened without a parent window on purpose. A macOS sheet disables its
+    // parent window, and if the sheet fails to present (for example because the
+    // default folder does not exist yet) the whole app stays disabled until it
+    // is restarted. Only pass a default path that is actually there.
+    const downloadDir = store.get().settings.downloadDir
+    const options: Electron.OpenDialogOptions = {
       title: 'Choose where purchased downloads are saved',
-      defaultPath: store.get().settings.downloadDir,
-      properties: ['openDirectory', 'createDirectory'] as const
+      properties: ['openDirectory', 'createDirectory']
     }
-    const result = parent
-      ? await dialog.showOpenDialog(parent, { ...options, properties: [...options.properties] })
-      : await dialog.showOpenDialog({ ...options, properties: [...options.properties] })
+    if (existsSync(downloadDir)) options.defaultPath = downloadDir
+    const result = await dialog.showOpenDialog(options)
     if (result.canceled || !result.filePaths[0]) return null
     const settings = store.setSettings({ downloadDir: result.filePaths[0] })
     await mkdir(settings.downloadDir, { recursive: true }).catch(() => undefined)
@@ -170,6 +240,66 @@ export function registerIpc(context: IpcContext): void {
   ipcMain.handle(IPC.settingsClearCaches, async () => {
     await library.clearCaches()
     await client.session.clearCache().catch(() => undefined)
+  })
+
+  // Every integration handler answers with the complete IntegrationsState.
+  // Returning a single service's state here used to leave the renderer with a
+  // snapshot whose `integrations.discord` was undefined, which crashed the
+  // settings page on the next render.
+  ipcMain.handle(IPC.lastfmUpdate, (_event, patch: unknown) => {
+    if (!patch || typeof patch !== 'object') throw new Error('Invalid Last.fm settings.')
+    const input = patch as Record<string, unknown>
+    lastfm.update({
+      enabled: typeof input.enabled === 'boolean' ? input.enabled : undefined,
+      apiKey: typeof input.apiKey === 'string' ? input.apiKey : undefined,
+      apiSecret: typeof input.apiSecret === 'string' ? input.apiSecret : undefined
+    })
+    return integrationState(lastfm, discord)
+  })
+  ipcMain.handle(IPC.lastfmConnect, async (event) => {
+    const parent = BrowserWindow.fromWebContents(event.sender) ?? getMainWindow()
+    await lastfm.connect(parent)
+    return integrationState(lastfm, discord)
+  })
+  ipcMain.handle(IPC.lastfmDisconnect, () => {
+    lastfm.disconnect()
+    return integrationState(lastfm, discord)
+  })
+  ipcMain.handle(IPC.lastfmNowPlaying, async (_event, input: unknown) => {
+    await lastfm.nowPlaying(readScrobble(input))
+    return integrationState(lastfm, discord)
+  })
+  ipcMain.handle(IPC.lastfmScrobble, async (_event, input: unknown) => {
+    await lastfm.scrobble(readScrobble(input))
+    return integrationState(lastfm, discord)
+  })
+  ipcMain.handle(IPC.discordUpdate, (_event, patch: unknown) => {
+    if (!patch || typeof patch !== 'object') throw new Error('Invalid Discord settings.')
+    const input = patch as Record<string, unknown>
+    if (typeof input.clientId === 'string' && input.clientId.trim() && !/^\d{15,25}$/.test(input.clientId.trim())) {
+      throw new Error('A Discord application ID is a 15–25 digit number.')
+    }
+    const next: DiscordUpdate = {
+      enabled: typeof input.enabled === 'boolean' ? input.enabled : undefined,
+      clientId: typeof input.clientId === 'string' ? input.clientId : undefined,
+      showTimestamps: typeof input.showTimestamps === 'boolean' ? input.showTimestamps : undefined,
+      showButton: typeof input.showButton === 'boolean' ? input.showButton : undefined
+    }
+    if (typeof input.detailsTemplate === 'string') next.detailsTemplate = input.detailsTemplate.slice(0, 160)
+    if (typeof input.stateTemplate === 'string') next.stateTemplate = input.stateTemplate.slice(0, 160)
+    if (input.activityType === 'listening' || input.activityType === 'playing' || input.activityType === 'watching') {
+      next.activityType = input.activityType
+    }
+    discord.update(next)
+    return integrationState(lastfm, discord)
+  })
+  ipcMain.handle(IPC.discordPresence, async (_event, input: unknown) => {
+    await discord.setPresence(readPresence(input))
+    return integrationState(lastfm, discord)
+  })
+  ipcMain.handle(IPC.integrationsRetry, async () => {
+    await lastfm.flush()
+    return integrationState(lastfm, discord)
   })
 
 }
