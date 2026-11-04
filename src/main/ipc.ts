@@ -22,6 +22,7 @@ import type { Store, } from './store'
 import { normalizeAccent } from './store'
 import { TRACK_QUALITIES, type TrackDownloadManager } from './trackDownloads'
 import { checkForUpdate } from './updates'
+import { artworkAccent } from './artwork'
 
 interface IpcContext {
   client: BandcampClient
@@ -136,6 +137,10 @@ export function registerIpc(context: IpcContext): void {
 
   ipcMain.handle(IPC.getState, () => snapshot())
   ipcMain.handle(IPC.updatesCheck, () => checkForUpdate())
+  ipcMain.handle(IPC.artworkAccent, async (_event, url: unknown) => {
+    if (typeof url !== 'string' || url.length > 2048) throw new Error('Invalid artwork URL.')
+    return artworkAccent(url, client, library)
+  })
   ipcMain.handle(IPC.discoverSearch, async (_event, query: unknown) => {
     if (typeof query !== 'string' || query.trim().length < 2) throw new Error('Type at least two characters to search.')
     return client.searchDiscover(query.trim().slice(0, 120))
@@ -252,6 +257,13 @@ export function registerIpc(context: IpcContext): void {
       allowed.accent = normalizeAccent(input.accent)
     }
     if (input.theme === 'dark' || input.theme === 'light') allowed.theme = input.theme
+    if (typeof input.coverTheme === 'boolean') allowed.coverTheme = input.coverTheme
+    if (typeof input.backgroundGradient === 'boolean') allowed.backgroundGradient = input.backgroundGradient
+    if (input.gradientPosition === 'top' || input.gradientPosition === 'bottom') {
+      allowed.gradientPosition = input.gradientPosition
+    }
+    if (typeof input.rainbow === 'boolean') allowed.rainbow = input.rainbow
+    if (typeof input.rainbowUnlocked === 'boolean') allowed.rainbowUnlocked = input.rainbowUnlocked
     if (input.trackQuality === 'mp3-128' || input.trackQuality === 'mp3-v0' || input.trackQuality === 'mp3-320') {
       allowed.trackQuality = input.trackQuality
     }

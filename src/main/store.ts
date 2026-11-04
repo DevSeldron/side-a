@@ -45,6 +45,11 @@ export function defaultSettings(downloadDir: string): Settings {
     reduceMotion: false,
     accent: '#2ad4c0',
     theme: 'dark',
+    coverTheme: false,
+    backgroundGradient: false,
+    gradientPosition: 'bottom',
+    rainbow: false,
+    rainbowUnlocked: false,
     showWishlist: true,
     trackQuality: 'mp3-128'
   }

@@ -290,6 +290,11 @@ export interface Settings {
   /** Hex colour, e.g. #66e0cc. */
   accent: string
   theme: ThemeMode
+  coverTheme: boolean
+  backgroundGradient: boolean
+  gradientPosition: 'top' | 'bottom'
+  rainbow: boolean
+  rainbowUnlocked: boolean
   showWishlist: boolean
   /** Quality used by direct track downloads. */
   trackQuality: TrackQuality
@@ -370,6 +375,9 @@ export interface SideAAPI {
     update: (patch: Partial<Settings>) => Promise<Settings>
     chooseDownloadDir: () => Promise<string | null>
     clearCaches: () => Promise<void>
+  }
+  artwork: {
+    accent: (url: string) => Promise<string | null>
   }
   update: {
     check: () => Promise<UpdateInfo>

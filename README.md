@@ -32,9 +32,10 @@ Built with Electron, React, TypeScript and Vite. Targets **arm64 macOS** and
   credential store (Keychain on macOS, DPAPI on Windows).
 - **Discord Rich Presence** — optional "Listening to" status with the release, track and
   a live progress bar, using your own Discord application ID.
-- **Any accent, dark or light** — pick any colour with the colour picker, and switch
+- **Any accent, dark or light** — pick any colour with the colour picker, then switch
   the whole interface between a dark and a light room. Tints are derived from the
-  accent you choose.
+  accent you choose, a background gradient can fade from gray or white into it, and
+  the cover-art theme borrows the accent from the release you are playing.
 - **Demo mode** — load a public Bandcamp fan collection to explore the app without
   connecting an account.
 

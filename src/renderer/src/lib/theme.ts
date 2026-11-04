@@ -36,19 +36,67 @@ export function accentInk(value: string): string {
   return luminance > 0.62 ? '#0d0d10' : '#ffffff'
 }
 
-/**
- * Accent colours are derived at runtime instead of being baked into the
- * stylesheet, so any hex the user picks gets matching soft/line/glow tints.
- */
-export function applyTheme(accent: string, theme: ThemeMode): void {
-  const root = document.documentElement
-  const hex = normalizeAccent(accent)
-  const [r, g, b] = parseHex(hex) ?? [102, 224, 204]
-  root.dataset.theme = theme === 'light' ? 'light' : 'dark'
+let rainbowFrame: number | null = null
+
+function hslToRgb(hue: number, saturation: number, lightness: number): [number, number, number] {
+  const chroma = (1 - Math.abs(2 * lightness - 1)) * saturation
+  const sector = hue / 60
+  const second = chroma * (1 - Math.abs((sector % 2) - 1))
+  const offset = lightness - chroma / 2
+  let rgb: [number, number, number]
+  if (sector < 1) rgb = [chroma, second, 0]
+  else if (sector < 2) rgb = [second, chroma, 0]
+  else if (sector < 3) rgb = [0, chroma, second]
+  else if (sector < 4) rgb = [0, second, chroma]
+  else if (sector < 5) rgb = [second, 0, chroma]
+  else rgb = [chroma, 0, second]
+  return rgb.map((channel) => Math.round((channel + offset) * 255)) as [number, number, number]
+}
+
+function setAccent(root: HTMLElement, rgb: [number, number, number], ink?: string): void {
+  const [r, g, b] = rgb
+  const hex = `#${rgb.map((channel) => channel.toString(16).padStart(2, '0')).join('')}`
   root.style.setProperty('--accent', hex)
   root.style.setProperty('--accent-rgb', `${r}, ${g}, ${b}`)
-  root.style.setProperty('--accent-ink', accentInk(hex))
+  root.style.setProperty('--accent-ink', ink ?? accentInk(hex))
   root.style.setProperty('--accent-soft', `rgba(${r}, ${g}, ${b}, 0.14)`)
   root.style.setProperty('--accent-line', `rgba(${r}, ${g}, ${b}, 0.36)`)
   root.style.setProperty('--accent-glow', `rgba(${r}, ${g}, ${b}, 0.22)`)
+}
+
+/**
+ * Accent colours are derived at runtime instead of being baked into the
+ * stylesheet, so any hex the user picks gets matching soft/line/glow tints.
+ * The rainbow setting cycles the same variables through the spectrum.
+ */
+export function applyBackgroundGradient(enabled: boolean, position: 'top' | 'bottom'): void {
+  const root = document.documentElement
+  root.dataset.background = enabled ? 'gradient' : 'solid'
+  root.dataset.gradient = position === 'top' ? 'top' : 'bottom'
+}
+
+export function applyTheme(accent: string, theme: ThemeMode, rainbow = false): void {
+  const root = document.documentElement
+  const hex = normalizeAccent(accent)
+  const base = parseHex(hex) ?? [102, 224, 204]
+  root.dataset.theme = theme === 'light' ? 'light' : 'dark'
+  root.dataset.rainbow = rainbow ? 'true' : 'false'
+  setAccent(root, base)
+
+  if (rainbowFrame !== null) {
+    cancelAnimationFrame(rainbowFrame)
+    rainbowFrame = null
+  }
+  if (!rainbow) return
+
+  const started = performance.now()
+  const lightness = 0.66
+  const tick = (now: number): void => {
+    const hue = ((now - started) / 45) % 360
+    // Rainbow accents stay in the light half of the spectrum, so one dark ink
+    // stays legible instead of flipping between black and white each hue.
+    setAccent(root, hslToRgb(hue, 0.66, lightness), '#0d0d10')
+    rainbowFrame = requestAnimationFrame(tick)
+  }
+  rainbowFrame = requestAnimationFrame(tick)
 }

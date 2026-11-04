@@ -30,6 +30,7 @@ export const IPC = {
   discordPresence: 'discord:presence',
   integrationsRetry: 'integrations:retry',
   updatesCheck: 'updates:check',
+  artworkAccent: 'artwork:accent',
   discoverSearch: 'discover:search',
   discoverArtist: 'discover:artist',
   discoverAlbum: 'discover:album',

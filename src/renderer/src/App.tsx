@@ -1,10 +1,10 @@
-import { useEffect, type ReactElement } from 'react'
+import { useEffect, useState, type ReactElement } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { AlertTriangle, RefreshCw } from 'lucide-react'
 import { useApp } from './store/app'
 import { usePlayer } from './store/player'
 import { startIntegrations } from './lib/integrations'
-import { applyTheme, FALLBACK_ACCENT } from './lib/theme'
+import { applyBackgroundGradient, applyTheme, FALLBACK_ACCENT } from './lib/theme'
 import { Sidebar } from './components/Sidebar'
 import { TopBar } from './components/TopBar'
 import { PlayerBar, PlayerSpacer } from './components/PlayerBar'
@@ -28,6 +28,7 @@ export default function App(): ReactElement {
   const loadingError = useApp((state) => state.loadingError)
   const snapshot = useApp((state) => state.snapshot)
   const setPaletteOpen = useApp((state) => state.setPaletteOpen)
+  const track = usePlayer((state) => state.queue[state.index])
 
   useEffect(() => {
     void init()
@@ -41,11 +42,41 @@ export default function App(): ReactElement {
 
   const accent = snapshot?.settings.accent ?? FALLBACK_ACCENT
   const theme = snapshot?.settings.theme ?? 'dark'
+  const rainbow = snapshot?.settings.rainbow ?? false
+  const coverTheme = snapshot?.settings.coverTheme ?? false
+  const backgroundGradient = snapshot?.settings.backgroundGradient ?? false
+  const gradientPosition = snapshot?.settings.gradientPosition ?? 'bottom'
   const reduceMotion = snapshot?.settings.reduceMotion ?? false
+  const [coverAccent, setCoverAccent] = useState<string | null>(null)
+  const coverUrl = track?.coverUrl ?? ''
 
   useEffect(() => {
-    applyTheme(accent, theme)
-  }, [accent, theme])
+    if (!coverTheme || !coverUrl) {
+      setCoverAccent(null)
+      return
+    }
+    let active = true
+    setCoverAccent(null)
+    void window.sideA.artwork
+      .accent(coverUrl)
+      .then((colour) => {
+        if (active) setCoverAccent(colour)
+      })
+      .catch(() => {
+        if (active) setCoverAccent(null)
+      })
+    return () => {
+      active = false
+    }
+  }, [coverTheme, coverUrl])
+
+  useEffect(() => {
+    applyBackgroundGradient(backgroundGradient, gradientPosition)
+  }, [backgroundGradient, gradientPosition])
+
+  useEffect(() => {
+    applyTheme(coverTheme && coverAccent ? coverAccent : accent, theme, rainbow)
+  }, [accent, coverAccent, coverTheme, theme, rainbow])
 
   useEffect(() => {
     document.documentElement.dataset.motion = reduceMotion ? 'reduced' : 'full'

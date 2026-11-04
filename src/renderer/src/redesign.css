@@ -577,6 +577,66 @@ h4 {
   border-radius: 0;
 }
 
+.gradient-choices {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin: 4px 0 10px;
+}
+
+.gradient-choice {
+  display: flex;
+  min-width: 0;
+  min-height: 46px;
+  align-items: center;
+  gap: 9px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 500;
+  text-align: left;
+}
+
+.gradient-choice:hover {
+  border-color: var(--line-strong);
+}
+
+.gradient-choice.is-active {
+  border-color: var(--accent-line);
+  background: rgba(var(--accent-rgb), 0.08);
+  color: var(--text);
+}
+
+.gradient-choice > svg {
+  flex: 0 0 auto;
+  margin-left: auto;
+  color: var(--accent);
+}
+
+.gradient-choice-preview {
+  width: 24px;
+  height: 28px;
+  flex: 0 0 auto;
+  border: 1px solid var(--line);
+}
+
+.gradient-choice-preview.is-top {
+  background: linear-gradient(to top, var(--bg), color-mix(in srgb, var(--accent) 20%, var(--bg)));
+}
+
+.gradient-choice-preview.is-bottom {
+  background: linear-gradient(to bottom, var(--bg), color-mix(in srgb, var(--accent) 20%, var(--bg)));
+}
+
+:root[data-theme='light'] .gradient-choice-preview.is-top {
+  background: linear-gradient(to top, #ffffff, color-mix(in srgb, var(--accent) 26%, #ffffff));
+}
+
+:root[data-theme='light'] .gradient-choice-preview.is-bottom {
+  background: linear-gradient(to bottom, #ffffff, color-mix(in srgb, var(--accent) 26%, #ffffff));
+}
+
 /* Offline, downloads, settings */
 
 .offline-row,
@@ -597,6 +657,10 @@ h4 {
 .download-active,
 .download-folder,
 .settings-card {
+  border-radius: 0;
+}
+
+.account-row {
   border-radius: 0;
 }
 
@@ -806,6 +870,34 @@ h4 {
 
 .welcome {
   background: var(--bg);
+}
+
+:root[data-theme='dark'][data-background='gradient'] {
+  --muted: #bababa;
+  --muted-dim: #b4b4b4;
+}
+
+:root[data-background='gradient'] body {
+  background: linear-gradient(to bottom, var(--bg), color-mix(in srgb, var(--accent) 20%, var(--bg)));
+}
+
+:root[data-background='gradient'][data-gradient='top'] body {
+  background: linear-gradient(to top, var(--bg), color-mix(in srgb, var(--accent) 20%, var(--bg)));
+}
+
+:root[data-theme='light'][data-background='gradient'] body {
+  background: linear-gradient(to bottom, #ffffff, color-mix(in srgb, var(--accent) 26%, #ffffff));
+}
+
+:root[data-theme='light'][data-background='gradient'][data-gradient='top'] body {
+  background: linear-gradient(to top, #ffffff, color-mix(in srgb, var(--accent) 26%, #ffffff));
+}
+
+:root[data-background='gradient'] .app-shell,
+:root[data-background='gradient'] .app-main,
+:root[data-background='gradient'] .welcome,
+:root[data-background='gradient'] .welcome-panel-wrap {
+  background: transparent;
 }
 
 .welcome-glow {
@@ -1071,7 +1163,12 @@ h4 {
 }
 
 .discover-track-play {
+  padding: 0;
   border-radius: 0;
+}
+
+.discover-track-play svg {
+  transform: none;
 }
 
 .discover-track.is-playing {

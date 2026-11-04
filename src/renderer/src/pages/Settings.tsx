@@ -1,4 +1,4 @@
-import { useState, type FormEvent, type ReactElement } from 'react'
+import { useRef, useState, type FormEvent, type ReactElement } from 'react'
 import {
   ArrowDownToLine,
   Check,
@@ -60,6 +60,8 @@ export function Settings(): ReactElement {
   const [clientId, setClientId] = useState('')
   const [connecting, setConnecting] = useState(false)
   const [checkingUpdate, setCheckingUpdate] = useState(false)
+  const unlockTaps = useRef(0)
+  const unlockTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   if (!snapshot) return <div className="page" />
 
@@ -70,6 +72,35 @@ export function Settings(): ReactElement {
   const isDemo = snapshot.demo
 
   const { lastfm, discord } = snapshot.integrations
+
+  const chooseAccent = (value: string): void => {
+    void updateSettings({ accent: value, rainbow: false, coverTheme: false })
+  }
+
+  const toggleCoverTheme = (value: boolean): void => {
+    void updateSettings({ coverTheme: value, ...(value ? { rainbow: false } : {}) })
+  }
+
+  const toggleRainbow = (value: boolean): void => {
+    void updateSettings({ rainbow: value, ...(value ? { coverTheme: false } : {}) })
+  }
+
+  const tapAppearance = (): void => {
+    if (settings.rainbowUnlocked) return
+    unlockTaps.current += 1
+    if (unlockTimer.current) clearTimeout(unlockTimer.current)
+    unlockTimer.current = setTimeout(() => {
+      unlockTaps.current = 0
+    }, 900)
+    if (unlockTaps.current < 3) return
+    unlockTaps.current = 0
+    if (unlockTimer.current) clearTimeout(unlockTimer.current)
+    void updateSettings({ rainbowUnlocked: true })
+    pushToast('Rainbow theme unlocked', {
+      description: 'A new toggle is waiting in Appearance.',
+      tone: 'success'
+    })
+  }
 
   const signOut = async (): Promise<void> => {
     stopPlayer()
@@ -153,10 +184,6 @@ export function Settings(): ReactElement {
                 @{username} · {isDemo ? 'Public demo' : 'Bandcamp connected'}
               </span>
             </div>
-            <span className={cx('status-dot', isDemo ? 'is-demo' : 'is-live')}>
-              <i />
-              {isDemo ? 'Demo' : 'Live'}
-            </span>
           </div>
           <div className="settings-actions">
             {isDemo ? (
@@ -186,7 +213,7 @@ export function Settings(): ReactElement {
 
         <section className="settings-card">
           <header className="settings-head">
-            <span className="settings-icon"><Palette size={17} /></span>
+            <span className="settings-icon" onClick={tapAppearance}><Palette size={17} /></span>
             <div>
               <h2>Appearance</h2>
               <p>Light or dark room, with an accent colour of your choosing.</p>
@@ -213,7 +240,7 @@ export function Settings(): ReactElement {
                 type="color"
                 value={settings.accent}
                 aria-label="Custom accent colour"
-                onChange={(event) => void updateSettings({ accent: event.target.value })}
+                onChange={(event) => chooseAccent(event.target.value)}
               />
               <span className="accent-swatch large" style={{ background: settings.accent }} />
               <span className="accent-custom-copy">
@@ -229,7 +256,7 @@ export function Settings(): ReactElement {
                 type="button"
                 key={accent.value}
                 className={cx('accent-choice', settings.accent.toLowerCase() === accent.value && 'is-active')}
-                onClick={() => void updateSettings({ accent: accent.value })}
+                onClick={() => chooseAccent(accent.value)}
               >
                 <span className="accent-swatch" style={{ background: accent.value }} />
                 {accent.name}
@@ -237,6 +264,43 @@ export function Settings(): ReactElement {
               </button>
             ))}
           </div>
+          <SettingToggle
+            title="Match cover art"
+            description="Use the artwork of the release you are playing for the accent colour."
+            checked={settings.coverTheme}
+            onChange={toggleCoverTheme}
+          />
+          {settings.rainbowUnlocked || settings.rainbow ? (
+            <SettingToggle
+              title="Rainbow theme"
+              description="Cycle every accent colour. Choosing an accent turns it off again."
+              checked={settings.rainbow}
+              onChange={toggleRainbow}
+            />
+          ) : null}
+          <SettingToggle
+            title="Background gradient"
+            description="Fade the background from gray into your accent colour. Light mode starts at white."
+            checked={settings.backgroundGradient}
+            onChange={(value) => void updateSettings({ backgroundGradient: value })}
+          />
+          {settings.backgroundGradient ? (
+            <div className="gradient-choices">
+              {(['top', 'bottom'] as const).map((position) => (
+                <button
+                  type="button"
+                  key={position}
+                  className={cx('gradient-choice', settings.gradientPosition === position && 'is-active')}
+                  aria-pressed={settings.gradientPosition === position}
+                  onClick={() => void updateSettings({ gradientPosition: position })}
+                >
+                  <span className={cx('gradient-choice-preview', `is-${position}`)} />
+                  {position === 'top' ? 'Accent on top' : 'Accent at bottom'}
+                  {settings.gradientPosition === position ? <Check size={14} /> : null}
+                </button>
+              ))}
+            </div>
+          ) : null}
           <SettingToggle
             title="Reduce motion"
             description="Tone down transitions and artwork movement."

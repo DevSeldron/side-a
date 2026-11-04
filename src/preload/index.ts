@@ -39,6 +39,9 @@ const api: SideAAPI = {
     chooseDownloadDir: () => ipcRenderer.invoke(IPC.settingsChooseDir),
     clearCaches: () => ipcRenderer.invoke(IPC.settingsClearCaches)
   },
+  artwork: {
+    accent: (url) => ipcRenderer.invoke(IPC.artworkAccent, url)
+  },
   update: {
     check: () => ipcRenderer.invoke(IPC.updatesCheck)
   },
