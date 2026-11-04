@@ -26,6 +26,14 @@ import { FormatPicker } from '../components/FormatPicker'
 import { ProgressBar } from '../components/Page'
 import { coverUrl, cx, formatDuration, formatLongDuration, formatYear, plural } from '../lib/format'
 
+// Bandcamp stores this release as `void__19###` even though the artist styles it
+// as `void_19####`, so accept both spellings without matching unrelated titles.
+const VOID_TRIBUTE_TITLE = /^void_+19#+$/
+
+function normalizeTributeText(value: string): string {
+  return value.normalize('NFKC').trim().toLowerCase().replace(/\s+/g, ' ')
+}
+
 export function AlbumPage(): ReactElement {
   const { key } = useParams<{ key: string }>()
   const snapshot = useApp((state) => state.snapshot)
@@ -52,8 +60,8 @@ export function AlbumPage(): ReactElement {
 
   const isVoidTribute = Boolean(
     album?.purchased &&
-      album.title.trim().toLowerCase() === 'void_19####' &&
-      album.bandName.trim().toLowerCase() === 'no love in the house of gold'
+      VOID_TRIBUTE_TITLE.test(normalizeTributeText(album.title)) &&
+      normalizeTributeText(album.bandName) === 'no love in the house of gold'
   )
 
   useLayoutEffect(() => {

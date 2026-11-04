@@ -5,6 +5,7 @@ import sharp from 'sharp'
 const width = 660
 const height = 400
 const scale = 4
+const density = 72 * scale
 const iconY = 176
 const arrowY = iconY
 
@@ -13,7 +14,7 @@ const svg = `
   <rect width="${width}" height="${height}" fill="#f5f2ea"/>
   <rect width="${width}" height="4" fill="#18b9a7"/>
   <text x="44" y="60" fill="#171717" font-family="-apple-system, Helvetica Neue, sans-serif" font-size="28" font-weight="500" letter-spacing="-0.6">Side A</text>
-  <text x="616" y="60" text-anchor="end" fill="#5e5e5e" font-family="-apple-system, Helvetica Neue, sans-serif" font-size="13">2.1.4</text>
+  <text x="616" y="60" text-anchor="end" fill="#5e5e5e" font-family="-apple-system, Helvetica Neue, sans-serif" font-size="13">2.1.5</text>
 
   <g stroke="#149e8d" stroke-width="2.4" fill="none" stroke-linecap="round">
     <path d="M272 ${arrowY} H390" stroke-dasharray="1 9"/>
@@ -25,5 +26,7 @@ const svg = `
 
 const output = join(process.cwd(), 'build', 'dmg-background.png')
 mkdirSync(dirname(output), { recursive: true })
-await sharp(Buffer.from(svg)).png().toFile(output)
-console.log(`wrote ${output} (${width * scale}x${height * scale})`)
+// Finder sizes DMG backgrounds from their DPI, not their pixel count. Without
+// this metadata a 4x image is treated as 4x the window size and cropped.
+await sharp(Buffer.from(svg)).withMetadata({ density }).png().toFile(output)
+console.log(`wrote ${output} (${width * scale}x${height * scale} at ${density} dpi)`)
