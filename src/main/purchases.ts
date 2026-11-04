@@ -175,11 +175,11 @@ export class PurchaseManager {
     this.set(startEntry)
     try {
       const link = await this.client.resolvePurchaseDownload(redownload, requestedFormat)
+      // No Referer here: Chromium refuses a manually set cross-origin Referer
+      // on main-process fetches (net::ERR_BLOCKED_BY_CLIENT), and the signed
+      // link does not need one.
       const response = await this.client.fetchRaw(link.url, {
-        headers: {
-          Accept: '*/*',
-          Referer: redownload
-        }
+        headers: { Accept: '*/*' }
       })
       if (!response.ok) throw new Error(`Bandcamp returned ${response.status} for the download.`)
       await mkdir(join(this.store.get().settings.downloadDir), { recursive: true })
