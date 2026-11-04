@@ -47,6 +47,8 @@ export interface Track {
   number: number
   duration: number
   streamUrl?: string
+  /** Every streaming rendition Bandcamp exposes for this track, keyed by format. */
+  streamUrls?: Record<string, string>
   isStreamable?: boolean
 }
 
@@ -119,7 +121,32 @@ export interface SyncState {
   error?: string
 }
 
-export type Accent = 'teal' | 'ember' | 'violet'
+export type Accent = string
+
+export type ThemeMode = 'dark' | 'light'
+
+export type TrackQuality = 'mp3-128' | 'mp3-v0' | 'mp3-320'
+
+export interface TrackDownload {
+  /** `<albumKey>:<trackId>` */
+  id: string
+  albumKey: string
+  trackId: number
+  title: string
+  artist: string
+  albumTitle: string
+  quality: TrackQuality
+  /** Format actually served by Bandcamp (it may fall back). */
+  actualQuality?: string
+  status: 'queued' | 'downloading' | 'done' | 'error'
+  progress: number
+  bytes: number
+  totalBytes?: number
+  filePath?: string
+  error?: string
+  startedAt: number
+  completedAt?: number
+}
 
 export interface ScrobbleInput {
   artist: string
@@ -217,8 +244,12 @@ export interface Settings {
   downloadDir: string
   prefetchDetails: boolean
   reduceMotion: boolean
-  accent: Accent
+  /** Hex colour, e.g. #66e0cc. */
+  accent: string
+  theme: ThemeMode
   showWishlist: boolean
+  /** Quality used by direct track downloads. */
+  trackQuality: TrackQuality
 }
 
 export interface LibrarySnapshot {
@@ -231,6 +262,7 @@ export interface LibrarySnapshot {
   sync: SyncState
   settings: Settings
   integrations: IntegrationsState
+  trackDownloads: Record<string, TrackDownload>
   demo: boolean
   appVersion: string
 }
@@ -251,6 +283,7 @@ export interface LibraryEventMap {
   'offline:changed': OfflineEntry
   'purchase:changed': PurchaseDownload
   'settings:changed': Settings
+  'download:changed': TrackDownload
   'integration:changed': IntegrationsState
   'library:changed': { collectionCount: number; wishlistCount: number; lastSyncedAt?: number }
 }
@@ -283,6 +316,10 @@ export interface SideAAPI {
     formats: (key: string) => Promise<PurchaseFormat[]>
     download: (key: string, format: string) => Promise<PurchaseDownload>
     reveal: (key: string) => Promise<void>
+  }
+  downloads: {
+    track: (albumKey: string, trackId: number, quality: TrackQuality) => Promise<TrackDownload>
+    reveal: (id: string) => Promise<void>
   }
   settings: {
     update: (patch: Partial<Settings>) => Promise<Settings>

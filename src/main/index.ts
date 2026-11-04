@@ -8,6 +8,7 @@ import { LastfmService } from './lastfm'
 import { Library } from './library'
 import { MediaGateway, registerMediaScheme } from './media'
 import { PurchaseManager } from './purchases'
+import { TrackDownloadManager } from './trackDownloads'
 import { ensureDataDirs, Store } from './store'
 import { getAppPaths } from './paths'
 import { broadcastEvent, registerIpc } from './ipc'
@@ -26,6 +27,7 @@ if (!gotLock) {
   let client: BandcampClient
   let library: Library
   let purchases: PurchaseManager
+  let trackDownloads: TrackDownloadManager
   let media: MediaGateway
   let auth: AuthManager
   let lastfm: LastfmService
@@ -158,6 +160,9 @@ if (!gotLock) {
     purchases = new PurchaseManager(client, store, library, {
       onPurchaseChanged: (entry) => broadcastEvent(IPC.eventPurchase, entry)
     })
+    trackDownloads = new TrackDownloadManager(client, store, library, {
+      onChanged: (entry) => broadcastEvent(IPC.eventDownload, entry)
+    })
     media = new MediaGateway(client, library, store)
     auth = new AuthManager(client, store, {
       onAuthChanged: (state) => broadcastEvent(IPC.eventAuth, state),
@@ -182,6 +187,7 @@ if (!gotLock) {
       store,
       library,
       purchases,
+      trackDownloads,
       auth,
       media,
       lastfm,

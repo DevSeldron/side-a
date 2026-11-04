@@ -29,6 +29,10 @@ const api: SideAAPI = {
     download: (key, format) => ipcRenderer.invoke(IPC.purchaseDownload, key, format),
     reveal: (key) => ipcRenderer.invoke(IPC.purchaseReveal, key)
   },
+  downloads: {
+    track: (albumKey, trackId, quality) => ipcRenderer.invoke(IPC.trackDownload, albumKey, trackId, quality),
+    reveal: (id) => ipcRenderer.invoke(IPC.trackReveal, id)
+  },
   settings: {
     update: (patch) => ipcRenderer.invoke(IPC.settingsUpdate, patch),
     chooseDownloadDir: () => ipcRenderer.invoke(IPC.settingsChooseDir),

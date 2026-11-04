@@ -18,6 +18,7 @@ export function Downloads(): ReactElement {
   const purchased = snapshot.collection.filter((album) => album.purchased)
   const downloadable = purchased.filter((album) => album.purchaseDownloadable)
   const downloads = Object.values(snapshot.purchases)
+  const trackDownloads = Object.values(snapshot.trackDownloads).sort((a, b) => b.startedAt - a.startedAt).slice(0, 8)
   const active = downloads.filter((entry) => entry.status === 'preparing' || entry.status === 'downloading' || entry.status === 'queued')
   const completed = downloads.filter((entry) => entry.status === 'done')
   const totalBytes = completed.reduce((sum, entry) => sum + entry.bytes, 0)
@@ -27,7 +28,7 @@ export function Downloads(): ReactElement {
       <PageIntro
         kicker="Original files"
         title="Downloads"
-        description="Keep the files you paid for. Side A downloads the exact format Bandcamp stores for your purchase — FLAC, WAV, AIFF, MP3 and more."
+        description="Keep the files you paid for, or grab a single track. Purchases download the exact format Bandcamp stores — FLAC, WAV, AIFF, MP3 and more; individual tracks save as MP3 in the quality you pick in Settings."
         actions={
           <button type="button" className="button ghost" onClick={() => void chooseDownloadDir()}>
             <FolderOpen size={16} />
@@ -66,6 +67,41 @@ export function Downloads(): ReactElement {
                 {entry.status === 'downloading' ? <ProgressBar value={entry.progress} /> : null}
               </div>
               <span className="download-format">{entry.format.toUpperCase()}</span>
+            </div>
+          ))}
+        </section>
+      ) : null}
+
+      {trackDownloads.length > 0 ? (
+        <section className="download-active">
+          <h2>Track downloads</h2>
+          {trackDownloads.map((entry) => (
+            <div key={entry.id} className="download-active-row">
+              {entry.status === 'downloading' ? (
+                <Loader2 size={17} className="spin" />
+              ) : entry.status === 'error' ? (
+                <AlertCircle size={17} />
+              ) : (
+                <CheckCircle2 size={17} />
+              )}
+              <div className="download-active-copy">
+                <strong>{entry.artist} — {entry.title}</strong>
+                <span>
+                  {entry.status === 'downloading'
+                    ? `${Math.round(entry.progress * 100)}% · ${entry.actualQuality ?? entry.quality}`
+                    : entry.status === 'error'
+                      ? entry.error ?? 'Failed'
+                      : `${entry.actualQuality ?? entry.quality} · ${formatBytes(entry.bytes)}`}
+                </span>
+                {entry.status === 'downloading' ? <ProgressBar value={entry.progress} /> : null}
+              </div>
+              {entry.status === 'done' ? (
+                <button type="button" className="button small ghost" onClick={() => void window.sideA.downloads.reveal(entry.id)}>
+                  Show file
+                </button>
+              ) : (
+                <span className="download-format">{entry.quality.replace('mp3-', 'MP3 ').toUpperCase()}</span>
+              )}
             </div>
           ))}
         </section>

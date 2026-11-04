@@ -8,7 +8,8 @@ import type {
   OfflineEntry,
   PurchaseDownload,
   Settings,
-  SyncState
+  SyncState,
+  TrackDownload
 } from '@shared/types'
 import { getAppPaths } from './paths'
 
@@ -31,6 +32,7 @@ export interface PersistedState {
   sync: SyncState
   settings: Settings
   integrations: IntegrationsConfig
+  trackDownloads: Record<string, TrackDownload>
   redownloads: Record<string, string>
 }
 
@@ -40,9 +42,26 @@ export function defaultSettings(downloadDir: string): Settings {
     downloadDir,
     prefetchDetails: false,
     reduceMotion: false,
-    accent: 'teal',
-    showWishlist: true
+    accent: '#66e0cc',
+    theme: 'dark',
+    showWishlist: true,
+    trackQuality: 'mp3-128'
   }
+}
+
+const LEGACY_ACCENTS: Record<string, string> = {
+  teal: '#66e0cc',
+  ember: '#ff8a5c',
+  violet: '#b39cff'
+}
+
+/** Presets from older builds were ids; everything is stored as a hex colour now. */
+export function normalizeAccent(value: unknown): string {
+  if (typeof value !== 'string') return '#66e0cc'
+  const trimmed = value.trim()
+  const legacy = LEGACY_ACCENTS[trimmed.toLowerCase()]
+  if (legacy) return legacy
+  return /^#[0-9a-f]{6}$/i.test(trimmed) ? trimmed.toLowerCase() : '#66e0cc'
 }
 
 export function emptySync(): SyncState {
@@ -88,6 +107,7 @@ function defaults(downloadDir: string): PersistedState {
     sync: emptySync(),
     settings: defaultSettings(downloadDir),
     integrations: defaultIntegrations(),
+    trackDownloads: {},
     redownloads: {}
   }
 }
@@ -113,7 +133,7 @@ export class Store {
         ...parsed,
         version: VERSION,
         auth: { ...base.auth, ...parsed.auth },
-        settings: { ...base.settings, ...parsed.settings, downloadDir: parsed.settings?.downloadDir || this.downloadDir },
+        settings: { ...base.settings, ...parsed.settings, accent: normalizeAccent(parsed.settings?.accent), downloadDir: parsed.settings?.downloadDir || this.downloadDir },
         sync: { ...base.sync, ...parsed.sync },
         integrations: {
           lastfm: { ...base.integrations.lastfm, ...parsed.integrations?.lastfm },
@@ -122,6 +142,7 @@ export class Store {
         details: parsed.details ?? {},
         offline: parsed.offline ?? {},
         purchases: parsed.purchases ?? {},
+        trackDownloads: parsed.trackDownloads ?? {},
         collection: parsed.collection ?? [],
         wishlist: parsed.wishlist ?? [],
         redownloads: parsed.redownloads ?? {}
@@ -190,6 +211,13 @@ export class Store {
   setPurchase(key: string, entry: PurchaseDownload): void {
     this.update((state) => {
       state.purchases[key] = entry
+    })
+  }
+
+  setTrackDownload(id: string, entry: TrackDownload | null): void {
+    this.update((state) => {
+      if (entry) state.trackDownloads[id] = entry
+      else delete state.trackDownloads[id]
     })
   }
 

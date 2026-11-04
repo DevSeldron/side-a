@@ -692,6 +692,7 @@ export class BandcampClient {
     if (data.error) throw new Error(data.error_message || 'Bandcamp could not load this release.')
     const tracks: Track[] = (data.tracks ?? []).map((raw, index) => {
       const stream = raw.streaming_url?.['mp3-128'] ?? raw.streaming_url?.['mp3-320'] ?? raw.file?.['mp3-128']
+      const streamUrls: Record<string, string> = { ...(raw.file ?? {}), ...(raw.streaming_url ?? {}) }
       return {
         id: raw.track_id ?? raw.id ?? index + 1,
         title: raw.title ?? 'Untitled',
@@ -699,6 +700,7 @@ export class BandcampClient {
         number: raw.track_num ?? raw.track_number ?? index + 1,
         duration: raw.duration ?? 0,
         streamUrl: stream,
+        streamUrls: Object.keys(streamUrls).length ? streamUrls : undefined,
         isStreamable: raw.is_streamable !== false
       }
     })

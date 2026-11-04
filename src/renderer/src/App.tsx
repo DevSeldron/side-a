@@ -4,6 +4,7 @@ import { AlertTriangle, RefreshCw } from 'lucide-react'
 import { useApp } from './store/app'
 import { usePlayer } from './store/player'
 import { startIntegrations } from './lib/integrations'
+import { applyTheme, FALLBACK_ACCENT } from './lib/theme'
 import { Sidebar } from './components/Sidebar'
 import { TopBar } from './components/TopBar'
 import { PlayerBar, PlayerSpacer } from './components/PlayerBar'
@@ -33,12 +34,13 @@ export default function App(): ReactElement {
     startIntegrations()
   }, [init, initPlayer])
 
-  const accent = snapshot?.settings.accent ?? 'teal'
+  const accent = snapshot?.settings.accent ?? FALLBACK_ACCENT
+  const theme = snapshot?.settings.theme ?? 'dark'
   const reduceMotion = snapshot?.settings.reduceMotion ?? false
 
   useEffect(() => {
-    document.documentElement.dataset.accent = accent
-  }, [accent])
+    applyTheme(accent, theme)
+  }, [accent, theme])
 
   useEffect(() => {
     document.documentElement.dataset.motion = reduceMotion ? 'reduced' : 'full'

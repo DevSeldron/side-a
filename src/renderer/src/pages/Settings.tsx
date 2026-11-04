@@ -18,17 +18,12 @@ import {
   UserRound
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
-import type { Accent, DiscordActivityType } from '@shared/types'
+import type { DiscordActivityType } from '@shared/types'
+import { ACCENT_PRESETS } from '../lib/theme'
 import { useApp } from '../store/app'
 import { usePlayer } from '../store/player'
 import { PageIntro } from '../components/Page'
 import { cx, formatBytes, initials, shortPath } from '../lib/format'
-
-const ACCENTS: Array<{ id: Accent; label: string; color: string }> = [
-  { id: 'teal', label: 'Teal', color: '#66e0cc' },
-  { id: 'ember', label: 'Ember', color: '#ff8a5c' },
-  { id: 'violet', label: 'Violet', color: '#b39cff' }
-]
 
 const FORMATS = [
   { id: 'flac', label: 'FLAC (lossless)' },
@@ -175,20 +170,51 @@ export function Settings(): ReactElement {
             <span className="settings-icon"><Palette size={17} /></span>
             <div>
               <h2>Appearance</h2>
-              <p>A dark room for music. Pick the accent that suits your desk.</p>
+              <p>Light or dark room, with an accent colour of your choosing.</p>
             </div>
           </header>
-          <div className="accent-row">
-            {ACCENTS.map((accent) => (
+          <div className="theme-row">
+            {(['dark', 'light'] as const).map((mode) => (
               <button
                 type="button"
-                key={accent.id}
-                className={cx('accent-choice', settings.accent === accent.id && 'is-active')}
-                onClick={() => void updateSettings({ accent: accent.id })}
+                key={mode}
+                className={cx('theme-choice', settings.theme === mode && 'is-active')}
+                aria-pressed={settings.theme === mode}
+                onClick={() => void updateSettings({ theme: mode })}
               >
-                <span className="accent-swatch" style={{ background: accent.color }} />
-                {accent.label}
-                {settings.accent === accent.id ? <Check size={14} /> : null}
+                <span className={cx('theme-preview', `is-${mode}`)} />
+                <span className="theme-choice-label">{mode === 'dark' ? 'Dark' : 'Light'}</span>
+                {settings.theme === mode ? <Check size={14} /> : null}
+              </button>
+            ))}
+          </div>
+          <div className="accent-picker">
+            <label className="accent-custom">
+              <input
+                type="color"
+                value={settings.accent}
+                aria-label="Custom accent colour"
+                onChange={(event) => void updateSettings({ accent: event.target.value })}
+              />
+              <span className="accent-swatch large" style={{ background: settings.accent }} />
+              <span className="accent-custom-copy">
+                <strong>Custom accent</strong>
+                <span>{settings.accent.toUpperCase()}</span>
+              </span>
+              <span className="accent-custom-hint">Pick…</span>
+            </label>
+          </div>
+          <div className="accent-row">
+            {ACCENT_PRESETS.map((accent) => (
+              <button
+                type="button"
+                key={accent.value}
+                className={cx('accent-choice', settings.accent.toLowerCase() === accent.value && 'is-active')}
+                onClick={() => void updateSettings({ accent: accent.value })}
+              >
+                <span className="accent-swatch" style={{ background: accent.value }} />
+                {accent.name}
+                {settings.accent.toLowerCase() === accent.value ? <Check size={14} /> : null}
               </button>
             ))}
           </div>
@@ -439,15 +465,33 @@ export function Settings(): ReactElement {
             <span className="settings-icon"><FolderOpen size={17} /></span>
             <div>
               <h2>Downloads</h2>
-              <p>Where original Bandcamp files are saved.</p>
+              <p>Where tracks and purchased files are saved.</p>
             </div>
           </header>
+          <div className="setting-row">
+            <div className="setting-copy">
+              <strong>Track download quality</strong>
+              <span>Used by the download button on each track. If Bandcamp only offers a lower rendition, Side A saves that and notes it.</span>
+            </div>
+            <label className="select-wrap compact">
+              <select
+                value={settings.trackQuality}
+                onChange={(event) => void updateSettings({ trackQuality: event.target.value as 'mp3-128' | 'mp3-v0' | 'mp3-320' })}
+                aria-label="Track download quality"
+              >
+                <option value="mp3-128">MP3 128</option>
+                <option value="mp3-v0">MP3 V0</option>
+                <option value="mp3-320">MP3 320</option>
+              </select>
+            </label>
+          </div>
           <div className="folder-row">
             <code title={settings.downloadDir}>{shortPath(settings.downloadDir, 48)}</code>
             <button type="button" className="button small ghost" onClick={() => void chooseDownloadDir()}>Choose…</button>
           </div>
           <p className="settings-hint">
             The folder is created automatically. Existing files with the same name get a numbered suffix instead of being overwritten.
+            Purchased releases still use the Formats page, which can fetch FLAC and other lossless files.
           </p>
         </section>
 

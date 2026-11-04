@@ -7,7 +7,9 @@ import type {
   OfflineEntry,
   PurchaseDownload,
   Settings,
-  SyncState
+  SyncState,
+  TrackDownload,
+  TrackQuality
 } from '@shared/types'
 import { IPC } from '@shared/ipc'
 import { errorMessage } from '../lib/format'
@@ -38,6 +40,8 @@ interface AppState {
   removeOffline: (key: string) => Promise<void>
   saveAllPurchased: () => Promise<void>
   downloadPurchase: (key: string, format: string) => Promise<void>
+  downloadTrack: (albumKey: string, trackId: number, quality: TrackQuality) => Promise<void>
+  revealTrackDownload: (id: string) => Promise<void>
   updateSettings: (patch: Partial<Settings>) => Promise<void>
   chooseDownloadDir: () => Promise<void>
   clearCaches: () => Promise<void>
@@ -53,6 +57,7 @@ interface AppState {
   applySync: (sync: SyncState) => void
   applyOffline: (entry: OfflineEntry) => void
   applyPurchase: (entry: PurchaseDownload) => void
+  applyTrackDownload: (entry: TrackDownload) => void
   applySettings: (settings: Settings) => void
   applyIntegrations: (integrations: IntegrationsState) => void
 }
@@ -85,6 +90,7 @@ export const useApp = create<AppState>()((set, get) => ({
       window.sideA.on(IPC.eventSync, (sync) => get().applySync(sync))
       window.sideA.on(IPC.eventOffline, (entry) => get().applyOffline(entry))
       window.sideA.on(IPC.eventPurchase, (entry) => get().applyPurchase(entry))
+      window.sideA.on(IPC.eventDownload, (entry) => get().applyTrackDownload(entry))
       window.sideA.on(IPC.eventSettings, (settings) => get().applySettings(settings))
       window.sideA.on(IPC.eventIntegration, (integrations) => get().applyIntegrations(integrations))
       window.sideA.on(IPC.eventLibrary, () => {
@@ -228,6 +234,29 @@ export const useApp = create<AppState>()((set, get) => ({
         tone: 'error'
       })
       throw error
+    }
+  },
+
+  downloadTrack: async (albumKey, trackId, quality) => {
+    try {
+      const entry = await window.sideA.downloads.track(albumKey, trackId, quality)
+      get().applyTrackDownload(entry)
+    } catch (error) {
+      get().pushToast('Could not download this track', {
+        description: errorMessage(error),
+        tone: 'error'
+      })
+    }
+  },
+
+  revealTrackDownload: async (id) => {
+    try {
+      await window.sideA.downloads.reveal(id)
+    } catch (error) {
+      get().pushToast('Could not show that file', {
+        description: errorMessage(error),
+        tone: 'error'
+      })
     }
   },
 
@@ -428,6 +457,21 @@ export const useApp = create<AppState>()((set, get) => ({
       get().pushToast('Purchase download failed', {
         description: entry.error ?? 'Try again in a moment.',
         tone: 'error'
+      })
+    }
+  },
+
+  applyTrackDownload: (entry) => {
+    set((state) => ({
+      ...withSnapshot(state, (snapshot) => ({
+        ...snapshot,
+        trackDownloads: { ...snapshot.trackDownloads, [entry.id]: entry }
+      }))
+    }))
+    if (entry.status === 'done') {
+      get().pushToast('Track saved', {
+        description: `${entry.artist} — ${entry.title} · ${entry.actualQuality ?? entry.quality}`,
+        tone: 'success'
       })
     }
   },

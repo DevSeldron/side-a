@@ -2,13 +2,13 @@ import { app, BrowserWindow, dialog, ipcMain, shell } from 'electron'
 import { existsSync } from 'node:fs'
 import { mkdir } from 'node:fs/promises'
 import type {
-  Accent,
   IntegrationsState,
   LibrarySnapshot,
   OfflineEntry,
   PresenceInput,
   ScrobbleInput,
-  Settings
+  Settings,
+  TrackQuality
 } from '@shared/types'
 import { IPC } from '@shared/ipc'
 import type { AuthManager } from './auth'
@@ -18,13 +18,16 @@ import type { LastfmService } from './lastfm'
 import type { Library } from './library'
 import type { MediaGateway } from './media'
 import type { PurchaseManager } from './purchases'
-import type { Store } from './store'
+import type { Store, } from './store'
+import { normalizeAccent } from './store'
+import { TRACK_QUALITIES, type TrackDownloadManager } from './trackDownloads'
 
 interface IpcContext {
   client: BandcampClient
   store: Store
   library: Library
   purchases: PurchaseManager
+  trackDownloads: TrackDownloadManager
   auth: AuthManager
   media: MediaGateway
   lastfm: LastfmService
@@ -98,7 +101,7 @@ function broadcast(channel: string, payload: unknown): void {
 }
 
 export function registerIpc(context: IpcContext): void {
-  const { client, store, library, purchases, auth, media, lastfm, discord, getMainWindow } = context
+  const { client, store, library, purchases, trackDownloads, auth, media, lastfm, discord, getMainWindow } = context
 
   const snapshot = async (): Promise<LibrarySnapshot> => {
     const state = store.get()
@@ -112,6 +115,7 @@ export function registerIpc(context: IpcContext): void {
       details: state.details,
       offline,
       purchases: state.purchases,
+      trackDownloads: state.trackDownloads,
       sync: state.sync,
       settings: state.settings,
       integrations: integrationState(lastfm, discord),
@@ -198,6 +202,17 @@ export function registerIpc(context: IpcContext): void {
     await purchases.reveal(key)
   })
 
+  ipcMain.handle(IPC.trackDownload, async (_event, key: unknown, trackId: unknown, quality: unknown) => {
+    if (typeof key !== 'string' || !/^[pt]\d+$/.test(key)) throw new Error('Invalid release id.')
+    if (typeof trackId !== 'number' || !Number.isFinite(trackId)) throw new Error('Invalid track id.')
+    if (!TRACK_QUALITIES.includes(quality as TrackQuality)) throw new Error('Invalid download quality.')
+    return trackDownloads.download(key, trackId, quality as TrackQuality)
+  })
+  ipcMain.handle(IPC.trackReveal, async (_event, id: unknown) => {
+    if (typeof id !== 'string' || !/^[pt]\d+:\d+$/.test(id)) throw new Error('Invalid download id.')
+    await trackDownloads.reveal(id)
+  })
+
   ipcMain.handle(IPC.settingsUpdate, async (_event, patch: unknown) => {
     if (!patch || typeof patch !== 'object') throw new Error('Invalid settings.')
     const input = patch as Record<string, unknown>
@@ -208,8 +223,12 @@ export function registerIpc(context: IpcContext): void {
     if (typeof input.purchaseFormat === 'string' && /^[a-z0-9-]{1,32}$/i.test(input.purchaseFormat)) {
       allowed.purchaseFormat = input.purchaseFormat
     }
-    if (input.accent === 'teal' || input.accent === 'ember' || input.accent === 'violet') {
-      allowed.accent = input.accent as Accent
+    if (typeof input.accent === 'string' && /^#[0-9a-f]{6}$/i.test(input.accent.trim())) {
+      allowed.accent = normalizeAccent(input.accent)
+    }
+    if (input.theme === 'dark' || input.theme === 'light') allowed.theme = input.theme
+    if (input.trackQuality === 'mp3-128' || input.trackQuality === 'mp3-v0' || input.trackQuality === 'mp3-320') {
+      allowed.trackQuality = input.trackQuality
     }
     if (typeof input.downloadDir === 'string' && input.downloadDir.length > 0) {
       allowed.downloadDir = input.downloadDir
@@ -226,7 +245,7 @@ export function registerIpc(context: IpcContext): void {
     // is restarted. Only pass a default path that is actually there.
     const downloadDir = store.get().settings.downloadDir
     const options: Electron.OpenDialogOptions = {
-      title: 'Choose where purchased downloads are saved',
+      title: 'Choose where downloads are saved',
       properties: ['openDirectory', 'createDirectory']
     }
     if (existsSync(downloadDir)) options.defaultPath = downloadDir
