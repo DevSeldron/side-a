@@ -795,6 +795,9 @@ h4 {
 }
 
 .now-meta h1 {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
   font-family: var(--font-ui);
   font-weight: 500;
   letter-spacing: -0.03em;
