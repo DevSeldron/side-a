@@ -42,8 +42,11 @@ if (!gotLock) {
       show: false,
       backgroundColor: '#08080b',
       title: 'Side A',
-      titleBarStyle: 'hiddenInset',
-      trafficLightPosition: { x: 20, y: 24 },
+      // Inset traffic lights are a macOS idea. Windows keeps its native title
+      // bar, and the renderer keys its window chrome off sideA.platform.
+      ...(process.platform === 'darwin'
+        ? { titleBarStyle: 'hiddenInset' as const, trafficLightPosition: { x: 20, y: 24 } }
+        : {}),
       vibrancy: undefined,
       webPreferences: {
         preload: join(__dirname, '../preload/index.js'),

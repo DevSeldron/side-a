@@ -12,8 +12,10 @@
     "build": "electron-vite build",
     "typecheck": "tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p tsconfig.web.json",
     "icons": "node scripts/generate-icon.mjs",
+    "icons:ico": "node scripts/generate-ico.mjs",
     "package": "npm run build && electron-builder --mac --arm64",
-    "package:dir": "npm run build && electron-builder --mac --arm64 --dir"
+    "package:dir": "npm run build && electron-builder --mac --arm64 --dir",
+    "package:win": "npm run build && electron-builder --win --x64"
   },
   "dependencies": {
     "@fontsource-variable/inter": "^5.3.0",
@@ -75,6 +77,39 @@
         "NSHumanReadableCopyright": "Side A — a personal Bandcamp client",
         "LSMinimumSystemVersion": "12.0"
       }
+    },
+    "win": {
+      "icon": "build/icon.ico",
+      "artifactName": "${productName}-${version}-win-${arch}.${ext}",
+      "requestedExecutionLevel": "asInvoker",
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "zip",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowElevation": true,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Side A",
+      "installerIcon": "build/icon.ico",
+      "uninstallerIcon": "build/icon.ico",
+      "installerHeaderIcon": "build/icon.ico",
+      "deleteAppDataOnUninstall": false,
+      "runAfterFinish": true
     },
     "dmg": {
       "title": "Side A",

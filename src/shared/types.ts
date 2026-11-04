@@ -291,6 +291,8 @@ export interface LibraryEventMap {
 export type LibraryEvent = keyof LibraryEventMap
 
 export interface SideAAPI {
+  /** Host platform, so the renderer can adjust window chrome. */
+  platform: string
   getState: () => Promise<LibrarySnapshot>
   auth: {
     login: () => Promise<AuthState>

@@ -552,6 +552,12 @@ code {
   min-height: 76px;
 }
 
+/* macOS draws its traffic lights inside this corner; Windows keeps the native
+   title bar, so the brand should not leave room for them. */
+:root[data-platform='win32'] .sidebar-brand {
+  padding-left: 22px;
+}
+
 .sidebar-scroll {
   flex: 1;
   min-height: 0;

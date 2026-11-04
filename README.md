@@ -1,11 +1,12 @@
 # Side A
 
-A native macOS player for your Bandcamp collection and wishlist. Side A signs in to
-Bandcamp in an isolated session, syncs your library, streams full releases, keeps
-music available offline, and downloads the original files you purchased in the
-format Bandcamp offers.
+A desktop player for your Bandcamp collection and wishlist, on macOS and Windows.
+Side A signs in to Bandcamp in an isolated session, syncs your library, streams full
+releases, keeps music available offline, and downloads the original files you
+purchased in the format Bandcamp offers.
 
-Built with Electron, React, TypeScript and Vite. Targets **arm64 macOS**.
+Built with Electron, React, TypeScript and Vite. Targets **arm64 macOS** and
+**Windows 10 and newer (x64)**.
 
 ## Features
 
@@ -27,18 +28,23 @@ Built with Electron, React, TypeScript and Vite. Targets **arm64 macOS**.
 - **Command palette** — `⌘K` to search releases or jump to any page.
 - **Last.fm scrobbling** — optional. Side A authorises against your own Last.fm API
   account, sends now-playing updates, and queues scrobbles locally so plays survive a
-  dropped connection. Keys and the session are sealed with the macOS keychain.
+  dropped connection. Keys and the session are sealed with the operating system
+  credential store (Keychain on macOS, DPAPI on Windows).
 - **Discord Rich Presence** — optional "Listening to" status with the release, track and
   a live progress bar, using your own Discord application ID.
-- **Three accents** — teal, ember and violet, applied instantly.
+- **Any accent, dark or light** — pick any colour with the colour picker, and switch
+  the whole interface between a dark and a light room. Tints are derived from the
+  accent you choose.
 - **Demo mode** — load a public Bandcamp fan collection to explore the app without
   connecting an account.
 
 ## Requirements
 
-- macOS 12 or newer
-- Apple silicon (arm64)
+- macOS 12 or newer on Apple silicon (arm64), or Windows 10 / 11 on x64
 - A Bandcamp account with music in your collection (or use the demo)
+
+Windows support is built on Electron 45, which requires Windows 10 (1809) or newer.
+The app is a per-user install, so no administrator rights are needed.
 
 ## Development
 
@@ -47,7 +53,8 @@ npm install
 npm run dev          # electron-vite dev server + Electron
 npm run typecheck    # main/preload and renderer TypeScript checks
 npm run build        # production bundles in out/
-npm run icons        # regenerate build/icon.icns from the SVG mark
+npm run icons        # regenerate build/icon.icns from the SVG mark (macOS only)
+npm run icons:ico    # regenerate build/icon.ico from build/icon.png
 ```
 
 Useful environment variables:
@@ -62,16 +69,30 @@ Useful environment variables:
 ```bash
 npm run package       # arm64 DMG + ZIP in release/
 npm run package:dir   # unpacked Side A.app in release/mac-arm64/
+npm run package:win   # Windows x64 installer + ZIP in release/
 ```
 
-The build is intentionally **unsigned** (`identity: null`). On first launch macOS
-Gatekeeper may block it. For a locally built copy:
+The Windows targets are built from `build/icon.ico` (regenerate it with
+`npm run icons:ico` after changing the artwork):
 
-```bash
-xattr -dr com.apple.quarantine "release/mac-arm64/Side A.app"
-```
+| Target | Output |
+| --- | --- |
+| `nsis` | `Side A-<version>-win-x64.exe` — per-user installer with a directory picker |
+| `zip` | `Side A-<version>-win-x64.zip` — portable, unpack and run `Side A.exe` |
 
-or use **System Settings → Privacy & Security → Open Anyway**.
+Cross-building on macOS or Linux needs no Wine: Electron Builder handles the PE
+resources and NSIS itself. Run `npm run typecheck` and `npm run build` first so
+`out/` is current, or just use `npm run package:win`, which does both.
+
+Both platforms are intentionally **unsigned** (`identity: null`, no Windows
+certificate). On first launch:
+
+- macOS Gatekeeper may block the app. For a locally built copy run
+  `xattr -dr com.apple.quarantine "release/mac-arm64/Side A.app"`, or use
+  **System Settings → Privacy & Security → Open Anyway**.
+- Windows SmartScreen shows "Windows protected your PC" for the installer and the
+  portable exe. Choose **More info → Run anyway**; this disappears once the build is
+  signed with a code-signing certificate.
 
 ## How sign-in works
 
@@ -87,15 +108,16 @@ or use **System Settings → Privacy & Security → Open Anyway**.
 All application data is under:
 
 ```
-~/Library/Application Support/Side A/
+~/Library/Application Support/Side A/      # macOS
+%APPDATA%\Side A\                          # Windows
 ├── side-a.json        # library, details cache, settings, integration state
 ├── offline/           # cached 128 kbps tracks + cover art per release
 ├── media/             # reserved for local media
 └── logs/
 ```
 
-Purchased original files are saved to `~/Downloads/Side A/` by default. You can
-change this in **Settings → Downloads**.
+Purchased original files and per-track downloads are saved to `Downloads/Side A/`
+inside your home folder by default. You can change this in **Settings → Downloads**.
 
 ## Purchase downloads
 

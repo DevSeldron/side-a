@@ -78,8 +78,9 @@ export class AuthManager {
       show: false,
       title: 'Sign in to Bandcamp',
       backgroundColor: '#f7f4ee',
-      titleBarStyle: 'hiddenInset',
-      trafficLightPosition: { x: 18, y: 18 },
+      ...(process.platform === 'darwin'
+        ? { titleBarStyle: 'hiddenInset' as const, trafficLightPosition: { x: 18, y: 18 } }
+        : {}),
       autoHideMenuBar: true,
       webPreferences: {
         partition: BANDCAMP_PARTITION,

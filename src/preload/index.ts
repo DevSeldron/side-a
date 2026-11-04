@@ -3,6 +3,7 @@ import type { LibraryEvent, LibraryEventMap, SideAAPI } from '@shared/types'
 import { IPC } from '@shared/ipc'
 
 const api: SideAAPI = {
+  platform: process.platform,
   getState: () => ipcRenderer.invoke(IPC.getState),
   auth: {
     login: () => ipcRenderer.invoke(IPC.authLogin),

@@ -34,6 +34,10 @@ export default function App(): ReactElement {
     startIntegrations()
   }, [init, initPlayer])
 
+  useEffect(() => {
+    document.documentElement.dataset.platform = window.sideA.platform
+  }, [])
+
   const accent = snapshot?.settings.accent ?? FALLBACK_ACCENT
   const theme = snapshot?.settings.theme ?? 'dark'
   const reduceMotion = snapshot?.settings.reduceMotion ?? false
