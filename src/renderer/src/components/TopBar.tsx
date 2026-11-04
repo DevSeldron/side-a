@@ -1,6 +1,6 @@
 import type { ReactElement } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { AlertCircle, Command, Loader2, RefreshCw, Search, Settings } from 'lucide-react'
+import { AlertCircle, ArrowUpRight, Command, Loader2, RefreshCw, Search, Settings } from 'lucide-react'
 import { useApp } from '../store/app'
 import { cx, initials, relativeDate } from '../lib/format'
 
@@ -8,6 +8,8 @@ export function TopBar(): ReactElement {
   const snapshot = useApp((state) => state.snapshot)
   const sync = useApp((state) => state.sync)
   const setPaletteOpen = useApp((state) => state.setPaletteOpen)
+  const update = useApp((state) => state.update)
+  const dismissUpdate = useApp((state) => state.dismissUpdate)
   const location = useLocation()
   if (!snapshot) return <header className="topbar" />
 
@@ -59,6 +61,20 @@ export function TopBar(): ReactElement {
         ) : null}
       </div>
       <div className="topbar-actions no-drag">
+        {update?.available ? (
+          <button
+            type="button"
+            className="update-pill"
+            onClick={() => {
+              if (update.url) void window.sideA.library.openExternal(update.url)
+              dismissUpdate()
+            }}
+            title={update.name ?? `Version ${update.version} is available`}
+          >
+            <ArrowUpRight size={15} />
+            <span>{update.version}</span>
+          </button>
+        ) : null}
         <button
           type="button"
           className={cx('sync-pill', syncing && 'is-syncing', failed && 'is-error')}

@@ -1,6 +1,7 @@
 import { session } from 'electron'
 import type { Session } from 'electron'
 import type { Album, AlbumDetail, PurchaseFormat, Track, TralbumType } from '@shared/types'
+import { findRedownload } from './redownloads'
 
 export const BANDCAMP_PARTITION = 'persist:bandcamp'
 export const BANDCAMP_UA =
@@ -304,7 +305,7 @@ function toAlbum(item: RawCollectionItem, redownloads: Record<string, string>): 
   const key = `${itemType === 'track' ? 't' : 'p'}${item.item_id}`
   const artId = item.item_art_id
   const title = item.item_title ?? item.album_title ?? item.track_title ?? 'Untitled'
-  const redownload = item.sale_item_id ? redownloads[String(item.sale_item_id)] : undefined
+  const redownload = findRedownload(redownloads, item.sale_item_id, item.sale_item_type)
   return {
     key,
     itemId: item.item_id,
@@ -605,12 +606,23 @@ export class BandcampClient {
       wishlistCount: wishlist.length
     })
 
-    if (page.collectionMore && page.collectionToken) {
+    // The fan page blob can omit its redownload map, so keep paging through the
+    // collection API while purchases are still missing a download link.
+    const needsPurchaseLinks = collection.some(
+      (album) => album.saleItemId && !findRedownload(redownloads, album.saleItemId, album.saleItemType)
+    )
+    if (page.collectionToken && (page.collectionMore || needsPurchaseLinks)) {
       let token: string | undefined = page.collectionToken
       let pages = 0
       while (token && pages < 200) {
         const result = await this.fetchCollectionPage(fanId, token, 'collection_items')
-        if (result.error) throw new Error(result.error_message || 'Bandcamp rejected the collection request.')
+        if (result.error) {
+          // A repair pass that only looks for download links must not fail the sync.
+          if (page.collectionMore) {
+            throw new Error(result.error_message || 'Bandcamp rejected the collection request.')
+          }
+          break
+        }
         for (const [saleId, url] of Object.entries(result.redownload_urls ?? {})) redownloads[saleId] = url
         for (const raw of result.items ?? []) {
           const album = toAlbum(raw, redownloads)
@@ -657,7 +669,7 @@ export class BandcampClient {
     // Purchase URLs are only present when signed in. Recompute availability now
     // that every page has contributed its redownload links.
     const finalize = (album: Album): Album => {
-      const available = album.saleItemId ? Boolean(redownloads[String(album.saleItemId)]) : false
+      const available = Boolean(findRedownload(redownloads, album.saleItemId, album.saleItemType))
       return { ...album, purchaseDownloadable: available }
     }
 

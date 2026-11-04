@@ -7,6 +7,7 @@ import type { Album, PurchaseDownload, PurchaseFormat } from '@shared/types'
 import type { BandcampClient } from './bandcamp'
 import type { Library } from './library'
 import type { Store } from './store'
+import { findRedownload } from './redownloads'
 
 export interface PurchaseEvents {
   onPurchaseChanged: (entry: PurchaseDownload) => void
@@ -133,7 +134,7 @@ export class PurchaseManager {
 
   private redownloadUrl(album: Album): string | undefined {
     if (!album.saleItemId) return undefined
-    return this.store.get().redownloads[String(album.saleItemId)]
+    return findRedownload(this.store.get().redownloads, album.saleItemId, album.saleItemType)
   }
 
   requireAlbum(key: string): Album {

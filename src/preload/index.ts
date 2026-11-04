@@ -39,6 +39,9 @@ const api: SideAAPI = {
     chooseDownloadDir: () => ipcRenderer.invoke(IPC.settingsChooseDir),
     clearCaches: () => ipcRenderer.invoke(IPC.settingsClearCaches)
   },
+  updates: {
+    check: () => ipcRenderer.invoke(IPC.updatesCheck)
+  },
   integrations: {
     updateLastfm: (patch) => ipcRenderer.invoke(IPC.lastfmUpdate, patch),
     connectLastfm: () => ipcRenderer.invoke(IPC.lastfmConnect),

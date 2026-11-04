@@ -9,7 +9,8 @@ import type {
   Settings,
   SyncState,
   TrackDownload,
-  TrackQuality
+  TrackQuality,
+  UpdateInfo
 } from '@shared/types'
 import { IPC } from '@shared/ipc'
 import { errorMessage } from '../lib/format'
@@ -29,6 +30,7 @@ interface AppState {
   loadingError: string | null
   toasts: ToastItem[]
   paletteOpen: boolean
+  update: UpdateInfo | null
   init: () => Promise<void>
   refresh: () => Promise<void>
   sync: () => Promise<void>
@@ -52,6 +54,8 @@ interface AppState {
   retryIntegrations: () => Promise<void>
   pushToast: (title: string, options?: { description?: string; tone?: ToastTone }) => void
   dismissToast: (id: number) => void
+  checkUpdate: () => Promise<void>
+  dismissUpdate: () => void
   setPaletteOpen: (open: boolean) => void
   applyAuth: (auth: AuthState) => void
   applySync: (sync: SyncState) => void
@@ -80,6 +84,7 @@ export const useApp = create<AppState>()((set, get) => ({
   loadingError: null,
   toasts: [],
   paletteOpen: false,
+  update: null,
 
   init: async () => {
     if (initialized) return
@@ -100,6 +105,7 @@ export const useApp = create<AppState>()((set, get) => ({
     try {
       const snapshot = await window.sideA.getState()
       set({ snapshot, ready: true, loadingError: null })
+      void get().checkUpdate()
     } catch (error) {
       set({ ready: true, loadingError: errorMessage(error, 'Side A could not start.') })
     }
@@ -391,6 +397,17 @@ export const useApp = create<AppState>()((set, get) => ({
   },
 
   setPaletteOpen: (open) => set({ paletteOpen: open }),
+
+  checkUpdate: async () => {
+    try {
+      const info = await window.sideA.updates.check()
+      set({ update: info.available ? info : null })
+    } catch {
+      // Launching offline just means there is no update to mention.
+    }
+  },
+
+  dismissUpdate: () => set({ update: null }),
 
   applyAuth: (auth) => {
     set((state) => ({

@@ -21,6 +21,7 @@ import type { PurchaseManager } from './purchases'
 import type { Store, } from './store'
 import { normalizeAccent } from './store'
 import { TRACK_QUALITIES, type TrackDownloadManager } from './trackDownloads'
+import { checkForUpdate } from './updates'
 
 interface IpcContext {
   client: BandcampClient
@@ -134,6 +135,7 @@ export function registerIpc(context: IpcContext): void {
   }
 
   ipcMain.handle(IPC.getState, () => snapshot())
+  ipcMain.handle(IPC.updatesCheck, () => checkForUpdate())
 
   ipcMain.handle(IPC.authLogin, (event) => {
     const parent = BrowserWindow.fromWebContents(event.sender)

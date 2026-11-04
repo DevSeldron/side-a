@@ -29,6 +29,7 @@ export const IPC = {
   discordUpdate: 'discord:update',
   discordPresence: 'discord:presence',
   integrationsRetry: 'integrations:retry',
+  updatesCheck: 'updates:check',
   eventAuth: 'auth:changed',
   eventSync: 'sync:changed',
   eventOffline: 'offline:changed',

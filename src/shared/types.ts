@@ -40,6 +40,13 @@ export interface Album {
   genreId?: number
 }
 
+export interface UpdateInfo {
+  available: boolean
+  version?: string
+  url?: string
+  name?: string
+}
+
 export interface Track {
   id: number
   title: string
@@ -327,6 +334,9 @@ export interface SideAAPI {
     update: (patch: Partial<Settings>) => Promise<Settings>
     chooseDownloadDir: () => Promise<string | null>
     clearCaches: () => Promise<void>
+  }
+  updates: {
+    check: () => Promise<UpdateInfo>
   }
   integrations: {
     updateLastfm: (patch: { enabled?: boolean; apiKey?: string; apiSecret?: string }) => Promise<IntegrationsState>

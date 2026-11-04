@@ -1,4 +1,5 @@
 import { useEffect, type ReactElement, type ReactNode } from 'react'
+import { createPortal } from 'react-dom'
 import { X } from 'lucide-react'
 import { cx } from '../lib/format'
 
@@ -29,7 +30,10 @@ export function Modal({ open, title, eyebrow, onClose, children, footer, width =
 
   if (!open) return null
 
-  return (
+  // Portal to <body>: a fixed overlay inside a page that animates its
+  // transform is positioned against that page, not the viewport, which parks
+  // the panel off-screen once the page is scrolled.
+  return createPortal(
     <div className="modal-layer" role="dialog" aria-modal="true" aria-label={title} onMouseDown={(event) => {
       if (event.target === event.currentTarget) onClose()
     }}>
@@ -46,6 +50,7 @@ export function Modal({ open, title, eyebrow, onClose, children, footer, width =
         <div className="modal-body">{children}</div>
         {footer ? <footer className="modal-foot">{footer}</footer> : null}
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }

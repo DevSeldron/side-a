@@ -12,6 +12,7 @@ import type {
   TrackDownload
 } from '@shared/types'
 import { getAppPaths } from './paths'
+import { withPurchaseLink } from './redownloads'
 
 const VERSION = 1
 
@@ -128,6 +129,7 @@ export class Store {
     try {
       const parsed = JSON.parse(readFileSync(file, 'utf8')) as Partial<PersistedState>
       const base = defaults(this.downloadDir)
+      const redownloads = parsed.redownloads ?? {}
       return {
         ...base,
         ...parsed,
@@ -143,9 +145,9 @@ export class Store {
         offline: parsed.offline ?? {},
         purchases: parsed.purchases ?? {},
         trackDownloads: parsed.trackDownloads ?? {},
-        collection: parsed.collection ?? [],
-        wishlist: parsed.wishlist ?? [],
-        redownloads: parsed.redownloads ?? {}
+        collection: (parsed.collection ?? []).map((album) => withPurchaseLink(album, redownloads)),
+        wishlist: (parsed.wishlist ?? []).map((album) => withPurchaseLink(album, redownloads)),
+        redownloads
       }
     } catch (error) {
       console.error('Could not read library file, starting fresh', error)
