@@ -1,7 +1,6 @@
 import { useState, type FormEvent, type ReactElement } from 'react'
 import { ArrowRight, Disc3, Headphones, Loader2, Lock, ShieldCheck, Sparkles, User } from 'lucide-react'
 import { useApp } from '../store/app'
-import { Brand } from '../components/Brand'
 import { cx } from '../lib/format'
 
 export function Welcome(): ReactElement {
@@ -44,7 +43,6 @@ export function Welcome(): ReactElement {
     <div className="welcome">
       <div className="welcome-glow" aria-hidden="true" />
       <section className="welcome-editorial">
-        <Brand />
         <div className="welcome-editorial-body">
           <h1>
             Your Bandcamp collection,
@@ -80,7 +78,7 @@ export function Welcome(): ReactElement {
           </div>
         </div>
         <footer className="welcome-foot">
-          <span>Side A 1.1</span>
+          <span>Side A 2.0</span>
           <span>Not affiliated with Bandcamp</span>
         </footer>
       </section>

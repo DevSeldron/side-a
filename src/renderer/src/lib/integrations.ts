@@ -115,16 +115,18 @@ function trackSession(state: PlayerState, track: PlayerTrack | undefined): void 
 
   const delta = state.currentTime - session.position
   session.position = state.currentTime
+
+  // Looping back to the very start is a new play, including repeat one, where
+  // the player seeks to zero before the play event flips playing back on. Any
+  // other backwards seek keeps the current session so earlier listening counts.
+  if (delta < -1 && state.currentTime < 1) {
+    settle(session)
+    session = newSession(state, track)
+  }
+
   if (!state.playing) return
 
-  if (delta < -1) {
-    // Looping back to the very start is a new play; any other backwards seek
-    // keeps the current session so earlier listening still counts.
-    if (state.currentTime < 1) {
-      settle(session)
-      session = newSession(state, track)
-    }
-  } else if (delta > 0 && delta < 5) {
+  if (delta > 0 && delta < 5) {
     // Forward playback only; jumps mean a seek, not listening time.
     session.listened += delta
   }

@@ -11,7 +11,6 @@ import {
 } from 'lucide-react'
 import { useApp } from '../store/app'
 import { usePlayer } from '../store/player'
-import { Brand } from './Brand'
 import { cx, formatBytes, initials } from '../lib/format'
 
 export function Sidebar(): ReactElement {
@@ -36,9 +35,7 @@ export function Sidebar(): ReactElement {
 
   return (
     <aside className="sidebar">
-      <div className="sidebar-brand drag-region">
-        <Brand />
-      </div>
+      <div className="sidebar-brand drag-region" aria-hidden="true" />
 
       <div className="sidebar-scroll">
         <p className="nav-label">Browse</p>

@@ -22,6 +22,8 @@ type RepeatMode = 'off' | 'all' | 'one'
 interface PlayerState {
   queue: PlayerTrack[]
   index: number
+  /** Playback order of queue indexes. Stays fixed while shuffle is on. */
+  order: number[]
   playing: boolean
   loading: boolean
   pendingKey: string | null
@@ -56,6 +58,22 @@ let audio: HTMLAudioElement | null = null
 let initialized = false
 let loadToken = 0
 let lastErrorAt = 0
+
+/**
+ * Builds a playback order that starts at the current track and visits every
+ * other track exactly once. Next and previous both walk this order, so a
+ * shuffled album does not re-randomise on every skip.
+ */
+function buildOrder(length: number, start: number, shuffle: boolean): number[] {
+  const natural = Array.from({ length }, (_, index) => index)
+  if (!shuffle || length < 2) return natural
+  const rest = natural.filter((index) => index !== start)
+  for (let index = rest.length - 1; index > 0; index -= 1) {
+    const swap = Math.floor(Math.random() * (index + 1))
+    ;[rest[index], rest[swap]] = [rest[swap] as number, rest[index] as number]
+  }
+  return start >= 0 && start < length ? [start, ...rest] : rest
+}
 
 function storedNumber(key: string, fallback: number): number {
   const raw = localStorage.getItem(key)
@@ -209,6 +227,7 @@ function installMediaSessionHandlers(): void {
 export const usePlayer = create<PlayerState>()((set, get) => ({
   queue: [],
   index: -1,
+  order: [],
   playing: false,
   loading: false,
   pendingKey: null,
@@ -260,6 +279,7 @@ export const usePlayer = create<PlayerState>()((set, get) => ({
       set({
         queue,
         index,
+        order: buildOrder(queue.length, index, get().shuffle),
         pendingKey: null,
         currentTime: 0,
         duration: queue[index]?.duration ?? 0,
@@ -343,40 +363,37 @@ export const usePlayer = create<PlayerState>()((set, get) => ({
   },
 
   next: async (auto = false) => {
-    const { queue, index, repeat, shuffle } = get()
+    const { queue, index, repeat, shuffle, order } = get()
     if (!queue.length) return
     if (auto && repeat === 'one') {
       get().seek(0)
       await get().play()
       return
     }
-    let nextIndex: number
-    if (shuffle && queue.length > 1) {
-      do {
-        nextIndex = Math.floor(Math.random() * queue.length)
-      } while (nextIndex === index)
-    } else {
-      nextIndex = index + 1
-    }
-    if (nextIndex >= queue.length) {
+    const active = order.length === queue.length ? order : buildOrder(queue.length, index, shuffle)
+    const position = Math.max(0, active.indexOf(index))
+    let nextPosition = position + 1
+    if (nextPosition >= active.length) {
       if (auto && repeat === 'off') {
         set({ playing: false, currentTime: get().duration })
         return
       }
-      nextIndex = 0
+      nextPosition = 0
     }
-    await get().loadAt(nextIndex, true)
+    await get().loadAt(active[nextPosition] ?? 0, true)
   },
 
   prev: async () => {
-    const { index, currentTime } = get()
+    const { queue, index, currentTime, shuffle, order } = get()
     if (currentTime > 3) {
       get().seek(0)
       return
     }
-    if (get().queue.length === 0) return
-    const previous = index <= 0 ? get().queue.length - 1 : index - 1
-    await get().loadAt(previous, true)
+    if (queue.length === 0) return
+    const active = order.length === queue.length ? order : buildOrder(queue.length, index, shuffle)
+    const position = Math.max(0, active.indexOf(index))
+    const previousPosition = position <= 0 ? active.length - 1 : position - 1
+    await get().loadAt(active[previousPosition] ?? 0, true)
   },
 
   handleEnded: () => {
@@ -417,9 +434,11 @@ export const usePlayer = create<PlayerState>()((set, get) => ({
   },
 
   toggleShuffle: () => {
+    const { queue, index, order } = get()
     const shuffle = !get().shuffle
+    const nextOrder = queue.length ? buildOrder(queue.length, index, shuffle) : order
     localStorage.setItem('sidea.shuffle', String(shuffle))
-    set({ shuffle })
+    set({ shuffle, order: nextOrder })
   },
 
   cycleRepeat: () => {
@@ -442,6 +461,7 @@ export const usePlayer = create<PlayerState>()((set, get) => ({
     set({
       queue: [],
       index: -1,
+      order: [],
       playing: false,
       loading: false,
       currentTime: 0,

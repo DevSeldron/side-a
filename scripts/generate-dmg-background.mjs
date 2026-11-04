@@ -12,7 +12,7 @@ const svg = `
   <rect width="${width}" height="${height}" fill="#1f1f1f"/>
   <rect width="${width}" height="3" fill="#2ad4c0"/>
   <text x="44" y="64" fill="#ededed" font-family="-apple-system, Helvetica Neue, sans-serif" font-size="26" font-weight="500" letter-spacing="-0.5">Side A</text>
-  <text x="616" y="64" text-anchor="end" fill="#7a7a7a" font-family="-apple-system, Helvetica Neue, sans-serif" font-size="12">1.1.0</text>
+  <text x="616" y="64" text-anchor="end" fill="#7a7a7a" font-family="-apple-system, Helvetica Neue, sans-serif" font-size="12">2.0.0</text>
 
   <g stroke="#2ad4c0" stroke-width="2" fill="none" stroke-linecap="round">
     <path d="M272 ${arrowY} H390" stroke-dasharray="1 9"/>

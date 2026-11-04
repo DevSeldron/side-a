@@ -385,7 +385,7 @@ export class LastfmService {
         method: 'POST',
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
-          'User-Agent': 'SideA/1.1 (macOS)'
+          'User-Agent': 'SideA/2.0 (macOS)'
         },
         body,
         signal: controller.signal
