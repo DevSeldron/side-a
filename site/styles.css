@@ -474,9 +474,15 @@ code {
 .download-card {
   display: flex;
   flex-direction: column;
+  min-width: 0;
   padding: 32px;
   background: var(--panel);
   border: 1px solid var(--line);
+}
+
+.download-links,
+.download-links .button {
+  min-width: 0;
 }
 
 .download-head {
@@ -865,7 +871,24 @@ code {
   }
 
   .download-card {
-    padding: 24px;
+    padding: 20px;
+  }
+
+  .download-links .button {
+    height: auto;
+    min-height: 54px;
+    padding: 12px 16px;
+    white-space: normal;
+    text-align: left;
+  }
+
+  .download-head p {
+    overflow-wrap: anywhere;
+  }
+
+  .command code {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
   }
 
   .notes-head {
