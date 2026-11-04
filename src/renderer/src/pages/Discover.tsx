@@ -49,7 +49,7 @@ export function Discover(): ReactElement {
         })
         .catch((reason) => {
           if (cancelled) return
-          setError(errorMessage(reason, 'Bandcamp search failed.'))
+          setError(errorMessage(reason, 'Bandcamp search failed'))
           setLoading(false)
         })
     }, 320)
@@ -76,7 +76,7 @@ export function Discover(): ReactElement {
 
   const playTrack = async (track: Track): Promise<void> => {
     if (!track.streamUrl) {
-      pushToast('Bandcamp is not streaming this track.', { tone: 'error' })
+      pushToast('Bandcamp is not streaming this track', { tone: 'error' })
       return
     }
     if (playingId === track.id) {
@@ -100,7 +100,7 @@ export function Discover(): ReactElement {
       audio.onended = () => setPlayingId(null)
       audio.onerror = () => {
         setPlayingId(null)
-        pushToast('This stream stopped early.', { tone: 'error' })
+        pushToast('This stream stopped early', { tone: 'error' })
       }
       await audio.play()
     } catch (reason) {
@@ -133,7 +133,7 @@ export function Discover(): ReactElement {
 
   const openAlbum = async (bandId: number | undefined, tralbumId: number, tralbumType: TralbumType): Promise<void> => {
     if (!bandId) {
-      pushToast('This release needs a Bandcamp artist id.', { tone: 'error' })
+      pushToast('This release needs a Bandcamp artist id', { tone: 'error' })
       return
     }
     stopAudio()
@@ -165,7 +165,7 @@ export function Discover(): ReactElement {
       <PageIntro
         kicker="Browse"
         title="Discover"
-        description="Search all of Bandcamp, open an artist's discography, and listen to anything with a stream, no purchase needed."
+        description="Search all of Bandcamp, open an artist's discography, and listen to anything with a stream, no purchase needed"
       />
 
       <form className="discover-search" onSubmit={(event) => event.preventDefault()}>
@@ -191,7 +191,7 @@ export function Discover(): ReactElement {
       {albumLoading ? (
         <div className="discover-loading">
           <Loader2 size={18} className="spin" />
-          <span>Loading release…</span>
+          <span>Loading release</span>
         </div>
       ) : album ? (
         <section className="discover-album">
@@ -244,7 +244,7 @@ export function Discover(): ReactElement {
       ) : artistLoading ? (
         <div className="discover-loading">
           <Loader2 size={18} className="spin" />
-          <span>Loading artist…</span>
+          <span>Loading artist</span>
         </div>
       ) : artist ? (
         <section className="discover-artist">
@@ -252,7 +252,7 @@ export function Discover(): ReactElement {
             <div className="discover-artist-art">
               <Artwork src={artist.image} alt={artist.name} eager />
             </div>
-            <div>
+            <div className="discover-artist-copy">
               <span className="discover-kicker">Artist</span>
               <h2>{artist.name}</h2>
               {artist.bio ? <p className="discover-about">{artist.bio}</p> : null}
@@ -278,7 +278,7 @@ export function Discover(): ReactElement {
                 <span>{release.kind === 'track' ? 'Track' : 'Album'}</span>
               </button>
             ))}
-            {artist.releases.length === 0 ? <p className="discover-empty">No releases listed for this artist.</p> : null}
+            {artist.releases.length === 0 ? <p className="discover-empty">No releases listed for this artist</p> : null}
           </div>
         </section>
       ) : error ? (
@@ -300,7 +300,7 @@ export function Discover(): ReactElement {
                       <strong>{entry.title}</strong>
                       <span>{entry.location ?? 'Bandcamp artist'}</span>
                     </span>
-                    {entry.tags?.length ? <span className="discover-tags">{entry.tags.slice(0, 3).join(' · ')}</span> : null}
+                    {entry.tags?.length ? <span className="discover-tags">{entry.tags.slice(0, 3).join(' / ')}</span> : null}
                   </button>
                 ))}
               </div>
@@ -356,7 +356,7 @@ export function Discover(): ReactElement {
           {query.trim().length < 2 ? (
             <div className="discover-hint">
               <Search size={18} />
-              <p>Type at least two characters to search artists, albums and tracks across Bandcamp.</p>
+              <p>Type at least two characters to search artists, albums and tracks across Bandcamp</p>
             </div>
           ) : null}
         </div>

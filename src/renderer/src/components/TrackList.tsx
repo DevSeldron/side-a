@@ -81,7 +81,7 @@ export function TrackList({ album, detail, offlineReady }: TrackListProps): Reac
                 className={cx('track-download', done && 'is-done', busy && 'is-busy')}
                 title={
                   busy
-                    ? 'Downloading…'
+                    ? 'Downloading'
                     : done
                       ? `Saved to ${entry?.filePath ?? 'your download folder'}`
                       : `Download this track (${quality.replace('mp3-', 'MP3 ')})`

@@ -40,7 +40,7 @@ export function useAlbumDetail(key: string | undefined, force = false): AlbumDet
       })
       .catch((reason) => {
         if (!cancelled) {
-          setError(errorMessage(reason, 'Could not load this release.'))
+          setError(errorMessage(reason, 'Could not load this release'))
           setLoading(false)
         }
       })

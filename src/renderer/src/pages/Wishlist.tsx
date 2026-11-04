@@ -41,8 +41,8 @@ export function Wishlist(): ReactElement {
         title="Wishlist"
         description={
           wishlist.length
-            ? `${plural(wishlist.length, 'release')} on your Bandcamp wishlist. Preview them here, then buy on Bandcamp when the moment is right.`
-            : 'Releases you add to your Bandcamp wishlist will show up here.'
+            ? `${plural(wishlist.length, 'release')} on your Bandcamp wishlist, preview them here, then buy on Bandcamp`
+            : 'Releases you add to your Bandcamp wishlist will show up here'
         }
         actions={
           <button type="button" className="button primary" onClick={shufflePlay} disabled={!filtered.length}>
@@ -58,8 +58,8 @@ export function Wishlist(): ReactElement {
           title="The wishlist is empty"
           description={
             snapshot.demo
-              ? 'The demo fan has no public wishlist. Connect your account to see yours.'
-              : 'Add a release to your wishlist on Bandcamp and it will appear here after the next sync.'
+              ? 'The demo fan has no public wishlist, connect your account to see yours'
+              : 'Add a release to your wishlist on Bandcamp and it will appear here after the next sync'
           }
           action={
             <button type="button" className="button primary" onClick={() => void sync()}>
@@ -100,7 +100,7 @@ export function Wishlist(): ReactElement {
             <EmptyState
               icon={<Search size={24} />}
               title="No wishlist matches"
-              description="Try a different artist or release name."
+              description="Try a different artist or release name"
               action={<button type="button" className="button ghost" onClick={() => setQuery('')}>Clear filter</button>}
             />
           ) : (

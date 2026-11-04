@@ -33,7 +33,7 @@ export function Welcome(): ReactElement {
     try {
       await setUsername(username.trim())
     } catch {
-      setError('That username could not be loaded. Check the spelling and try again.')
+      setError('That username could not be loaded, check the spelling and try again')
     } finally {
       setBusy(null)
     }
@@ -47,32 +47,32 @@ export function Welcome(): ReactElement {
           <h1>
             Your Bandcamp collection,
             <br />
-            <em>redesigned.</em>
+            <em>redesigned</em>
           </h1>
           <p>
-            A redesigned player for the music you already own. Your collection and wishlist, available in a
-            modernized interface, with offline copies for traveling and for... well, offline play.
+            A player for the music you already own, with your collection and wishlist in one place and offline
+            copies for listening away from the network
           </p>
           <div className="welcome-features">
             <div>
               <Headphones size={17} />
               <span>
                 <strong>Full-release streaming</strong>
-                Stream complete releases at Bandcamp quality.
+                Stream complete releases at Bandcamp quality
               </span>
             </div>
             <div>
               <Disc3 size={17} />
               <span>
                 <strong>Original downloads</strong>
-                Keep the FLAC, WAV or MP3 you paid for.
+                Keep the FLAC, WAV or MP3 files you paid for
               </span>
             </div>
             <div>
               <Lock size={17} />
               <span>
                 <strong>Stays on your device</strong>
-                Sessions and libraries never leave the app.
+                Sessions and libraries stay on your device
               </span>
             </div>
           </div>
@@ -90,8 +90,8 @@ export function Welcome(): ReactElement {
             <h2>{needsUsername ? 'Where should we look?' : 'Connect Bandcamp'}</h2>
             <p>
               {needsUsername
-                ? 'Bandcamp signed you in, but did not share a profile name. Enter your Bandcamp username so Side A can find your collection.'
-                : 'Sign in with Bandcamp in a secure window. Side A reads your own collection, wishlist and purchases. Nothing else.'}
+                ? 'Bandcamp signed you in, but did not share a profile name, enter your Bandcamp username so Side A can find your collection'
+                : 'Sign in with Bandcamp in a secure window, Side A reads your own collection, wishlist and purchases'}
             </p>
           </div>
 
@@ -131,13 +131,13 @@ export function Welcome(): ReactElement {
                 {busy === 'demo' ? <Loader2 size={16} className="spin" /> : <Sparkles size={16} />}
                 Explore the public demo
               </button>
-              <p className="welcome-demo-note">The demo loads a public Bandcamp fan collection so you can try the player without an account.</p>
+              <p className="welcome-demo-note">The demo loads a public Bandcamp fan collection so you can try the player without an account</p>
             </div>
           )}
 
           <div className="welcome-trust">
             <ShieldCheck size={15} />
-            <span>Bandcamp credentials are handled by Bandcamp itself. Side A only stores your session cookie locally.</span>
+            <span>Bandcamp credentials are handled by Bandcamp itself, Side A only stores your session cookie locally</span>
           </div>
         </div>
       </section>

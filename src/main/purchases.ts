@@ -79,8 +79,8 @@ async function writeResponse(
   destination: string,
   onProgress: (bytes: number, total: number) => void
 ): Promise<number> {
-  if (!response.ok) throw new Error(`Bandcamp returned ${response.status} while downloading.`)
-  if (!response.body) throw new Error('Bandcamp returned an empty download.')
+  if (!response.ok) throw new Error(`Bandcamp returned ${response.status} while downloading`)
+  if (!response.body) throw new Error('Bandcamp returned an empty download')
   const total = Number.parseInt(response.headers.get('content-length') ?? '0', 10) || 0
   const part = `${destination}.part`
   await new Promise<void>((resolve, reject) => {
@@ -125,7 +125,7 @@ export class PurchaseManager {
         this.store.setPurchase(key, {
           ...entry,
           status: 'error',
-          error: 'This download was interrupted. Try again.',
+          error: 'This download was interrupted, try again',
           progress: 0
         })
       }
@@ -139,14 +139,14 @@ export class PurchaseManager {
 
   requireAlbum(key: string): Album {
     const album = this.library.findAlbum(key)
-    if (!album) throw new Error('This release is no longer in your library.')
+    if (!album) throw new Error('This release is no longer in your library')
     return album
   }
 
   async formats(key: string): Promise<PurchaseFormat[]> {
     const album = this.requireAlbum(key)
     const redownload = this.redownloadUrl(album)
-    if (!redownload) throw new Error('Bandcamp does not expose a download for this purchase.')
+    if (!redownload) throw new Error('Bandcamp does not expose a download for this purchase')
     const info = await this.client.fetchPurchaseInfo(redownload)
     return info.formats
   }
@@ -158,8 +158,8 @@ export class PurchaseManager {
       if (current) return current
     }
     const redownload = this.redownloadUrl(album)
-    if (!redownload) throw new Error('Bandcamp does not expose a download for this purchase.')
-    if (this.active.has(key)) throw new Error('This purchase is already downloading.')
+    if (!redownload) throw new Error('Bandcamp does not expose a download for this purchase')
+    if (this.active.has(key)) throw new Error('This purchase is already downloading')
 
     const startEntry: PurchaseDownload = {
       key,
@@ -181,7 +181,7 @@ export class PurchaseManager {
       const response = await this.client.fetchRaw(link.url, {
         headers: { Accept: '*/*' }
       })
-      if (!response.ok) throw new Error(`Bandcamp returned ${response.status} for the download.`)
+      if (!response.ok) throw new Error(`Bandcamp returned ${response.status} for the download`)
       await mkdir(join(this.store.get().settings.downloadDir), { recursive: true })
       const disposition = parseFilename(response.headers.get('content-disposition'))
       const extension = extensionFor(response.headers.get('content-type'), requestedFormat, disposition ?? link.suggestedName)
@@ -222,7 +222,7 @@ export class PurchaseManager {
       this.active.delete(key)
       return entry
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Could not download this purchase.'
+      const message = error instanceof Error ? error.message : 'Could not download this purchase'
       const failed: PurchaseDownload = {
         ...startEntry,
         status: 'error',
@@ -236,7 +236,7 @@ export class PurchaseManager {
 
   async reveal(key: string): Promise<void> {
     const entry = this.store.get().purchases[key]
-    if (!entry?.filePath) throw new Error('There is no downloaded file to show yet.')
+    if (!entry?.filePath) throw new Error('There is no downloaded file to show yet')
     shell.showItemInFolder(entry.filePath)
   }
 

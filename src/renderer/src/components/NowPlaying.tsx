@@ -40,7 +40,7 @@ export function NowPlaying(): ReactElement | null {
             <span className="now-number">Track {String(track.number).padStart(2, '0')}</span>
             <h1>{track.title}</h1>
             <p>
-              {track.artist} <span>·</span> {track.albumTitle}
+              {track.artist} <span>/</span> {track.albumTitle}
             </p>
           </div>
           <WaveScrubber />
@@ -48,7 +48,7 @@ export function NowPlaying(): ReactElement | null {
           <div className="now-footer">
             <span>{track.offline ? 'Playing from your offline copy' : 'Streaming from Bandcamp'}</span>
             <span>
-              {formatDuration(track.duration)} · Side A
+              {formatDuration(track.duration)} / Side A
             </span>
           </div>
         </div>

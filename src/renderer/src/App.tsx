@@ -101,7 +101,7 @@ export default function App(): ReactElement {
           <div className="splash-loader">
             <span />
           </div>
-          <p>Finding your records…</p>
+          <p>Finding your records</p>
         </div>
       </div>
     )

@@ -156,8 +156,8 @@ if (!gotLock) {
     app.setAboutPanelOptions({
       applicationName: 'Side A',
       applicationVersion: app.getVersion(),
-      copyright: 'A personal Bandcamp client. Not affiliated with Bandcamp.',
-      credits: 'Your collection. Offline.'
+      copyright: 'A personal Bandcamp client, not affiliated with Bandcamp',
+      credits: 'Your collection, offline'
     })
     ensureDataDirs()
     const downloadDir = join(app.getPath('downloads'), 'Side A')

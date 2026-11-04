@@ -24,7 +24,8 @@ import { ACCENT_PRESETS } from '../lib/theme'
 import { useApp } from '../store/app'
 import { usePlayer } from '../store/player'
 import { PageIntro } from '../components/Page'
-import { cx, formatBytes, initials, shortPath } from '../lib/format'
+import { UserAvatar } from '../components/UserAvatar'
+import { cx, formatBytes, shortPath } from '../lib/format'
 
 const FORMATS = [
   { id: 'flac', label: 'FLAC (lossless)' },
@@ -97,7 +98,7 @@ export function Settings(): ReactElement {
     if (unlockTimer.current) clearTimeout(unlockTimer.current)
     void updateSettings({ rainbowUnlocked: true })
     pushToast('Rainbow theme unlocked', {
-      description: 'A new toggle is waiting in Appearance.',
+      description: 'A new toggle is available in Appearance',
       tone: 'success'
     })
   }
@@ -133,8 +134,8 @@ export function Settings(): ReactElement {
       const info = await checkUpdate()
       pushToast(info.available ? `Side A ${info.version} is available` : 'Side A is up to date', {
         description: info.available
-          ? 'Open the update pill in the top bar to download it.'
-          : `You are running ${snapshot.appVersion}.`,
+          ? 'Use the update pill in the top bar to download it'
+          : `Running ${snapshot.appVersion}`,
         tone: info.available ? 'info' : 'success'
       })
     } finally {
@@ -164,7 +165,7 @@ export function Settings(): ReactElement {
       <PageIntro
         kicker="Side A"
         title="Settings"
-        description="Account, appearance, downloads and local data. Everything here stays on your device."
+        description="Account, appearance, downloads and local data, all stored on your device"
       />
 
       <div className="settings-grid">
@@ -173,15 +174,15 @@ export function Settings(): ReactElement {
             <span className="settings-icon"><UserRound size={17} /></span>
             <div>
               <h2>Account</h2>
-              <p>Your Bandcamp session is stored in an isolated app profile.</p>
+              <p>Bandcamp session stored in an isolated app profile</p>
             </div>
           </header>
           <div className="account-row">
-            <div className="avatar large">{initials(snapshot.auth.displayName ?? username)}</div>
+            <UserAvatar className="large" src={snapshot.auth.photoUrl} name={snapshot.auth.displayName ?? username} />
             <div className="account-copy">
               <strong>{snapshot.auth.displayName ?? `@${username}`}</strong>
               <span>
-                @{username} · {isDemo ? 'Public demo' : 'Bandcamp connected'}
+                @{username} / {isDemo ? 'Public demo' : 'Bandcamp connected'}
               </span>
             </div>
           </div>
@@ -216,7 +217,7 @@ export function Settings(): ReactElement {
             <span className="settings-icon" onClick={tapAppearance}><Palette size={17} /></span>
             <div>
               <h2>Appearance</h2>
-              <p>Light or dark room, with an accent colour of your choosing.</p>
+              <p>Light or dark theme with a custom accent colour</p>
             </div>
           </header>
           <div className="theme-row">
@@ -247,7 +248,7 @@ export function Settings(): ReactElement {
                 <strong>Custom accent</strong>
                 <span>{settings.accent.toUpperCase()}</span>
               </span>
-              <span className="accent-custom-hint">Pick…</span>
+              <span className="accent-custom-hint">Pick</span>
             </label>
           </div>
           <div className="accent-row">
@@ -266,21 +267,21 @@ export function Settings(): ReactElement {
           </div>
           <SettingToggle
             title="Match cover art"
-            description="Use the artwork of the release you are playing for the accent colour."
+            description="Use the artwork of the current release for the accent colour"
             checked={settings.coverTheme}
             onChange={toggleCoverTheme}
           />
           {settings.rainbowUnlocked || settings.rainbow ? (
             <SettingToggle
               title="Rainbow theme"
-              description="Cycle every accent colour. Choosing an accent turns it off again."
+              description="Cycle every accent colour, choosing an accent turns it off"
               checked={settings.rainbow}
               onChange={toggleRainbow}
             />
           ) : null}
           <SettingToggle
             title="Background gradient"
-            description="Fade the background from gray into your accent colour. Light mode starts at white."
+            description="Fade the background from gray into your accent colour, light mode starts at white"
             checked={settings.backgroundGradient}
             onChange={(value) => void updateSettings({ backgroundGradient: value })}
           />
@@ -303,7 +304,7 @@ export function Settings(): ReactElement {
           ) : null}
           <SettingToggle
             title="Reduce motion"
-            description="Tone down transitions and artwork movement."
+            description="Tone down transitions and artwork movement"
             checked={settings.reduceMotion}
             onChange={(value) => void updateSettings({ reduceMotion: value })}
           />
@@ -314,19 +315,19 @@ export function Settings(): ReactElement {
             <span className="settings-icon"><Sliders size={17} /></span>
             <div>
               <h2>Library</h2>
-              <p>How Side A fetches and prepares your music.</p>
+              <p>How Side A fetches and prepares your music</p>
             </div>
           </header>
           <SettingToggle
             title="Pre-fetch release details"
-            description="Warm the tracklist cache after each sync for faster playback."
+            description="Warm the tracklist cache after each sync for faster playback"
             checked={settings.prefetchDetails}
             onChange={(value) => void updateSettings({ prefetchDetails: value })}
           />
           <div className="setting-row">
             <div className="setting-copy">
               <strong>Default purchase format</strong>
-              <span>Preselected when a purchase offers this format.</span>
+              <span>Preselected when a purchase offers this format</span>
             </div>
             <label className="select-wrap compact">
               <select
@@ -343,7 +344,7 @@ export function Settings(): ReactElement {
           <div className="setting-row">
             <div className="setting-copy">
               <strong>Updates</strong>
-              <span>Side A {snapshot.appVersion} · checks GitHub releases on launch.</span>
+              <span>Side A {snapshot.appVersion} / checks GitHub releases on launch</span>
             </div>
             <button type="button" className="button ghost" onClick={() => void runUpdateCheck()} disabled={checkingUpdate}>
               {checkingUpdate ? <Loader2 size={16} className="spin" /> : <RefreshCw size={16} />}
@@ -363,12 +364,12 @@ export function Settings(): ReactElement {
             <span className="settings-icon"><Radio size={17} /></span>
             <div>
               <h2>Last.fm scrobbling</h2>
-              <p>Send the tracks you play to your Last.fm listening history.</p>
+              <p>Send the tracks you play to your Last.fm listening history</p>
             </div>
           </header>
           <SettingToggle
             title="Scrobble plays"
-            description="A play counts after half the track or four minutes, whichever comes first."
+            description="A play counts after half the track or four minutes, whichever comes first"
             checked={lastfm.enabled}
             onChange={(value) => void updateLastfm({ enabled: value })}
           />
@@ -416,7 +417,7 @@ export function Settings(): ReactElement {
               onClick={() => void connect()}
             >
               <Radio size={16} />
-              {connecting ? 'Waiting for authorisation…' : lastfm.connected ? 'Re-authorise' : 'Connect Last.fm'}
+              {connecting ? 'Waiting for authorisation' : lastfm.connected ? 'Re-authorise' : 'Connect Last.fm'}
             </button>
             {lastfm.connected ? (
               <button type="button" className="button ghost quiet" onClick={() => void disconnectLastfm()}>
@@ -442,7 +443,7 @@ export function Settings(): ReactElement {
           {lastfm.error ? <p className="integration-error">{lastfm.error}</p> : null}
           <p className="settings-hint">
             Create a free API account on Last.fm, paste its key and shared secret, then connect to authorise Side A in a
-            Last.fm window. The credentials and session are encrypted with your operating system's credential store.
+            Last.fm window, credentials and session are encrypted with your operating system's credential store
           </p>
         </section>
 
@@ -451,12 +452,12 @@ export function Settings(): ReactElement {
             <span className="settings-icon"><Gamepad2 size={17} /></span>
             <div>
               <h2>Discord Rich Presence</h2>
-              <p>Show the release you are playing on your Discord profile.</p>
+              <p>Show the release you are playing on your Discord profile</p>
             </div>
           </header>
           <SettingToggle
             title="Show what I am playing"
-            description="Updates Discord with the track and live progress while Side A plays."
+            description="Updates Discord with the track and live progress while Side A plays"
             checked={discord.enabled}
             onChange={(value) => void updateDiscord({ enabled: value })}
           />
@@ -484,7 +485,7 @@ export function Settings(): ReactElement {
           <div className="setting-row">
             <div className="setting-copy">
               <strong>Activity type</strong>
-              <span>How Discord labels the status line.</span>
+              <span>How Discord labels the status line</span>
             </div>
             <label className="select-wrap compact">
               <select
@@ -500,13 +501,13 @@ export function Settings(): ReactElement {
           </div>
           <SettingToggle
             title="Progress bar"
-            description="Show elapsed and remaining time while a track plays."
+            description="Show elapsed and remaining time while a track plays"
             checked={discord.showTimestamps}
             onChange={(value) => void updateDiscord({ showTimestamps: value })}
           />
           <SettingToggle
             title="Release button"
-            description="Add a “Listen on Bandcamp” button when the release has a link."
+            description="Add a “Listen on Bandcamp” button when the release has a link"
             checked={discord.showButton}
             onChange={(value) => void updateDiscord({ showButton: value })}
           />
@@ -533,13 +534,13 @@ export function Settings(): ReactElement {
             </label>
             <p className="settings-hint">
               Tokens: <code>{'{title}'}</code>, <code>{'{artist}'}</code>, <code>{'{album}'}</code> and{' '}
-              <code>{'{band}'}</code>. Lines save when you leave the field.
+              <code>{'{band}'}</code>, lines save when you leave the field
             </p>
           </div>
           {discord.error ? <p className="integration-error">{discord.error}</p> : null}
           <p className="settings-hint">
-            Create an application at Discord's developer portal and copy its Application ID. The Discord desktop app must
-            be running; artwork is sent as a Bandcamp image URL, so no assets need uploading.
+            Create an application at Discord's developer portal and copy its Application ID, the Discord desktop app must
+            be running, artwork is sent as a Bandcamp image URL, so no assets need uploading
           </p>
           <div className="settings-actions">
             <button
@@ -558,13 +559,13 @@ export function Settings(): ReactElement {
             <span className="settings-icon"><FolderOpen size={17} /></span>
             <div>
               <h2>Downloads</h2>
-              <p>Where tracks and purchased files are saved.</p>
+              <p>Where tracks and purchased files are saved</p>
             </div>
           </header>
           <div className="setting-row">
             <div className="setting-copy">
               <strong>Track download quality</strong>
-              <span>Used by the download button on each track. If Bandcamp only offers a lower rendition, Side A saves that and notes it.</span>
+              <span>Used by the download button on each track, if Bandcamp only offers a lower rendition, Side A saves that and notes it</span>
             </div>
             <label className="select-wrap compact">
               <select
@@ -580,11 +581,11 @@ export function Settings(): ReactElement {
           </div>
           <div className="folder-row">
             <code title={settings.downloadDir}>{shortPath(settings.downloadDir, 48)}</code>
-            <button type="button" className="button small ghost" onClick={() => void chooseDownloadDir()}>Choose…</button>
+            <button type="button" className="button small ghost" onClick={() => void chooseDownloadDir()}>Choose</button>
           </div>
           <p className="settings-hint">
-            The folder is created automatically. Existing files with the same name get a numbered suffix instead of being overwritten.
-            Purchased releases still use the Formats page, which can fetch FLAC and other lossless files.
+            The folder is created automatically, existing files with the same name get a numbered suffix instead of being overwritten.
+            Purchased releases still use the Formats page, which can fetch FLAC and other lossless files
           </p>
         </section>
 
@@ -593,7 +594,7 @@ export function Settings(): ReactElement {
             <span className="settings-icon"><HardDrive size={17} /></span>
             <div>
               <h2>Storage & data</h2>
-              <p>Local copies, session caches and app data.</p>
+              <p>Local copies, session caches and app data</p>
             </div>
           </header>
           <div className="storage-rows">
@@ -621,7 +622,7 @@ export function Settings(): ReactElement {
             <span className="settings-icon"><Info size={17} /></span>
             <div>
               <h2>About Side A</h2>
-              <p>A personal Bandcamp client.</p>
+              <p>A personal Bandcamp client</p>
             </div>
           </header>
           <div className="storage-rows">
@@ -639,8 +640,8 @@ export function Settings(): ReactElement {
             </button>
           </div>
           <p className="settings-hint">
-            Side A is an independent player and is not affiliated with Bandcamp. Your purchases belong to you; Bandcamp owns the
-            platform.
+            Side A is an independent player and is not affiliated with Bandcamp, your purchases belong to you, Bandcamp owns the
+            platform
           </p>
         </section>
       </div>

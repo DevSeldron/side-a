@@ -28,7 +28,7 @@ export function Downloads(): ReactElement {
       <PageIntro
         kicker="Original files"
         title="Downloads"
-        description="Keep the files you paid for, or grab a single track. Purchases download the exact format Bandcamp stores, FLAC, WAV, AIFF, MP3 and more; individual tracks save as MP3 in the quality you pick in Settings."
+        description="Keep the files you paid for, or grab a single track, purchases download the exact format Bandcamp stores, FLAC, WAV, AIFF, MP3 and more, individual tracks save as MP3 in the quality you pick in Settings"
         actions={
           <button type="button" className="button ghost" onClick={() => void chooseDownloadDir()}>
             <FolderOpen size={16} />
@@ -61,7 +61,7 @@ export function Downloads(): ReactElement {
                 <strong>{entry.bandName}, {entry.title}</strong>
                 <span>
                   {entry.status === 'preparing'
-                    ? 'Preparing your download…'
+                    ? 'Preparing your download'
                     : `${formatBytes(entry.bytes)}${entry.totalBytes ? ` of ${formatBytes(entry.totalBytes)}` : ''}`}
                 </span>
                 {entry.status === 'downloading' ? <ProgressBar value={entry.progress} /> : null}
@@ -88,10 +88,10 @@ export function Downloads(): ReactElement {
                 <strong>{entry.artist}, {entry.title}</strong>
                 <span>
                   {entry.status === 'downloading'
-                    ? `${Math.round(entry.progress * 100)}% · ${entry.actualQuality ?? entry.quality}`
+                    ? `${Math.round(entry.progress * 100)}% / ${entry.actualQuality ?? entry.quality}`
                     : entry.status === 'error'
                       ? entry.error ?? 'Failed'
-                      : `${entry.actualQuality ?? entry.quality} · ${formatBytes(entry.bytes)}`}
+                      : `${entry.actualQuality ?? entry.quality} / ${formatBytes(entry.bytes)}`}
                 </span>
                 {entry.status === 'downloading' ? <ProgressBar value={entry.progress} /> : null}
               </div>
@@ -113,8 +113,8 @@ export function Downloads(): ReactElement {
           <div>
             <strong>This is the public demo</strong>
             <span>
-              The demo collection belongs to another fan, so Bandcamp will not expose original downloads. Sign in with your own
-              account to download the files you purchased.
+              The demo collection belongs to another fan, so Bandcamp will not expose original downloads, sign in with your own
+              account to download the files you purchased
             </span>
           </div>
         </div>
@@ -126,8 +126,8 @@ export function Downloads(): ReactElement {
           title="No purchases yet"
           description={
             snapshot.demo
-              ? 'The public demo cannot access purchase downloads. Sign in with your own Bandcamp account to download the files you own.'
-              : 'When you buy music on Bandcamp, the original download appears here after your next sync.'
+              ? 'The public demo cannot access purchase downloads, sign in with your own Bandcamp account to download the files you own'
+              : 'When you buy music on Bandcamp, the original download appears here after your next sync'
           }
           action={<Link to="/" className="button primary">Back to collection</Link>}
         />
@@ -195,7 +195,7 @@ export function Downloads(): ReactElement {
           <strong>Bandcamp decides the formats</strong>
           <span>
             The list of available formats comes from your purchase page and can include FLAC, WAV, AIFF, ALAC, Ogg Vorbis and
-            MP3. ZIP bundles are saved as-is. Downloads pause after the app quits and can be restarted here.
+            MP3, ZIP bundles are saved as-is, downloads pause after the app quits and can be restarted here
           </span>
         </div>
       </div>

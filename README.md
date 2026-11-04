@@ -89,8 +89,8 @@ Both platforms are intentionally **unsigned** (`identity: null`, no Windows
 certificate), so mac builds are ad-hoc signed by `scripts/after-pack.mjs` to keep
 Gatekeeper from calling the bundle damaged. On first launch:
 
-- macOS may still quarantine the downloaded app. Either right-click it and choose
-  **Open**, or clear the flag once:
+- macOS may still quarantine the downloaded app. Drag it into Applications and
+  open it normally, or clear the flag once:
   `xattr -cr "/Applications/Side A.app"`. Locally built copies use the same command
   against `release/mac-arm64/Side A.app`.
 - Windows SmartScreen shows "Windows protected your PC" for the installer and the

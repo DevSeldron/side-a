@@ -57,8 +57,8 @@ async function writeResponse(
   destination: string,
   onProgress: (bytes: number, total: number) => void
 ): Promise<number> {
-  if (!response.ok) throw new Error(`Bandcamp returned ${response.status} for this track.`)
-  if (!response.body) throw new Error('Bandcamp returned an empty stream.')
+  if (!response.ok) throw new Error(`Bandcamp returned ${response.status} for this track`)
+  if (!response.body) throw new Error('Bandcamp returned an empty stream')
   const total = Number.parseInt(response.headers.get('content-length') ?? '0', 10) || 0
   const part = `${destination}.part`
   await new Promise<void>((resolve, reject) => {
@@ -112,7 +112,7 @@ export class TrackDownloadManager {
 
   async reveal(id: string): Promise<void> {
     const entry = this.store.get().trackDownloads[id]
-    if (!entry?.filePath) throw new Error('That track has not finished downloading yet.')
+    if (!entry?.filePath) throw new Error('That track has not finished downloading yet')
     shell.showItemInFolder(entry.filePath)
   }
 
@@ -123,16 +123,16 @@ export class TrackDownloadManager {
 
   private async run(id: string, albumKey: string, trackId: number, quality: TrackQuality): Promise<TrackDownload> {
     const album = this.library.findAlbum(albumKey)
-    if (!album) throw new Error('This release is no longer in your library.')
+    if (!album) throw new Error('This release is no longer in your library')
     const detail = await this.library.getDetail(albumKey)
     const track = detail.tracks.find((entry) => entry.id === trackId)
-    if (!track) throw new Error('That track is not part of this release.')
+    if (!track) throw new Error('That track is not part of this release')
 
     const streams = track.streamUrls ?? {}
     const chosen = QUALITY_ORDER[quality].find((key) => streams[key])
     const url = chosen ? streams[chosen] : track.streamUrl
     const actualQuality = chosen ?? 'mp3-128'
-    if (!url) throw new Error('Bandcamp is not offering a downloadable stream for this track.')
+    if (!url) throw new Error('Bandcamp is not offering a downloadable stream for this track')
 
     const start: TrackDownload = {
       id,
@@ -185,7 +185,7 @@ export class TrackDownloadManager {
       this.set(entry)
       return entry
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Could not download this track.'
+      const message = error instanceof Error ? error.message : 'Could not download this track'
       const failed: TrackDownload = { ...start, status: 'error', progress: 0, error: message }
       this.set(failed)
       throw error

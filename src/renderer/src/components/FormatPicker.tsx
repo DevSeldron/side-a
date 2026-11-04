@@ -41,7 +41,7 @@ export function FormatPicker({ album, open, onClose }: FormatPickerProps): React
       })
       .catch((reason) => {
         if (cancelled) return
-        setError(errorMessage(reason, 'Bandcamp did not return any download formats.'))
+        setError(errorMessage(reason, 'Bandcamp did not return any download formats'))
         setLoading(false)
       })
     return () => {
@@ -85,7 +85,7 @@ export function FormatPicker({ album, open, onClose }: FormatPickerProps): React
       {loading ? (
         <div className="format-loading">
           <Loader2 size={20} className="spin" />
-          <span>Asking Bandcamp for your formats…</span>
+          <span>Asking Bandcamp for your formats</span>
         </div>
       ) : error ? (
         <p className="format-error">{error}</p>
@@ -106,7 +106,7 @@ export function FormatPicker({ album, open, onClose }: FormatPickerProps): React
               <span className="format-size">{format.size ? formatBytes(format.size) : ''}</span>
             </button>
           ))}
-          {formats.length === 0 ? <p className="format-error">No downloadable formats were listed for this purchase.</p> : null}
+          {formats.length === 0 ? <p className="format-error">No downloadable formats were listed for this purchase</p> : null}
         </div>
       )}
       {existing?.status === 'done' && existing.filePath ? (

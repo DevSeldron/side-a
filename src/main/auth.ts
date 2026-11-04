@@ -46,12 +46,13 @@ export class AuthManager {
     const stored = this.store.get().auth
     const hasCookie = await this.client.hasIdentityCookie()
     if (stored.username) {
-      if (!hasCookie) return { status: 'signed-out', error: 'Your Bandcamp session has expired.' }
+      if (!hasCookie) return { status: 'signed-out', error: 'Your Bandcamp session has expired' }
       return {
         status: 'signed-in',
         username: stored.username,
         fanId: stored.fanId,
-        displayName: stored.displayName
+        displayName: stored.displayName,
+        photoUrl: stored.photoUrl
       }
     }
     if (this.waitingForUsername && hasCookie) return { status: 'needs-username' }
@@ -159,7 +160,7 @@ export class AuthManager {
         this.waitingForUsername = true
         const auth: AuthState = {
           status: 'needs-username',
-          error: error instanceof Error ? error.message : 'Could not read your Bandcamp profile.'
+          error: error instanceof Error ? error.message : 'Could not read your Bandcamp profile'
         }
         this.emit(auth)
         this.closeLoginWindow()
@@ -237,13 +238,15 @@ export class AuthManager {
     this.store.setAuth({
       username: identity.username,
       fanId: identity.fanId,
-      displayName: identity.displayName
+      displayName: identity.displayName,
+      photoUrl: identity.photoUrl
     })
     const auth: AuthState = {
       status: 'signed-in',
       username: identity.username,
       fanId: identity.fanId,
-      displayName: identity.displayName
+      displayName: identity.displayName,
+      photoUrl: identity.photoUrl
     }
     this.emit(auth)
     this.closeLoginWindow()
@@ -272,27 +275,29 @@ export class AuthManager {
   async setUsername(usernameInput: string): Promise<AuthState> {
     const username = usernameInput.trim().replace(/^@/, '')
     if (!/^[A-Za-z0-9_-]{1,80}$/.test(username)) {
-      throw new Error('Enter a valid Bandcamp username.')
+      throw new Error('Enter a valid Bandcamp username')
     }
     if (!(await this.client.hasIdentityCookie())) {
-      throw new Error('Your Bandcamp session expired. Please sign in again.')
+      throw new Error('Your Bandcamp session expired, sign in again')
     }
     // The typed name is usually the fan URL, but artist accounts often sign in
     // with a different fan page, so fall back to the identity the session itself
     // reports before giving up.
     const identity = (await this.client.validateUsername(username)) ?? (await this.client.discoverIdentity())
-    if (!identity) throw new Error(`We couldn't find a Bandcamp profile named @${username}.`)
+    if (!identity) throw new Error(`We couldn't find a Bandcamp profile named @${username}`)
     this.waitingForUsername = false
     this.store.setAuth({
       username: identity.username,
       fanId: identity.fanId,
-      displayName: identity.displayName
+      displayName: identity.displayName,
+      photoUrl: identity.photoUrl
     })
     const auth: AuthState = {
       status: 'signed-in',
       username: identity.username,
       fanId: identity.fanId,
-      displayName: identity.displayName
+      displayName: identity.displayName,
+      photoUrl: identity.photoUrl
     }
     this.emit(auth)
     this.events.onSignedIn(auth, false)

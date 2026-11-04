@@ -53,8 +53,8 @@ export function Collection(): ReactElement {
         title="Collection"
         description={
           collection.length
-            ? `${plural(collection.length, 'release')} from ${plural(artists, 'artist')}, everything you have bought or added on Bandcamp.`
-            : 'Everything you own on Bandcamp will appear here once you sync.'
+            ? `${plural(collection.length, 'release')} from ${plural(artists, 'artist')}, everything you have bought or added on Bandcamp`
+            : 'Everything you own on Bandcamp will appear here once you sync'
         }
         actions={
           <>
@@ -95,10 +95,10 @@ export function Collection(): ReactElement {
           title={snapshot.sync.status === 'error' ? 'The library could not sync' : 'Your collection is waiting'}
           description={
             snapshot.sync.status === 'error'
-              ? snapshot.sync.error ?? 'Check your connection and try again.'
+              ? snapshot.sync.error ?? 'Check your connection and try again'
               : snapshot.demo
-                ? 'This public demo collection is empty. Try connecting your own Bandcamp account.'
-                : 'Side A has not found any releases yet. Sync to pull your Bandcamp collection into the app.'
+                ? 'This public demo collection is empty, try connecting your own Bandcamp account'
+                : 'Side A has not found any releases yet, sync to pull your Bandcamp collection into the app'
           }
           action={
             <button type="button" className="button primary" onClick={() => void sync()}>
@@ -150,7 +150,7 @@ export function Collection(): ReactElement {
             <EmptyState
               icon={<Search size={24} />}
               title="Nothing matches that filter"
-              description="Try a different artist, release name or turn off the purchased filter."
+              description="Try a different artist or release name, or turn off the purchased filter"
               action={
                 <button type="button" className="button ghost" onClick={() => { setQuery(''); setPurchasedOnly(false) }}>
                   Clear filters

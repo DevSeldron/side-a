@@ -25,7 +25,7 @@ export interface DiscordUpdate {
 
 function truncate(value: string, limit: number): string {
   const trimmed = value.replace(/\s+/g, ' ').trim()
-  return trimmed.length > limit ? `${trimmed.slice(0, limit - 1)}…` : trimmed
+  return trimmed.length > limit ? trimmed.slice(0, limit) : trimmed
 }
 
 function httpsUrl(value: string | undefined): string | undefined {
@@ -203,8 +203,8 @@ export class DiscordService {
       if (this.client === client) {
         this.lastError =
           error instanceof Error && /timeout|connect|ENOENT|socket/i.test(error.message)
-            ? 'Discord is not running. Start it to show Rich Presence.'
-            : 'Could not connect to Discord.'
+            ? 'Discord is not running, start it to show Rich Presence'
+            : 'Could not connect to Discord'
         this.connected = false
         this.client = null
         this.emit()
@@ -266,7 +266,7 @@ export class DiscordService {
       renderTemplate(config.stateTemplate || '{artist} / {album}', input) || input.artist,
       128
     )
-    const pausedPrefix = input.playing ? '' : 'Paused · '
+    const pausedPrefix = input.playing ? '' : 'Paused / '
 
     const activity = {
       type: ACTIVITY_TYPES[activityTypeFor(config.activityType)],
@@ -290,8 +290,7 @@ export class DiscordService {
     }
     try {
       await client.user.setActivity(activity)
-    } catch (error) {
-      this.lastError = 'Discord rejected the presence update.'
+    } catch (error) {        this.lastError = 'Discord rejected the presence update'
       this.emit()
       console.warn('Discord presence failed', error)
     }

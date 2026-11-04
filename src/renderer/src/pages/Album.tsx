@@ -1,4 +1,4 @@
-import { useMemo, useState, type ReactElement } from 'react'
+import { useLayoutEffect, useMemo, useState, type ReactElement } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import {
   AlertCircle,
@@ -50,6 +50,21 @@ export function AlbumPage(): ReactElement {
     )
   }, [snapshot, key])
 
+  const isVoidTribute = Boolean(
+    album?.purchased &&
+      album.title.trim().toLowerCase() === 'void_19####' &&
+      album.bandName.trim().toLowerCase() === 'no love in the house of gold'
+  )
+
+  useLayoutEffect(() => {
+    if (!isVoidTribute) return
+    const root = document.documentElement
+    root.dataset.tribute = 'void'
+    return () => {
+      delete root.dataset.tribute
+    }
+  }, [isVoidTribute])
+
   if (!snapshot || !key) return <div className="page" />
 
   if (!album) {
@@ -58,7 +73,7 @@ export function AlbumPage(): ReactElement {
         <div className="empty-state">
           <span className="empty-icon"><Disc3 size={26} /></span>
           <h2>This release is not in your library</h2>
-          <p>It may have been removed from your Bandcamp collection, or the link is out of date.</p>
+          <p>It may have been removed from your Bandcamp collection, or the link is out of date</p>
           <div className="empty-action">
             <Link className="button primary" to="/">Back to collection</Link>
           </div>
@@ -156,7 +171,7 @@ export function AlbumPage(): ReactElement {
                 disabled={busy || offline?.status === 'downloading' || offline?.status === 'queued'}
               >
                 {busy || offline?.status === 'downloading' || offline?.status === 'queued' ? <Loader2 size={16} className="spin" /> : <HardDrive size={16} />}
-                {offline?.status === 'downloading' || offline?.status === 'queued' ? 'Saving…' : 'Save offline'}
+                {offline?.status === 'downloading' || offline?.status === 'queued' ? 'Saving' : 'Save offline'}
               </button>
             )}
 
@@ -183,7 +198,7 @@ export function AlbumPage(): ReactElement {
           {offline && (offline.status === 'downloading' || offline.status === 'queued') ? (
             <div className="offline-progress-card">
               <div>
-                <strong>{offline.status === 'queued' ? 'Waiting to save…' : 'Saving offline copy'}</strong>
+                <strong>{offline.status === 'queued' ? 'Waiting to save' : 'Saving offline copy'}</strong>
                 <span>{offline.done} of {offline.total} tracks</span>
               </div>
               <ProgressBar value={offline.total ? offline.done / offline.total : offline.progress} />
@@ -191,13 +206,13 @@ export function AlbumPage(): ReactElement {
           ) : null}
 
           {offline?.status === 'error' ? (
-            <p className="inline-error"><AlertCircle size={14} /> {offline.error ?? 'Offline save failed.'}</p>
+            <p className="inline-error"><AlertCircle size={14} /> {offline.error ?? 'Offline save failed'}</p>
           ) : null}
 
           {purchase?.status === 'downloading' || purchase?.status === 'preparing' ? (
             <p className="inline-note">
               <Loader2 size={14} className="spin" />
-              Downloading original files {purchase.totalBytes ? `· ${Math.round(purchase.progress * 100)}%` : ''}
+              Downloading original files {purchase.totalBytes ? `/ ${Math.round(purchase.progress * 100)}%` : ''}
             </p>
           ) : null}
         </div>
@@ -215,7 +230,7 @@ export function AlbumPage(): ReactElement {
       ) : loading && !detail ? (
         <div className="inline-panel">
           <Loader2 size={18} className="spin" />
-          <p>Loading the tracklist from Bandcamp…</p>
+          <p>Loading the tracklist from Bandcamp</p>
         </div>
       ) : detail ? (
         <TrackList album={album} detail={detail} offlineReady={offlineReady} />
@@ -243,14 +258,14 @@ export function AlbumPage(): ReactElement {
           <Heart size={16} />
           <div>
             <strong>On your wishlist</strong>
-            <span>Buying it on Bandcamp unlocks the original download and adds it to your collection.</span>
+            <span>Buying it on Bandcamp unlocks the original download and adds it to your collection</span>
           </div>
           <button
             type="button"
             className="button ghost"
             onClick={() =>
               pushToast('Open Bandcamp to buy', {
-                description: 'Purchases happen on Bandcamp. Side A is read-only for your library.',
+                description: 'Purchases happen on Bandcamp, Side A is read-only for your library',
                 tone: 'info'
               })
             }

@@ -11,7 +11,8 @@ import {
 } from 'lucide-react'
 import { useApp } from '../store/app'
 import { usePlayer } from '../store/player'
-import { cx, formatBytes, initials } from '../lib/format'
+import { UserAvatar } from './UserAvatar'
+import { cx, formatBytes } from '../lib/format'
 
 export function Sidebar(): ReactElement {
   const snapshot = useApp((state) => state.snapshot)
@@ -85,7 +86,7 @@ export function Sidebar(): ReactElement {
             <span className="demo-dot" />
             <div>
               <strong>Public demo</strong>
-              <span>Connect Bandcamp to load your own library.</span>
+              <span>Connect Bandcamp to load your own library</span>
             </div>
             <button type="button" onClick={() => void doLogout()} className="text-button">
               Sign in
@@ -111,7 +112,7 @@ export function Sidebar(): ReactElement {
         </NavLink>
 
         <div className="user-card">
-          <div className="avatar">{initials(snapshot.auth.displayName ?? username)}</div>
+          <UserAvatar src={snapshot.auth.photoUrl} name={snapshot.auth.displayName ?? username} />
           <button type="button" className="user-copy" onClick={() => navigate('/settings')}>
             <strong>@{username}</strong>
             <span>{snapshot.demo ? 'Demo mode' : 'Bandcamp connected'}</span>

@@ -170,9 +170,8 @@ function ensureAudio(): HTMLAudioElement {
     const now = Date.now()
     if (now - lastErrorAt < 1500) return
     lastErrorAt = now
-    usePlayer.setState({ loading: false, playing: false, error: 'This track could not be played.' })
-    useApp.getState().pushToast('Playback error', {
-      description: 'The stream may have expired. Try the track again.',
+    usePlayer.setState({ loading: false, playing: false, error: 'This track could not be played' })
+    useApp.getState().pushToast('Playback error', {        description: 'The stream may have expired, try the track again',
       tone: 'error'
     })
   })
@@ -256,7 +255,7 @@ export const usePlayer = create<PlayerState>()((set, get) => ({
       const album =
         snapshot?.collection.find((entry) => entry.key === albumKey) ??
         snapshot?.wishlist.find((entry) => entry.key === albumKey)
-      if (!detail.tracks.length) throw new Error('This release has no streamable tracks.')
+      if (!detail.tracks.length) throw new Error('This release has no streamable tracks')
       const offline = snapshot?.offline[albumKey]?.status === 'ready'
       const cover = offline
         ? `bcmedia://cover/${albumKey}`

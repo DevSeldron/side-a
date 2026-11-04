@@ -2,7 +2,8 @@ import type { ReactElement } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { AlertCircle, ArrowUpRight, Command, Loader2, RefreshCw, Search, Settings } from 'lucide-react'
 import { useApp } from '../store/app'
-import { cx, initials, relativeDate } from '../lib/format'
+import { UserAvatar } from './UserAvatar'
+import { cx, relativeDate } from '../lib/format'
 
 export function TopBar(): ReactElement {
   const snapshot = useApp((state) => state.snapshot)
@@ -101,9 +102,11 @@ export function TopBar(): ReactElement {
         <Link to="/settings" className="icon-button no-drag" title="Settings">
           <Settings size={18} />
         </Link>
-        <div className="topbar-avatar" title={snapshot.auth.username ? `@${snapshot.auth.username}` : 'Bandcamp'}>
-          {initials(snapshot.auth.displayName ?? snapshot.auth.username)}
-        </div>
+        <UserAvatar
+          className="topbar-avatar"
+          src={snapshot.auth.photoUrl}
+          name={snapshot.auth.displayName ?? snapshot.auth.username}
+        />
       </div>
     </header>
   )

@@ -115,7 +115,7 @@ export function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value))
 }
 
-export function errorMessage(error: unknown, fallback = 'Something went wrong.'): string {
+export function errorMessage(error: unknown, fallback = 'Something went wrong'): string {
   if (error instanceof Error && error.message) return error.message
   if (typeof error === 'string' && error.length) return error
   return fallback
@@ -125,5 +125,5 @@ export function shortPath(path: string, max = 44): string {
   if (path.length <= max) return path
   const pieces = path.split('/')
   const tail = pieces.slice(-2).join('/')
-  return `…/${tail.length > max ? tail.slice(-max) : tail}`
+  return `/${tail.length > max ? tail.slice(-max) : tail}`
 }

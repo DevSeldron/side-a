@@ -20,6 +20,7 @@ export interface PersistedAuth {
   username?: string
   fanId?: number
   displayName?: string
+  photoUrl?: string
 }
 
 export interface PersistedState {
@@ -249,9 +250,9 @@ export class Store {
   }
 
   getAuth(): AuthState {
-    const { username, fanId, displayName } = this.state.auth
+    const { username, fanId, displayName, photoUrl } = this.state.auth
     if (!username) return { status: 'signed-out' }
-    return { status: 'signed-in', username, fanId, displayName }
+    return { status: 'signed-in', username, fanId, displayName, photoUrl }
   }
 
   flush(): void {

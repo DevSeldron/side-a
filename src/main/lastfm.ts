@@ -119,17 +119,17 @@ export class LastfmService {
 
   async connect(parent?: BrowserWindow | null): Promise<LastfmState> {
     if (!this.apiKey() || !this.apiSecret()) {
-      throw new Error('Add your Last.fm API key and secret first.')
+      throw new Error('Add your Last.fm API key and secret first')
     }
-    if (this.authWindow) throw new Error('Last.fm sign-in is already open.')
+    if (this.authWindow) throw new Error('Last.fm sign-in is already open')
 
     let token: string
     try {
       const response = await this.call('auth.getToken')
       token = String(response.token ?? '')
-      if (!token) throw new Error('Last.fm did not return an auth token.')
+      if (!token) throw new Error('Last.fm did not return an auth token')
     } catch (error) {
-      this.lastError = error instanceof Error ? error.message : 'Could not reach Last.fm.'
+      this.lastError = error instanceof Error ? error.message : 'Could not reach Last.fm'
       this.emit()
       throw error
     }
@@ -161,7 +161,7 @@ export class LastfmService {
         let settled = false
         let interval: ReturnType<typeof setInterval> | null = null
         let timeout: ReturnType<typeof setTimeout> | null = null
-        const closed = (): void => finish(() => reject(new Error('Last.fm sign-in was cancelled.')))
+        const closed = (): void => finish(() => reject(new Error('Last.fm sign-in was cancelled')))
         const cleanup = (): void => {
           if (interval) clearInterval(interval)
           if (timeout) clearTimeout(timeout)
@@ -191,7 +191,7 @@ export class LastfmService {
           }
         }
         interval = setInterval(() => void check(), 2000)
-        timeout = setTimeout(() => finish(() => reject(new Error('Last.fm sign-in timed out.'))), 5 * 60_000)
+        timeout = setTimeout(() => finish(() => reject(new Error('Last.fm sign-in timed out'))), 5 * 60_000)
         win.once('closed', closed)
         void check()
       })
@@ -207,7 +207,7 @@ export class LastfmService {
       void this.flush().catch(() => undefined)
       return this.state()
     } catch (error) {
-      this.lastError = error instanceof Error ? error.message : 'Last.fm sign-in failed.'
+      this.lastError = error instanceof Error ? error.message : 'Last.fm sign-in failed'
       this.emit()
       throw error
     } finally {
@@ -338,11 +338,11 @@ export class LastfmService {
       return true
     } catch (error) {
       if (retryable(error)) {
-        this.lastError = 'Last.fm is unreachable. Scrobbles will be sent when it is back.'
+        this.lastError = 'Last.fm is unreachable, scrobbles will be sent when it is back'
         return false
       }
       // Permanent rejections are dropped so the queue cannot get stuck.
-      this.lastError = error instanceof Error ? error.message : 'Last.fm rejected a scrobble.'
+      this.lastError = error instanceof Error ? error.message : 'Last.fm rejected a scrobble'
       return true
     }
   }
@@ -354,12 +354,12 @@ export class LastfmService {
   ): Promise<Record<string, any>> {
     const apiKey = this.apiKey()
     const apiSecret = this.apiSecret()
-    if (!apiKey || !apiSecret) throw new Error('Last.fm is not configured.')
+    if (!apiKey || !apiSecret) throw new Error('Last.fm is not configured')
 
     const signed: Record<string, string> = { method, api_key: apiKey }
     if (options.session) {
       const session = this.sessionKey()
-      if (!session) throw new Error('Connect Last.fm first.')
+      if (!session) throw new Error('Connect Last.fm first')
       signed.sk = session
     }
     for (const [key, value] of Object.entries(params)) {
@@ -395,10 +395,10 @@ export class LastfmService {
       try {
         data = JSON.parse(raw) as Record<string, any>
       } catch {
-        throw new Error(`Last.fm returned an unexpected response (${response.status}).`)
+        throw new Error(`Last.fm returned an unexpected response (${response.status})`)
       }
       if (data?.error) {
-        throw new LastfmError(Number(data.error), String(data.message ?? 'Last.fm rejected the request.'))
+        throw new LastfmError(Number(data.error), String(data.message ?? 'Last.fm rejected the request'))
       }
       if (!response.ok) throw new Error(`Last.fm returned ${response.status}.`)
       return data

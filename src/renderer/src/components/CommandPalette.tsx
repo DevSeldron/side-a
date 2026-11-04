@@ -201,7 +201,7 @@ export function CommandPalette(): ReactElement | null {
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             onKeyDown={onKeyDown}
-            placeholder="Search your collection, or jump to a page…"
+            placeholder="Search your collection, or jump to a page"
             spellCheck={false}
             aria-label="Search"
           />
@@ -235,7 +235,7 @@ export function CommandPalette(): ReactElement | null {
           {items.length === 0 ? (
             <div className="palette-empty">
               <Loader2 size={18} className="spin" />
-              <span>Loading your library…</span>
+              <span>Loading your library</span>
             </div>
           ) : null}
         </div>

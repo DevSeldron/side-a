@@ -107,7 +107,7 @@ export const useApp = create<AppState>()((set, get) => ({
       set({ snapshot, ready: true, loadingError: null })
       void get().checkUpdate()
     } catch (error) {
-      set({ ready: true, loadingError: errorMessage(error, 'Side A could not start.') })
+      set({ ready: true, loadingError: errorMessage(error, 'Side A could not start') })
     }
   },
 
@@ -130,7 +130,7 @@ export const useApp = create<AppState>()((set, get) => ({
       const snapshot = await window.sideA.library.sync()
       set({ snapshot })
       get().pushToast('Library is up to date', {
-        description: `${snapshot.collection.length} releases · ${snapshot.wishlist.length} wishlisted`,
+        description: `${snapshot.collection.length} releases / ${snapshot.wishlist.length} wishlisted`,
         tone: 'success'
       })
     } catch (error) {
@@ -165,7 +165,7 @@ export const useApp = create<AppState>()((set, get) => ({
       await window.sideA.auth.startDemo()
       await get().refresh()
       get().pushToast('Demo collection loaded', {
-        description: 'Browse and listen freely. Purchased downloads need your own account.',
+        description: 'Browse and listen freely, purchased downloads need your own account',
         tone: 'info'
       })
     } catch (error) {
@@ -219,8 +219,8 @@ export const useApp = create<AppState>()((set, get) => ({
       await get().refresh()
       get().pushToast('Offline queue started', {
         description: result.queued
-          ? `${result.queued} release${result.queued === 1 ? '' : 's'} queued${result.skipped ? ` · ${result.skipped} already saved` : ''}`
-          : 'Every purchased release is already available offline.',
+          ? `${result.queued} release${result.queued === 1 ? '' : 's'} queued${result.skipped ? ` / ${result.skipped} already saved` : ''}`
+          : 'Every purchased release is already available offline',
         tone: result.queued ? 'success' : 'info'
       })
     } catch (error) {
@@ -294,7 +294,7 @@ export const useApp = create<AppState>()((set, get) => ({
     try {
       await window.sideA.settings.clearCaches()
       get().pushToast('Caches cleared', {
-        description: 'Release details and downloaded artwork will be fetched again.',
+        description: 'Release details and downloaded artwork will be fetched again',
         tone: 'success'
       })
     } catch (error) {
@@ -323,8 +323,8 @@ export const useApp = create<AppState>()((set, get) => ({
       get().applyIntegrations(integrations)
       get().pushToast('Last.fm connected', {
         description: integrations.lastfm.username
-          ? `Scrobbling as @${integrations.lastfm.username}.`
-          : 'New plays are being scrobbled.',
+          ? `Scrobbling as @${integrations.lastfm.username}`
+          : 'New plays are being scrobbled',
         tone: 'success'
       })
     } catch (error) {
@@ -369,8 +369,8 @@ export const useApp = create<AppState>()((set, get) => ({
         {
           description:
             integrations.lastfm.pending === 0
-              ? 'Everything queued has reached Last.fm.'
-              : `${integrations.lastfm.pending} scrobble${integrations.lastfm.pending === 1 ? '' : 's'} still queued.`,
+              ? 'Everything queued has reached Last.fm'
+              : `${integrations.lastfm.pending} scrobble${integrations.lastfm.pending === 1 ? '' : 's'} still queued`,
           tone: integrations.lastfm.pending === 0 ? 'success' : 'info'
         }
       )
@@ -424,7 +424,7 @@ export const useApp = create<AppState>()((set, get) => ({
     }
     if (auth.status === 'needs-username') {
       get().pushToast('Signed in, one more step', {
-        description: 'Enter your Bandcamp username so Side A can find your collection.',
+        description: 'Enter your Bandcamp username so Side A can find your collection',
         tone: 'info'
       })
     }
@@ -453,7 +453,7 @@ export const useApp = create<AppState>()((set, get) => ({
     }
     if (entry.status === 'error') {
       get().pushToast('Offline download failed', {
-        description: entry.error ?? 'Try again in a moment.',
+        description: entry.error ?? 'Try again in a moment',
         tone: 'error'
       })
     }
@@ -474,7 +474,7 @@ export const useApp = create<AppState>()((set, get) => ({
     }
     if (entry.status === 'error') {
       get().pushToast('Purchase download failed', {
-        description: entry.error ?? 'Try again in a moment.',
+        description: entry.error ?? 'Try again in a moment',
         tone: 'error'
       })
     }
@@ -489,7 +489,7 @@ export const useApp = create<AppState>()((set, get) => ({
     }))
     if (entry.status === 'done') {
       get().pushToast('Track saved', {
-        description: `${entry.artist}, ${entry.title} · ${entry.actualQuality ?? entry.quality}`,
+        description: `${entry.artist}, ${entry.title} / ${entry.actualQuality ?? entry.quality}`,
         tone: 'success'
       })
     }

@@ -49,11 +49,11 @@ function readText(value: unknown, limit: number): string | undefined {
 }
 
 function readScrobble(value: unknown): ScrobbleInput {
-  if (!value || typeof value !== 'object') throw new Error('Invalid scrobble payload.')
+  if (!value || typeof value !== 'object') throw new Error('Invalid scrobble payload')
   const input = value as Record<string, unknown>
   const artist = readText(input.artist, 300)
   const title = readText(input.title, 300)
-  if (!artist || !title) throw new Error('A scrobble needs an artist and a title.')
+  if (!artist || !title) throw new Error('A scrobble needs an artist and a title')
   const timestamp = Number(input.timestamp)
   const duration = Number(input.duration)
   const trackNumber = Number(input.trackNumber)
@@ -72,11 +72,11 @@ function readScrobble(value: unknown): ScrobbleInput {
 
 function readPresence(value: unknown): PresenceInput | null {
   if (value === null) return null
-  if (!value || typeof value !== 'object') throw new Error('Invalid presence payload.')
+  if (!value || typeof value !== 'object') throw new Error('Invalid presence payload')
   const input = value as Record<string, unknown>
   const artist = readText(input.artist, 300)
   const title = readText(input.title, 300)
-  if (!artist || !title) throw new Error('Presence needs an artist and a title.')
+  if (!artist || !title) throw new Error('Presence needs an artist and a title')
   const position = Number(input.position)
   const duration = Number(input.duration)
   return {
@@ -129,7 +129,7 @@ export function registerIpc(context: IpcContext): void {
   const syncFor = async (): Promise<LibrarySnapshot> => {
     const authState = await auth.getState()
     if (authState.status !== 'signed-in' && authState.status !== 'demo') {
-      throw new Error('Sign in to Bandcamp to sync your collection.')
+      throw new Error('Sign in to Bandcamp to sync your collection')
     }
     await library.sync(authState, authState.status === 'demo')
     return snapshot()
@@ -138,29 +138,29 @@ export function registerIpc(context: IpcContext): void {
   ipcMain.handle(IPC.getState, () => snapshot())
   ipcMain.handle(IPC.updatesCheck, () => checkForUpdate())
   ipcMain.handle(IPC.artworkAccent, async (_event, url: unknown) => {
-    if (typeof url !== 'string' || url.length > 2048) throw new Error('Invalid artwork URL.')
+    if (typeof url !== 'string' || url.length > 2048) throw new Error('Invalid artwork URL')
     return artworkAccent(url, client, library)
   })
   ipcMain.handle(IPC.discoverSearch, async (_event, query: unknown) => {
-    if (typeof query !== 'string' || query.trim().length < 2) throw new Error('Type at least two characters to search.')
+    if (typeof query !== 'string' || query.trim().length < 2) throw new Error('Type at least two characters to search')
     return client.searchDiscover(query.trim().slice(0, 120))
   })
   ipcMain.handle(IPC.discoverArtist, async (_event, bandId: unknown) => {
-    if (typeof bandId !== 'number' || !Number.isFinite(bandId)) throw new Error('Invalid artist id.')
+    if (typeof bandId !== 'number' || !Number.isFinite(bandId)) throw new Error('Invalid artist id')
     return client.fetchArtist(bandId)
   })
   ipcMain.handle(IPC.discoverAlbum, async (_event, bandId: unknown, tralbumId: unknown, tralbumType: unknown) => {
-    if (typeof bandId !== 'number' || !Number.isFinite(bandId)) throw new Error('Invalid artist id.')
-    if (typeof tralbumId !== 'number' || !Number.isFinite(tralbumId)) throw new Error('Invalid release id.')
+    if (typeof bandId !== 'number' || !Number.isFinite(bandId)) throw new Error('Invalid artist id')
+    if (typeof tralbumId !== 'number' || !Number.isFinite(tralbumId)) throw new Error('Invalid release id')
     const type = tralbumType === 't' ? 't' : 'a'
     return client.fetchDiscoveredAlbum(bandId, tralbumId, type)
   })
   ipcMain.handle(IPC.discoverStream, async (_event, url: unknown) => {
-    if (typeof url !== 'string') throw new Error('Invalid stream URL.')
+    if (typeof url !== 'string') throw new Error('Invalid stream URL')
     const parsed = new URL(url)
     const host = parsed.hostname.toLowerCase()
     if (parsed.protocol !== 'https:' || (host !== 'bandcamp.com' && !host.endsWith('.bcbits.com'))) {
-      throw new Error('Invalid stream URL.')
+      throw new Error('Invalid stream URL')
     }
     return media.ticketForUrl(parsed.toString())
   })
@@ -182,69 +182,69 @@ export function registerIpc(context: IpcContext): void {
     store.flush()
   })
   ipcMain.handle(IPC.authSetUsername, (_event, username: unknown) => {
-    if (typeof username !== 'string') throw new Error('A username is required.')
+    if (typeof username !== 'string') throw new Error('A username is required')
     return auth.setUsername(username)
   })
   ipcMain.handle(IPC.authStartDemo, () => auth.startDemo())
 
   ipcMain.handle(IPC.librarySync, () => syncFor())
   ipcMain.handle(IPC.libraryAlbum, async (_event, key: unknown, force: unknown) => {
-    if (typeof key !== 'string' || !/^[pt]\d+$/.test(key)) throw new Error('Invalid release id.')
+    if (typeof key !== 'string' || !/^[pt]\d+$/.test(key)) throw new Error('Invalid release id')
     return library.getDetail(key, force === true)
   })
 
   ipcMain.handle(IPC.openExternal, async (_event, url: unknown) => {
-    if (typeof url !== 'string') throw new Error('Invalid URL.')
+    if (typeof url !== 'string') throw new Error('Invalid URL')
     const parsed = new URL(url)
-    if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') throw new Error('Only web links can be opened.')
+    if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') throw new Error('Only web links can be opened')
     await shell.openExternal(parsed.toString())
   })
 
   ipcMain.handle(IPC.playbackStream, async (_event, albumKey: unknown, trackId: unknown) => {
-    if (typeof albumKey !== 'string' || !/^[pt]\d+$/.test(albumKey)) throw new Error('Invalid release id.')
-    if (typeof trackId !== 'number' || !Number.isFinite(trackId)) throw new Error('Invalid track id.')
+    if (typeof albumKey !== 'string' || !/^[pt]\d+$/.test(albumKey)) throw new Error('Invalid release id')
+    if (typeof trackId !== 'number' || !Number.isFinite(trackId)) throw new Error('Invalid track id')
     return media.ticket(albumKey, trackId)
   })
 
   ipcMain.handle(IPC.offlineSave, async (_event, key: unknown) => {
-    if (typeof key !== 'string' || !/^[pt]\d+$/.test(key)) throw new Error('Invalid release id.')
+    if (typeof key !== 'string' || !/^[pt]\d+$/.test(key)) throw new Error('Invalid release id')
     const entry = await library.saveOffline(key)
     return publicOffline(entry)
   })
   ipcMain.handle(IPC.offlineRemove, async (_event, key: unknown) => {
-    if (typeof key !== 'string' || !/^[pt]\d+$/.test(key)) throw new Error('Invalid release id.')
+    if (typeof key !== 'string' || !/^[pt]\d+$/.test(key)) throw new Error('Invalid release id')
     await library.removeOffline(key)
   })
   ipcMain.handle(IPC.offlineSaveAll, () => library.saveAllPurchased())
   ipcMain.handle(IPC.offlineOpenFolder, () => library.openOfflineFolder())
 
   ipcMain.handle(IPC.purchaseFormats, async (_event, key: unknown) => {
-    if (typeof key !== 'string' || !/^[pt]\d+$/.test(key)) throw new Error('Invalid release id.')
+    if (typeof key !== 'string' || !/^[pt]\d+$/.test(key)) throw new Error('Invalid release id')
     return purchases.formats(key)
   })
   ipcMain.handle(IPC.purchaseDownload, async (_event, key: unknown, format: unknown) => {
-    if (typeof key !== 'string' || !/^[pt]\d+$/.test(key)) throw new Error('Invalid release id.')
-    if (typeof format !== 'string' || !/^[a-z0-9-]{1,32}$/i.test(format)) throw new Error('Invalid download format.')
+    if (typeof key !== 'string' || !/^[pt]\d+$/.test(key)) throw new Error('Invalid release id')
+    if (typeof format !== 'string' || !/^[a-z0-9-]{1,32}$/i.test(format)) throw new Error('Invalid download format')
     return purchases.download(key, format)
   })
   ipcMain.handle(IPC.purchaseReveal, async (_event, key: unknown) => {
-    if (typeof key !== 'string' || !/^[pt]\d+$/.test(key)) throw new Error('Invalid release id.')
+    if (typeof key !== 'string' || !/^[pt]\d+$/.test(key)) throw new Error('Invalid release id')
     await purchases.reveal(key)
   })
 
   ipcMain.handle(IPC.trackDownload, async (_event, key: unknown, trackId: unknown, quality: unknown) => {
-    if (typeof key !== 'string' || !/^[pt]\d+$/.test(key)) throw new Error('Invalid release id.')
-    if (typeof trackId !== 'number' || !Number.isFinite(trackId)) throw new Error('Invalid track id.')
-    if (!TRACK_QUALITIES.includes(quality as TrackQuality)) throw new Error('Invalid download quality.')
+    if (typeof key !== 'string' || !/^[pt]\d+$/.test(key)) throw new Error('Invalid release id')
+    if (typeof trackId !== 'number' || !Number.isFinite(trackId)) throw new Error('Invalid track id')
+    if (!TRACK_QUALITIES.includes(quality as TrackQuality)) throw new Error('Invalid download quality')
     return trackDownloads.download(key, trackId, quality as TrackQuality)
   })
   ipcMain.handle(IPC.trackReveal, async (_event, id: unknown) => {
-    if (typeof id !== 'string' || !/^[pt]\d+:\d+$/.test(id)) throw new Error('Invalid download id.')
+    if (typeof id !== 'string' || !/^[pt]\d+:\d+$/.test(id)) throw new Error('Invalid download id')
     await trackDownloads.reveal(id)
   })
 
   ipcMain.handle(IPC.settingsUpdate, async (_event, patch: unknown) => {
-    if (!patch || typeof patch !== 'object') throw new Error('Invalid settings.')
+    if (!patch || typeof patch !== 'object') throw new Error('Invalid settings')
     const input = patch as Record<string, unknown>
     const allowed: Partial<Settings> = {}
     if (typeof input.prefetchDetails === 'boolean') allowed.prefetchDetails = input.prefetchDetails
@@ -303,7 +303,7 @@ export function registerIpc(context: IpcContext): void {
   // snapshot whose `integrations.discord` was undefined, which crashed the
   // settings page on the next render.
   ipcMain.handle(IPC.lastfmUpdate, (_event, patch: unknown) => {
-    if (!patch || typeof patch !== 'object') throw new Error('Invalid Last.fm settings.')
+    if (!patch || typeof patch !== 'object') throw new Error('Invalid Last.fm settings')
     const input = patch as Record<string, unknown>
     lastfm.update({
       enabled: typeof input.enabled === 'boolean' ? input.enabled : undefined,
@@ -330,10 +330,10 @@ export function registerIpc(context: IpcContext): void {
     return integrationState(lastfm, discord)
   })
   ipcMain.handle(IPC.discordUpdate, (_event, patch: unknown) => {
-    if (!patch || typeof patch !== 'object') throw new Error('Invalid Discord settings.')
+    if (!patch || typeof patch !== 'object') throw new Error('Invalid Discord settings')
     const input = patch as Record<string, unknown>
     if (typeof input.clientId === 'string' && input.clientId.trim() && !/^\d{15,25}$/.test(input.clientId.trim())) {
-      throw new Error('A Discord application ID is a 15–25 digit number.')
+      throw new Error('A Discord application ID is a 15–25 digit number')
     }
     const next: DiscordUpdate = {
       enabled: typeof input.enabled === 'boolean' ? input.enabled : undefined,

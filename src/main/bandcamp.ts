@@ -61,7 +61,7 @@ interface FanData {
   name?: string
   trackpipe_url?: string
   is_own_page?: boolean | null
-  photo?: { image_id?: number } | null
+  photo?: { image_id?: number | string } | null
 }
 
 interface CollectionPageData {
@@ -189,6 +189,7 @@ export interface DiscoveredIdentity {
   username: string
   fanId: number
   displayName?: string
+  photoUrl?: string
   isOwnPage?: boolean
 }
 
@@ -342,16 +343,23 @@ function artUrl(artId: number | undefined, size: 9 | 10 | 3 = 9): string | undef
   return `https://f4.bcbits.com/img/a${artId}_${size}.jpg`
 }
 
-function imageUrl(imageId: number | undefined, size: 9 | 10 | 3 = 9): string | undefined {
+function imageUrl(imageId: number | string | undefined, size: 9 | 10 | 3 = 9): string | undefined {
   if (!imageId) return undefined
   return `https://f4.bcbits.com/img/${imageId}_${size}.jpg`
+}
+
+function fanPhotoUrl(fan: { photo?: { image_id?: number | string } | null } | null | undefined): string | undefined {
+  return imageUrl(fan?.photo?.image_id, 10)
 }
 
 function toDiscoverResult(raw: RawSearchResult): DiscoverResult | null {
   if (!raw.id || !raw.name) return null
   const kind: DiscoverKind | null = raw.type === 'b' ? 'artist' : raw.type === 'a' ? 'album' : raw.type === 't' ? 'track' : null
   if (!kind) return null
-  const art = raw.img ?? artUrl(raw.art_id, 9)
+  // Search returns `img` with the wrong path for releases: it points at
+  // `/img/{art_id}` while album art lives at `/img/a{art_id}`. Use the art id
+  // so Discover covers load, and keep `img` as the artist fallback.
+  const art = kind === 'artist' ? raw.img ?? artUrl(raw.art_id, 9) : artUrl(raw.art_id, 10) ?? raw.img
   if (kind === 'artist') {
     return {
       kind,
@@ -489,13 +497,16 @@ export class BandcampClient {
     // Account pages (bandcamp.com/profile) expose the signed-in fan here, which
     // is what an artist account with a separate fan page looks like.
     const identities = (
-      blob as { identities?: { fan?: { id?: number; username?: string; name?: string } } } | null
+      blob as {
+        identities?: { fan?: { id?: number; username?: string; name?: string; photo?: { image_id?: number | string } } }
+      } | null
     )?.identities?.fan
     if (identities?.id && identities.username) {
       return {
         username: identities.username,
         fanId: identities.id,
         displayName: identities.name,
+        photoUrl: imageUrl(identities.photo?.image_id, 10),
         isOwnPage: true
       }
     }
@@ -505,6 +516,7 @@ export class BandcampClient {
       username: fan.username,
       fanId: fan.fan_id,
       displayName: fan.name,
+      photoUrl: fanPhotoUrl(fan),
       isOwnPage: fan.is_own_page === true
     }
   }
@@ -585,6 +597,7 @@ export class BandcampClient {
         username: fan.username,
         fanId: fan.fan_id,
         displayName: fan.name,
+        photoUrl: fanPhotoUrl(fan),
         isOwnPage: fan.is_own_page === true
       }
     } catch {
@@ -607,7 +620,7 @@ export class BandcampClient {
     const html = await response.text()
     const blob = extractPageBlob(html) as CollectionPageData | null
     if (!blob?.fan_data?.fan_id || !blob.fan_data.username) {
-      throw new Error('That Bandcamp profile could not be read. Make sure the username is correct.')
+      throw new Error('That Bandcamp profile could not be read, make sure the username is correct')
     }
     const redownloads = { ...(blob.collection_data?.redownload_urls ?? {}) }
     const collectionCache = blob.item_cache?.collection ?? {}
@@ -635,6 +648,7 @@ export class BandcampClient {
         username: blob.fan_data.username,
         fanId: blob.fan_data.fan_id,
         displayName: blob.fan_data.name,
+        photoUrl: fanPhotoUrl(blob.fan_data),
         isOwnPage: blob.fan_data.is_own_page === true
       },
       collection,
@@ -668,7 +682,7 @@ export class BandcampClient {
     try {
       return JSON.parse(text) as CollectionApiPage
     } catch {
-      throw new Error('Bandcamp returned an unexpected collection response.')
+      throw new Error('Bandcamp returned an unexpected collection response')
     }
   }
 
@@ -677,10 +691,10 @@ export class BandcampClient {
     expectedFanId: number | undefined,
     onProgress: (progress: SyncProgress) => void
   ): Promise<{ collection: Album[]; wishlist: Album[]; redownloads: Record<string, string>; fan: DiscoveredIdentity }> {
-    onProgress({ progress: 0.05, message: 'Reading your collection…', collectionCount: 0, wishlistCount: 0 })
+    onProgress({ progress: 0.05, message: 'Reading your collection', collectionCount: 0, wishlistCount: 0 })
     const page = await this.fetchFanPage(username)
     if (expectedFanId && page.fan.fanId !== expectedFanId) {
-      throw new Error('The signed-in Bandcamp account does not match the cached profile.')
+      throw new Error('The signed-in Bandcamp account does not match the cached profile')
     }
     const fanId = page.fan.fanId
     const redownloads = { ...page.redownloads }
@@ -691,7 +705,7 @@ export class BandcampClient {
 
     onProgress({
       progress: 0.2,
-      message: `Loading collection · ${collection.length} found`,
+      message: `Loading collection / ${collection.length} found`,
       collectionCount: collection.length,
       wishlistCount: wishlist.length
     })
@@ -709,7 +723,7 @@ export class BandcampClient {
         if (result.error) {
           // A repair pass that only looks for download links must not fail the sync.
           if (page.collectionMore) {
-            throw new Error(result.error_message || 'Bandcamp rejected the collection request.')
+            throw new Error(result.error_message || 'Bandcamp rejected the collection request')
           }
           break
         }
@@ -725,7 +739,7 @@ export class BandcampClient {
         token = result.more_available ? result.last_token : undefined
         onProgress({
           progress: Math.min(0.75, 0.2 + pages * 0.055),
-          message: `Loading collection · ${collection.length} found`,
+          message: `Loading collection / ${collection.length} found`,
           collectionCount: collection.length,
           wishlistCount: wishlist.length
         })
@@ -749,7 +763,7 @@ export class BandcampClient {
         token = result.more_available ? result.last_token : undefined
         onProgress({
           progress: Math.min(0.9, 0.76 + pages * 0.03),
-          message: `Loading wishlist · ${wishlist.length} found`,
+          message: `Loading wishlist / ${wishlist.length} found`,
           collectionCount: collection.length,
           wishlistCount: wishlist.length
         })
@@ -765,7 +779,7 @@ export class BandcampClient {
 
     onProgress({
       progress: 0.95,
-      message: 'Finishing up…',
+      message: 'Finishing up',
       collectionCount: collection.length,
       wishlistCount: wishlist.length
     })
@@ -791,7 +805,7 @@ export class BandcampClient {
     })
     if (!response.ok) throw new Error(`Could not load ${album.title} (${response.status})`)
     const data = (await response.json()) as MobileTralbum
-    if (data.error) throw new Error(data.error_message || 'Bandcamp could not load this release.')
+    if (data.error) throw new Error(data.error_message || 'Bandcamp could not load this release')
     const tracks: Track[] = (data.tracks ?? []).map((raw, index) => {
       const stream = raw.streaming_url?.['mp3-128'] ?? raw.streaming_url?.['mp3-320'] ?? raw.file?.['mp3-128']
       const streamUrls: Record<string, string> = { ...(raw.file ?? {}), ...(raw.streaming_url ?? {}) }
@@ -824,7 +838,7 @@ export class BandcampClient {
       fetchedAt: Date.now()
     }
     this.detailCache.set(album.itemId, detail)
-    if (tracks.length === 0) throw new Error('This release has no streamable tracks.')
+    if (tracks.length === 0) throw new Error('This release has no streamable tracks')
     return detail
   }
 
@@ -832,13 +846,13 @@ export class BandcampClient {
     let detail = current ?? this.detailCache.get(album.itemId)
     const stale = !detail || Date.now() - detail.fetchedAt > 1000 * 60 * 20
     if (stale) detail = await this.fetchAlbumDetail(album, true)
-    if (!detail) throw new Error('Release details are unavailable.')
+    if (!detail) throw new Error('Release details are unavailable')
     let track = detail.tracks.find((entry) => entry.id === trackId)
     if (!track?.streamUrl) {
       detail = await this.fetchAlbumDetail(album, true)
       track = detail.tracks.find((entry) => entry.id === trackId)
     }
-    if (!track?.streamUrl) throw new Error('This track cannot be streamed right now.')
+    if (!track?.streamUrl) throw new Error('This track cannot be streamed right now')
     return { url: track.streamUrl, detail }
   }
 
@@ -848,7 +862,7 @@ export class BandcampClient {
       headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
       body: JSON.stringify({ search_text: query, search_filter: '', full_page: true, fan_id: null })
     })
-    if (!response.ok) throw new Error(`Bandcamp search failed (${response.status}).`)
+    if (!response.ok) throw new Error(`Bandcamp search failed (${response.status})`)
     const data = (await response.json()) as { auto?: { results?: RawSearchResult[] } }
     return (data.auto?.results ?? [])
       .map((raw) => toDiscoverResult(raw))
@@ -859,9 +873,9 @@ export class BandcampClient {
     const response = await this.request(`${API}/api/mobile/24/band_details?band_id=${bandId}`, {
       headers: { Accept: 'application/json', Referer: `${API}/` }
     })
-    if (!response.ok) throw new Error(`Could not load this artist (${response.status}).`)
+    if (!response.ok) throw new Error(`Could not load this artist (${response.status})`)
     const data = (await response.json()) as BandDetails
-    if (!data.name) throw new Error('Bandcamp did not return that artist.')
+    if (!data.name) throw new Error('Bandcamp did not return that artist')
     const releases: DiscoverResult[] = (data.discography ?? [])
       .filter((entry) => entry.item_id && entry.title)
       .map((entry) => ({
@@ -892,9 +906,9 @@ export class BandcampClient {
     const response = await this.request(url.toString(), {
       headers: { Accept: 'application/json', Referer: `${API}/` }
     })
-    if (!response.ok) throw new Error(`Could not load this release (${response.status}).`)
+    if (!response.ok) throw new Error(`Could not load this release (${response.status})`)
     const data = (await response.json()) as MobileTralbum
-    if (data.error) throw new Error(data.error_message || 'Bandcamp could not load this release.')
+    if (data.error) throw new Error(data.error_message || 'Bandcamp could not load this release')
     const tracks: Track[] = (data.tracks ?? []).map((raw, index) => {
       const stream = raw.streaming_url?.['mp3-128'] ?? raw.streaming_url?.['mp3-320'] ?? raw.file?.['mp3-128']
       return {
@@ -934,7 +948,7 @@ export class BandcampClient {
     const blob = extractPageBlob(html) as Record<string, unknown> | null
     const items = (blob?.digital_items ?? blob?.download_items) as Array<Record<string, unknown>> | undefined
     const digitalItem = items?.[0]
-    if (!digitalItem) throw new Error('This purchase has no digital download attached.')
+    if (!digitalItem) throw new Error('This purchase has no digital download attached')
     const rawDownloads = (digitalItem.downloads ?? {}) as Record<string, unknown>
     const downloads: Record<string, { url: string; size?: number }> = {}
     for (const [format, value] of Object.entries(rawDownloads)) {
@@ -950,7 +964,7 @@ export class BandcampClient {
         }
       }
     }
-    if (Object.keys(downloads).length === 0) throw new Error('No downloadable formats were found for this purchase.')
+    if (Object.keys(downloads).length === 0) throw new Error('No downloadable formats were found for this purchase')
     const formats = Object.entries(downloads).map(([id, value]) => ({
       id,
       label: formatLabel(id),
@@ -970,7 +984,7 @@ export class BandcampClient {
   async resolvePurchaseDownload(redownloadUrl: string, format: string): Promise<PurchaseDownloadLink> {
     const info = await this.fetchPurchaseInfo(redownloadUrl)
     const chosen = info.downloads[format] ?? info.downloads[info.formats[0]?.id ?? '']
-    if (!chosen) throw new Error('That download format is not available.')
+    if (!chosen) throw new Error('That download format is not available')
     let finalUrl = chosen.url
     try {
       const stat = new URL(chosen.url, API)

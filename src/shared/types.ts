@@ -5,6 +5,7 @@ export interface AuthState {
   username?: string
   fanId?: number
   displayName?: string
+  photoUrl?: string
   error?: string
 }
 

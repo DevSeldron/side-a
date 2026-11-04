@@ -1,8 +1,9 @@
 import { _electron as electron } from 'playwright-core'
-import { mkdir } from 'node:fs/promises'
+import { mkdir, rm } from 'node:fs/promises'
 
 const out = 'site/assets/screens'
 await mkdir(out, { recursive: true })
+await rm('/tmp/sidea-site-capture', { recursive: true, force: true })
 
 const app = await electron.launch({
   args: ['.', '--user-data-dir=/tmp/sidea-site-capture'],
@@ -54,13 +55,19 @@ if (await nowButton.count()) {
   await page.waitForTimeout(400)
 }
 
-await page.goto(page.url().replace(/#.*$/, '#/discover'))
-await page.waitForTimeout(1200)
+await page.locator('.nav-item', { hasText: 'Discover' }).click()
+await page.waitForSelector('.discover-search input', { timeout: 10000 })
+await page.locator('.discover-search input').fill('dassuo')
+await page.waitForSelector('.discover-card-art img', { timeout: 20000 })
+await page.waitForTimeout(1800)
+await page.mouse.move(1200, 120)
 await page.screenshot({ path: `${out}/discover.png` })
 console.log('discover.png')
 
-await page.goto(page.url().replace(/#.*$/, '#/settings'))
+await page.locator('.nav-item', { hasText: 'Settings' }).click()
+await page.waitForSelector('.settings-page', { timeout: 10000 })
 await page.waitForTimeout(900)
+await page.mouse.move(1200, 120)
 await page.screenshot({ path: `${out}/settings.png` })
 console.log('settings.png')
 

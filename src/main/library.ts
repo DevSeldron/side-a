@@ -89,7 +89,7 @@ export class Library {
     const updates: Array<[string, OfflineEntry | null]> = []
     for (const [key, entry] of Object.entries(state.offline)) {
       if (entry.status !== 'ready') {
-        updates.push([key, { ...entry, status: 'error', error: 'This download was interrupted.', progress: 0 }])
+        updates.push([key, { ...entry, status: 'error', error: 'This download was interrupted', progress: 0 }])
         continue
       }
       const files = entry.files ?? {}
@@ -101,7 +101,7 @@ export class Library {
         }
       })
       if (missing || !Object.keys(files).length) {
-        updates.push([key, { ...entry, status: 'error', error: 'The offline files are missing. Download again.', progress: 0 }])
+        updates.push([key, { ...entry, status: 'error', error: 'The offline files are missing, download again', progress: 0 }])
       }
     }
     for (const [key, entry] of updates) {
@@ -129,11 +129,11 @@ export class Library {
 
   private async runSync(auth: AuthState, demo: boolean): Promise<void> {
     const username = auth.username
-    if (!username) throw new Error('Sign in to Bandcamp first.')
+    if (!username) throw new Error('Sign in to Bandcamp first')
     const progressState: SyncState = {
       status: 'syncing',
       progress: 0,
-      message: demo ? 'Loading the public demo collection…' : 'Connecting to Bandcamp…',
+      message: demo ? 'Loading the public demo collection' : 'Connecting to Bandcamp',
       collectionCount: 0,
       wishlistCount: 0,
       lastSyncedAt: this.store.get().sync.lastSyncedAt
@@ -155,9 +155,10 @@ export class Library {
         this.events.onSyncChanged(next)
       })
       this.store.setCollection(result.collection, result.wishlist, result.redownloads)
-      // Keep the display name fresh from the profile.
+      // Keep the identity details fresh from the profile.
       this.store.update((state) => {
         if (result.fan.displayName) state.auth.displayName = result.fan.displayName
+        if (result.fan.photoUrl) state.auth.photoUrl = result.fan.photoUrl
       })
       const done = this.store.get().sync
       this.events.onSyncChanged(done)
@@ -166,7 +167,7 @@ export class Library {
         void this.prefetch(result.collection.slice(0, 40))
       }
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Could not sync your Bandcamp library.'
+      const message = error instanceof Error ? error.message : 'Could not sync your Bandcamp library'
       const failed = this.store.setSync({
         status: 'error',
         message: 'Could not sync',
@@ -204,7 +205,7 @@ export class Library {
 
   async getDetail(key: string, force = false): Promise<AlbumDetail> {
     const album = this.findAlbum(key)
-    if (!album) throw new Error('This release is no longer in your library.')
+    if (!album) throw new Error('This release is no longer in your library')
     const cached = this.store.get().details[key]
     if (!force && cached) return cached
     const existing = this.detailRequests.get(key)
@@ -236,7 +237,7 @@ export class Library {
       }
     }
     const album = this.findAlbum(albumKey)
-    if (!album) throw new Error('This release is no longer in your library.')
+    if (!album) throw new Error('This release is no longer in your library')
     const detail = await this.getDetail(albumKey)
     const result = await this.client.getStreamUrl(album, trackId, detail)
     if (result.detail.fetchedAt !== detail.fetchedAt) this.store.setDetail(result.detail)
@@ -280,7 +281,7 @@ export class Library {
 
   private async executeSave(key: string): Promise<OfflineEntry> {
     const album = this.findAlbum(key)
-    if (!album) throw new Error('This release is no longer in your library.')
+    if (!album) throw new Error('This release is no longer in your library')
     const queued = this.store.get().offline[key]
     const total = Math.max(1, queued?.total || album.numTracks || 1)
     let entry: OfflineEntry = {
@@ -296,7 +297,7 @@ export class Library {
     try {
       const detail = await this.getDetail(key, true)
       const tracks = detail.tracks
-      if (!tracks.length) throw new Error('This release has no streamable tracks.')
+      if (!tracks.length) throw new Error('This release has no streamable tracks')
       const root = getAppPaths().offlineRoot
       const folder = join(root, key)
       await rm(folder, { recursive: true, force: true })
@@ -392,7 +393,7 @@ export class Library {
       this.events.onOfflineChanged(entry)
       return entry
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Could not save this release offline.'
+      const message = error instanceof Error ? error.message : 'Could not save this release offline'
       try {
         await rm(join(getAppPaths().offlineRoot, key), { recursive: true, force: true })
       } catch {

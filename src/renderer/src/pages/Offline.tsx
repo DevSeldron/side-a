@@ -35,8 +35,8 @@ export function Offline(): ReactElement {
         title="Offline"
         description={
           ready.length
-            ? `${plural(ready.length, 'release')} and ${plural(tracks, 'track')} stored locally, ${formatBytes(bytes)} of music that plays without a connection.`
-            : 'Save releases for flights, trains and dead zones. Side A stores a 128 kbps copy locally; purchases can also be kept as original files.'
+            ? `${plural(ready.length, 'release')} and ${plural(tracks, 'track')} stored locally, ${formatBytes(bytes)} of music that plays without a connection`
+            : 'Save releases for flights, trains and dead zones, Side A stores a 128 kbps copy locally, purchases can also be kept as original files'
         }
         actions={
           <>
@@ -63,7 +63,7 @@ export function Offline(): ReactElement {
         <EmptyState
           icon={<HardDrive size={26} />}
           title="Nothing saved offline yet"
-          description="Open any release and choose “Save offline”, or queue every purchase at once. Saved music appears here and streams through Side A without a connection."
+          description="Open any release and choose “Save offline”, or queue every purchase at once, saved music appears here and streams through Side A without a connection"
           action={
             <Link to="/" className="button primary">
               Browse collection
@@ -95,7 +95,7 @@ export function Offline(): ReactElement {
                       <span className="is-error">{entry.error ?? 'Save failed'}</span>
                     ) : (
                       <span>
-                        {entry.done} tracks · {formatBytes(entry.bytes)} · {entry.completedAt ? new Date(entry.completedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : 'Ready'}
+                        {entry.done} tracks / {formatBytes(entry.bytes)} / {entry.completedAt ? new Date(entry.completedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : 'Ready'}
                       </span>
                     )}
                   </div>
@@ -129,8 +129,8 @@ export function Offline(): ReactElement {
         <div>
           <strong>How offline listening works</strong>
           <span>
-            Side A downloads a 128 kbps MP3 per track plus the cover art, stored in your app data folder. Purchased originals are
-            downloaded separately from the Downloads page and saved to the folder you choose in Settings.
+            Side A downloads a 128 kbps MP3 per track plus the cover art, stored in your app data folder, purchased originals are
+            downloaded separately from the Downloads page and saved to the folder you choose in Settings
           </span>
         </div>
       </div>
