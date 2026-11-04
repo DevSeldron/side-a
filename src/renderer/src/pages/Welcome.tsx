@@ -78,7 +78,7 @@ export function Welcome(): ReactElement {
             <div>
               <Lock size={17} />
               <span>
-                <strong>Stays on your Mac</strong>
+                <strong>Stays on your device</strong>
                 Sessions and libraries never leave the app.
               </span>
             </div>

@@ -42,11 +42,14 @@ if (!gotLock) {
       show: false,
       backgroundColor: '#08080b',
       title: 'Side A',
-      // Inset traffic lights are a macOS idea. Windows keeps its native title
-      // bar, and the renderer keys its window chrome off sideA.platform.
+      // Traffic lights are inset on macOS; Windows draws its window controls as
+      // an overlay on the app's own bar, so neither platform shows two headers.
       ...(process.platform === 'darwin'
         ? { titleBarStyle: 'hiddenInset' as const, trafficLightPosition: { x: 20, y: 24 } }
-        : {}),
+        : {
+            titleBarStyle: 'hidden' as const,
+            titleBarOverlay: { color: '#08080b', symbolColor: '#f4f1e9', height: 46 }
+          }),
       vibrancy: undefined,
       webPreferences: {
         preload: join(__dirname, '../preload/index.js'),
@@ -131,6 +134,11 @@ if (!gotLock) {
         ]
       }
     ]
+    if (process.platform !== 'darwin') {
+      // The renderer draws its own bar; a native menu would add a second row.
+      Menu.setApplicationMenu(null)
+      return
+    }
     Menu.setApplicationMenu(Menu.buildFromTemplate(template))
   }
 

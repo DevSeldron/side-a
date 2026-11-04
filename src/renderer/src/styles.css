@@ -196,6 +196,10 @@ code {
   transform: translateX(1px);
 }
 
+.pause-glyph {
+  transform: translateX(-0.5px);
+}
+
 /* Buttons and common atoms */
 
 .button {
@@ -556,6 +560,22 @@ code {
    title bar, so the brand should not leave room for them. */
 :root[data-platform='win32'] .sidebar-brand {
   padding-left: 22px;
+}
+
+/* Windows draws its window controls over the app's own bar, so the bar keeps
+   room for them and the welcome page remains draggable from its background. */
+:root[data-platform='win32'] .topbar {
+  padding-right: 156px;
+}
+
+:root[data-platform='win32'] .welcome {
+  -webkit-app-region: drag;
+}
+
+:root[data-platform='win32'] .welcome button,
+:root[data-platform='win32'] .welcome input,
+:root[data-platform='win32'] .welcome a {
+  -webkit-app-region: no-drag;
 }
 
 .sidebar-scroll {
@@ -3617,8 +3637,13 @@ code {
 }
 
 .welcome-editorial > .brand {
-  margin-left: 74px;
   align-self: flex-start;
+}
+
+/* macOS traffic lights sit in this corner, so the mark starts below them while
+   staying on the same left edge as the headline. */
+:root[data-platform='darwin'] .welcome-editorial {
+  padding-top: 68px;
 }
 
 .welcome-editorial-body {

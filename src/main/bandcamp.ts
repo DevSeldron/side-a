@@ -14,8 +14,12 @@ import type {
 import { findRedownload } from './redownloads'
 
 export const BANDCAMP_PARTITION = 'persist:bandcamp'
+// Bandcamp reports the signing-in device from this string, so it has to follow
+// the host platform rather than always claiming to be a Mac.
 export const BANDCAMP_UA =
-  'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36'
+  process.platform === 'win32'
+    ? 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36'
+    : 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36'
 
 const API = 'https://bandcamp.com'
 
@@ -482,6 +486,19 @@ export class BandcampClient {
   }
 
   async discoverFromBlob(blob: unknown): Promise<DiscoveredIdentity | null> {
+    // Account pages (bandcamp.com/profile) expose the signed-in fan here, which
+    // is what an artist account with a separate fan page looks like.
+    const identities = (
+      blob as { identities?: { fan?: { id?: number; username?: string; name?: string } } } | null
+    )?.identities?.fan
+    if (identities?.id && identities.username) {
+      return {
+        username: identities.username,
+        fanId: identities.id,
+        displayName: identities.name,
+        isOwnPage: true
+      }
+    }
     const fan = findFanData(blob)
     if (!fan?.username || !fan.fan_id) return null
     return {

@@ -277,7 +277,10 @@ export class AuthManager {
     if (!(await this.client.hasIdentityCookie())) {
       throw new Error('Your Bandcamp session expired. Please sign in again.')
     }
-    const identity = await this.client.validateUsername(username)
+    // The typed name is usually the fan URL, but artist accounts often sign in
+    // with a different fan page, so fall back to the identity the session itself
+    // reports before giving up.
+    const identity = (await this.client.validateUsername(username)) ?? (await this.client.discoverIdentity())
     if (!identity) throw new Error(`We couldn't find a Bandcamp profile named @${username}.`)
     this.waitingForUsername = false
     this.store.setAuth({

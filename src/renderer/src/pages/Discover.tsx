@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type ReactElement } from 'react'
 import { ArrowLeft, ExternalLink, Loader2, Pause, Play, Search, UserRound } from 'lucide-react'
 import type { DiscoverAlbum, DiscoverArtist, DiscoverResult, TralbumType, Track } from '@shared/types'
 import { useApp } from '../store/app'
+import { usePlayer } from '../store/player'
 import { Artwork } from '../components/Artwork'
 import { PageIntro } from '../components/Page'
 import { cx, errorMessage } from '../lib/format'
@@ -26,6 +27,7 @@ export function Discover(): ReactElement {
   const [playingId, setPlayingId] = useState<number | null>(null)
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const playToken = useRef(0)
+  const playerPlaying = usePlayer((state) => state.playing)
 
   useEffect(() => {
     const text = query.trim()
@@ -82,6 +84,9 @@ export function Discover(): ReactElement {
       return
     }
     stopAudio()
+    // Only one track at a time: the library player and Discover share the
+    // speakers, so starting either pauses the other.
+    usePlayer.getState().pause()
     const token = playToken.current
     try {
       // Stream renditions need the Bandcamp session and Referer, so the main
@@ -104,6 +109,14 @@ export function Discover(): ReactElement {
       pushToast('Could not play this track', { description: errorMessage(reason), tone: 'error' })
     }
   }
+
+  useEffect(() => {
+    if (!playerPlaying) return
+    playToken.current += 1
+    audioRef.current?.pause()
+    audioRef.current = null
+    setPlayingId(null)
+  }, [playerPlaying])
 
   const openArtist = async (bandId: number): Promise<void> => {
     stopAudio()
@@ -215,7 +228,11 @@ export function Discover(): ReactElement {
                   aria-label={playingId === track.id ? `Pause ${track.title}` : `Play ${track.title}`}
                   disabled={!track.isStreamable}
                 >
-                  {playingId === track.id ? <Pause size={15} fill="currentColor" /> : <Play size={15} fill="currentColor" />}
+                  {playingId === track.id ? (
+                    <Pause size={15} fill="currentColor" className="pause-glyph" />
+                  ) : (
+                    <Play size={15} fill="currentColor" className="play-glyph" />
+                  )}
                 </button>
                 <span className="discover-track-number">{String(track.number).padStart(2, '0')}</span>
                 <strong className="discover-track-title">{track.title}</strong>
