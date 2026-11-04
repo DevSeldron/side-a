@@ -4,31 +4,30 @@ import sharp from 'sharp'
 
 const width = 660
 const height = 400
-const arrowY = 214
+const iconY = 196
+const arrowY = iconY
 
 const svg = `
 <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
   <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#0b0b10"/>
-      <stop offset="0.55" stop-color="#101018"/>
-      <stop offset="1" stop-color="#16121d"/>
+    <linearGradient id="paper" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f7f2e7"/>
+      <stop offset="0.6" stop-color="#f0e9da"/>
+      <stop offset="1" stop-color="#e7ddc9"/>
     </linearGradient>
-    <radialGradient id="glow" cx="0.18" cy="0.1" r="0.9">
-      <stop offset="0" stop-color="#66e0cc" stop-opacity="0.22"/>
-      <stop offset="1" stop-color="#66e0cc" stop-opacity="0"/>
-    </radialGradient>
   </defs>
-  <rect width="${width}" height="${height}" fill="url(#bg)"/>
-  <rect width="${width}" height="${height}" fill="url(#glow)"/>
-  <text x="40" y="66" fill="#f4f1e9" font-family="-apple-system, Helvetica Neue, sans-serif" font-size="26" font-weight="600" letter-spacing="-0.5">Side A</text>
-  <text x="40" y="92" fill="#8d8a93" font-family="-apple-system, Helvetica Neue, sans-serif" font-size="12" letter-spacing="2.4">BANDCAMP PLAYER</text>
-  <text x="330" y="${arrowY}" text-anchor="middle" fill="#c7c3ba" font-family="-apple-system, Helvetica Neue, sans-serif" font-size="13">Drag Side A into Applications to install</text>
-  <g stroke="#66e0cc" stroke-opacity="0.5" stroke-width="2" fill="none">
-    <path d="M268 ${arrowY - 34} H392" stroke-dasharray="6 7"/>
-    <path d="M380 ${arrowY - 41} L393 ${arrowY - 34} L380 ${arrowY - 27}"/>
+  <rect width="${width}" height="${height}" fill="url(#paper)"/>
+  <circle cx="52" cy="48" r="130" fill="#66e0cc" opacity="0.10"/>
+  <text x="44" y="70" fill="#191612" font-family="-apple-system, Helvetica Neue, sans-serif" font-size="27" font-weight="600" letter-spacing="-0.6">Side A</text>
+  <text x="44" y="94" fill="#7c7666" font-family="-apple-system, Helvetica Neue, sans-serif" font-size="11.5" letter-spacing="2.6">BANDCAMP PLAYER</text>
+
+  <g stroke="#0f8f7c" stroke-opacity="0.55" stroke-width="2" fill="none" stroke-linecap="round">
+    <path d="M272 ${arrowY} H390" stroke-dasharray="1 9"/>
+    <path d="M379 ${arrowY - 7} L391 ${arrowY} L379 ${arrowY + 7}"/>
   </g>
-  <text x="330" y="354" text-anchor="middle" fill="#66646d" font-family="-apple-system, Helvetica Neue, sans-serif" font-size="10.5" letter-spacing="1.4">UNSIGNED BUILD · RIGHT-CLICK OPEN THE FIRST TIME</text>
+
+  <text x="330" y="336" text-anchor="middle" fill="#4b463a" font-family="-apple-system, Helvetica Neue, sans-serif" font-size="13">Drag Side A into Applications to install</text>
+  <text x="330" y="372" text-anchor="middle" fill="#8d8474" font-family="-apple-system, Helvetica Neue, sans-serif" font-size="10" letter-spacing="1.5">UNSIGNED BUILD · OPEN ONCE VIA RIGHT-CLICK, OR RUN xattr -cr ON THE APP</text>
 </svg>`
 
 const output = join(process.cwd(), 'build', 'dmg-background.png')

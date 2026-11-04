@@ -85,11 +85,13 @@ resources and NSIS itself. Run `npm run typecheck` and `npm run build` first so
 `out/` is current, or just use `npm run package:win`, which does both.
 
 Both platforms are intentionally **unsigned** (`identity: null`, no Windows
-certificate). On first launch:
+certificate), so mac builds are ad-hoc signed by `scripts/after-pack.mjs` to keep
+Gatekeeper from calling the bundle damaged. On first launch:
 
-- macOS Gatekeeper may block the app. For a locally built copy run
-  `xattr -dr com.apple.quarantine "release/mac-arm64/Side A.app"`, or use
-  **System Settings → Privacy & Security → Open Anyway**.
+- macOS may still quarantine the downloaded app. Either right-click it and choose
+  **Open**, or clear the flag once:
+  `xattr -cr "/Applications/Side A.app"`. Locally built copies use the same command
+  against `release/mac-arm64/Side A.app`.
 - Windows SmartScreen shows "Windows protected your PC" for the installer and the
   portable exe. Choose **More info → Run anyway**; this disappears once the build is
   signed with a code-signing certificate.

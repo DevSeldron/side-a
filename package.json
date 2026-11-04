@@ -1,6 +1,6 @@
 {
   "name": "side-a",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "A modern Bandcamp collection player for macOS",
   "main": "./out/main/index.js",
   "author": "Side A",
@@ -44,6 +44,7 @@
     "appId": "com.sidea.bandcamp",
     "productName": "Side A",
     "asar": true,
+    "afterPack": "scripts/after-pack.mjs",
     "directories": {
       "buildResources": "build",
       "output": "release"
@@ -120,13 +121,13 @@
       },
       "contents": [
         {
-          "x": 180,
-          "y": 205,
+          "x": 165,
+          "y": 196,
           "type": "file"
         },
         {
-          "x": 480,
-          "y": 205,
+          "x": 495,
+          "y": 196,
           "type": "link",
           "path": "/Applications"
         }
