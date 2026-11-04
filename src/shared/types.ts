@@ -47,6 +47,42 @@ export interface UpdateInfo {
   name?: string
 }
 
+export type DiscoverKind = 'artist' | 'album' | 'track'
+
+export interface DiscoverResult {
+  kind: DiscoverKind
+  id: number
+  bandId?: number
+  bandName?: string
+  title: string
+  url: string
+  artUrl?: string
+  location?: string
+  tags?: string[]
+  releaseDate?: string
+}
+
+export interface DiscoverArtist {
+  bandId: number
+  name: string
+  url: string
+  image?: string
+  bio?: string
+  releases: DiscoverResult[]
+}
+
+export interface DiscoverAlbum {
+  bandId: number
+  tralbumId: number
+  tralbumType: TralbumType
+  title: string
+  bandName: string
+  url: string
+  artUrl?: string
+  about?: string
+  tracks: Track[]
+}
+
 export interface Track {
   id: number
   title: string
@@ -335,8 +371,13 @@ export interface SideAAPI {
     chooseDownloadDir: () => Promise<string | null>
     clearCaches: () => Promise<void>
   }
-  updates: {
+  update: {
     check: () => Promise<UpdateInfo>
+  }
+  discover: {
+    search: (query: string) => Promise<DiscoverResult[]>
+    artist: (bandId: number) => Promise<DiscoverArtist>
+    album: (bandId: number, tralbumId: number, tralbumType: TralbumType) => Promise<DiscoverAlbum>
   }
   integrations: {
     updateLastfm: (patch: { enabled?: boolean; apiKey?: string; apiSecret?: string }) => Promise<IntegrationsState>

@@ -1,6 +1,6 @@
 import type { MouseEvent, ReactElement } from 'react'
 import { Link } from 'react-router-dom'
-import { BadgeCheck, HardDrive, Loader2, Pause, Play } from 'lucide-react'
+import { HardDrive, Loader2, Pause, Play } from 'lucide-react'
 import type { Album } from '@shared/types'
 import { usePlayer } from '../store/player'
 import { Artwork } from './Artwork'
@@ -55,14 +55,6 @@ export function AlbumCard({ album, priority, compact }: AlbumCardProps): ReactEl
             <Play size={20} fill="currentColor" className="play-glyph" />
           )}
         </button>
-        <div className="album-flags">
-          {album.purchaseDownloadable ? (
-            <span className="flag" title="Purchase download available">
-              <BadgeCheck size={13} />
-              Bought
-            </span>
-          ) : null}
-        </div>
       </div>
       <div className="album-meta">
         <p className="album-band">{album.bandName}</p>

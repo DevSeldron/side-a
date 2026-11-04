@@ -2,6 +2,7 @@ import type { ReactElement } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import {
   ArrowDownToLine,
+  Compass,
   HardDrive,
   Heart,
   Library,
@@ -40,6 +41,14 @@ export function Sidebar(): ReactElement {
       </div>
 
       <div className="sidebar-scroll">
+        <p className="nav-label">Browse</p>
+        <nav className="nav-list" aria-label="Browse">
+          <NavLink to="/discover" className={({ isActive }) => cx('nav-item', isActive && 'is-active')}>
+            <Compass size={18} />
+            <span>Discover</span>
+          </NavLink>
+        </nav>
+
         <p className="nav-label">Your music</p>
         <nav className="nav-list" aria-label="Library">
           <NavLink to="/" end className={({ isActive }) => cx('nav-item', isActive && 'is-active')}>

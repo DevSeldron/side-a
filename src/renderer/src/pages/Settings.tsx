@@ -7,6 +7,7 @@ import {
   Gamepad2,
   HardDrive,
   Info,
+  Loader2,
   LogOut,
   Palette,
   Radio,
@@ -50,12 +51,15 @@ export function Settings(): ReactElement {
   const disconnectLastfm = useApp((state) => state.disconnectLastfm)
   const updateDiscord = useApp((state) => state.updateDiscord)
   const retryIntegrations = useApp((state) => state.retryIntegrations)
+  const checkUpdate = useApp((state) => state.checkUpdate)
+  const pushToast = useApp((state) => state.pushToast)
   const navigate = useNavigate()
   const stopPlayer = usePlayer((state) => state.stop)
   const [apiKey, setApiKey] = useState('')
   const [apiSecret, setApiSecret] = useState('')
   const [clientId, setClientId] = useState('')
   const [connecting, setConnecting] = useState(false)
+  const [checkingUpdate, setCheckingUpdate] = useState(false)
 
   if (!snapshot) return <div className="page" />
 
@@ -90,6 +94,21 @@ export function Settings(): ReactElement {
     if (!next) return
     await updateDiscord({ clientId: next })
     setClientId('')
+  }
+
+  const runUpdateCheck = async (): Promise<void> => {
+    setCheckingUpdate(true)
+    try {
+      const info = await checkUpdate()
+      pushToast(info.available ? `Side A ${info.version} is available` : 'Side A is up to date', {
+        description: info.available
+          ? 'Open the update pill in the top bar to download it.'
+          : `You are running ${snapshot.appVersion}.`,
+        tone: info.available ? 'info' : 'success'
+      })
+    } finally {
+      setCheckingUpdate(false)
+    }
   }
 
   const connect = async (): Promise<void> => {
@@ -256,6 +275,16 @@ export function Settings(): ReactElement {
                 ))}
               </select>
             </label>
+          </div>
+          <div className="setting-row">
+            <div className="setting-copy">
+              <strong>Updates</strong>
+              <span>Side A {snapshot.appVersion} · checks GitHub releases on launch.</span>
+            </div>
+            <button type="button" className="button ghost" onClick={() => void runUpdateCheck()} disabled={checkingUpdate}>
+              {checkingUpdate ? <Loader2 size={16} className="spin" /> : <RefreshCw size={16} />}
+              Check for updates
+            </button>
           </div>
           <div className="settings-actions">
             <button type="button" className="button ghost" onClick={() => void saveAllPurchased()}>

@@ -1,6 +1,6 @@
 {
   "name": "side-a",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "A modern Bandcamp collection player for macOS",
   "main": "./out/main/index.js",
   "author": "Side A",
@@ -113,20 +113,20 @@
     },
     "dmg": {
       "title": "Side A",
-      "backgroundColor": "#0b0b0e",
+      "background": "build/dmg-background.png",
       "window": {
-        "width": 540,
-        "height": 380
+        "width": 660,
+        "height": 400
       },
       "contents": [
         {
-          "x": 150,
-          "y": 190,
+          "x": 180,
+          "y": 205,
           "type": "file"
         },
         {
-          "x": 390,
-          "y": 190,
+          "x": 480,
+          "y": 205,
           "type": "link",
           "path": "/Applications"
         }

@@ -14,7 +14,9 @@ export function TopBar(): ReactElement {
   if (!snapshot) return <header className="topbar" />
 
   const albumKey = /^\/album\/([^/]+)/.exec(location.pathname)?.[1]
-  const section = location.pathname.startsWith('/wishlist')
+  const section = location.pathname.startsWith('/discover')
+    ? 'Browse Bandcamp'
+    : location.pathname.startsWith('/wishlist')
     ? 'Saved for later'
     : location.pathname.startsWith('/offline')
       ? 'Local listening'

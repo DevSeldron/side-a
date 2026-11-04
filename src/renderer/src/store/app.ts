@@ -54,7 +54,7 @@ interface AppState {
   retryIntegrations: () => Promise<void>
   pushToast: (title: string, options?: { description?: string; tone?: ToastTone }) => void
   dismissToast: (id: number) => void
-  checkUpdate: () => Promise<void>
+  checkUpdate: () => Promise<UpdateInfo>
   dismissUpdate: () => void
   setPaletteOpen: (open: boolean) => void
   applyAuth: (auth: AuthState) => void
@@ -400,10 +400,12 @@ export const useApp = create<AppState>()((set, get) => ({
 
   checkUpdate: async () => {
     try {
-      const info = await window.sideA.updates.check()
+      const info = await window.sideA.update.check()
       set({ update: info.available ? info : null })
+      return info
     } catch {
       // Launching offline just means there is no update to mention.
+      return { available: false }
     }
   },
 

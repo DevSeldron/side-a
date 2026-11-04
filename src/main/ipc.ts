@@ -136,6 +136,20 @@ export function registerIpc(context: IpcContext): void {
 
   ipcMain.handle(IPC.getState, () => snapshot())
   ipcMain.handle(IPC.updatesCheck, () => checkForUpdate())
+  ipcMain.handle(IPC.discoverSearch, async (_event, query: unknown) => {
+    if (typeof query !== 'string' || query.trim().length < 2) throw new Error('Type at least two characters to search.')
+    return client.searchDiscover(query.trim().slice(0, 120))
+  })
+  ipcMain.handle(IPC.discoverArtist, async (_event, bandId: unknown) => {
+    if (typeof bandId !== 'number' || !Number.isFinite(bandId)) throw new Error('Invalid artist id.')
+    return client.fetchArtist(bandId)
+  })
+  ipcMain.handle(IPC.discoverAlbum, async (_event, bandId: unknown, tralbumId: unknown, tralbumType: unknown) => {
+    if (typeof bandId !== 'number' || !Number.isFinite(bandId)) throw new Error('Invalid artist id.')
+    if (typeof tralbumId !== 'number' || !Number.isFinite(tralbumId)) throw new Error('Invalid release id.')
+    const type = tralbumType === 't' ? 't' : 'a'
+    return client.fetchDiscoveredAlbum(bandId, tralbumId, type)
+  })
 
   ipcMain.handle(IPC.authLogin, (event) => {
     const parent = BrowserWindow.fromWebContents(event.sender)

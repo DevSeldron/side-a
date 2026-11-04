@@ -18,6 +18,7 @@ import { Wishlist } from './pages/Wishlist'
 import { AlbumPage } from './pages/Album'
 import { Offline } from './pages/Offline'
 import { Downloads } from './pages/Downloads'
+import { Discover } from './pages/Discover'
 import { Settings } from './pages/Settings'
 
 export default function App(): ReactElement {
@@ -114,6 +115,7 @@ export default function App(): ReactElement {
             <Route path="/album/:key" element={<AlbumPage />} />
             <Route path="/offline" element={<Offline />} />
             <Route path="/downloads" element={<Downloads />} />
+            <Route path="/discover" element={<Discover />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

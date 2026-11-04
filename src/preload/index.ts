@@ -39,8 +39,13 @@ const api: SideAAPI = {
     chooseDownloadDir: () => ipcRenderer.invoke(IPC.settingsChooseDir),
     clearCaches: () => ipcRenderer.invoke(IPC.settingsClearCaches)
   },
-  updates: {
+  update: {
     check: () => ipcRenderer.invoke(IPC.updatesCheck)
+  },
+  discover: {
+    search: (query) => ipcRenderer.invoke(IPC.discoverSearch, query),
+    artist: (bandId) => ipcRenderer.invoke(IPC.discoverArtist, bandId),
+    album: (bandId, tralbumId, tralbumType) => ipcRenderer.invoke(IPC.discoverAlbum, bandId, tralbumId, tralbumType)
   },
   integrations: {
     updateLastfm: (patch) => ipcRenderer.invoke(IPC.lastfmUpdate, patch),

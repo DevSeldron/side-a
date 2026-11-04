@@ -1,6 +1,16 @@
 import { session } from 'electron'
 import type { Session } from 'electron'
-import type { Album, AlbumDetail, PurchaseFormat, Track, TralbumType } from '@shared/types'
+import type {
+  Album,
+  AlbumDetail,
+  DiscoverAlbum,
+  DiscoverArtist,
+  DiscoverKind,
+  DiscoverResult,
+  PurchaseFormat,
+  Track,
+  TralbumType
+} from '@shared/types'
 import { findRedownload } from './redownloads'
 
 export const BANDCAMP_PARTITION = 'persist:bandcamp'
@@ -70,6 +80,36 @@ interface CollectionPageData {
     wishlist?: Record<string, RawCollectionItem>
   }
   tracklists?: Record<string, Record<string, RawTrack[]>>
+}
+
+interface RawSearchResult {
+  type?: string
+  id?: number
+  name?: string
+  band_id?: number
+  band_name?: string
+  art_id?: number
+  img?: string
+  item_url_root?: string
+  item_url_path?: string
+  location?: string
+  tag_names?: string[]
+}
+
+interface BandDetails {
+  id?: number
+  name?: string
+  bio?: string
+  bio_image_id?: number
+  bandcamp_url?: string
+  discography?: Array<{
+    item_id?: number
+    item_type?: string
+    band_name?: string
+    title?: string
+    art_id?: number
+    release_date?: string
+  }>
 }
 
 interface RawTrack {
@@ -296,6 +336,39 @@ export function stripHtml(input: string | undefined): string | undefined {
 function artUrl(artId: number | undefined, size: 9 | 10 | 3 = 9): string | undefined {
   if (!artId) return undefined
   return `https://f4.bcbits.com/img/a${artId}_${size}.jpg`
+}
+
+function imageUrl(imageId: number | undefined, size: 9 | 10 | 3 = 9): string | undefined {
+  if (!imageId) return undefined
+  return `https://f4.bcbits.com/img/${imageId}_${size}.jpg`
+}
+
+function toDiscoverResult(raw: RawSearchResult): DiscoverResult | null {
+  if (!raw.id || !raw.name) return null
+  const kind: DiscoverKind | null = raw.type === 'b' ? 'artist' : raw.type === 'a' ? 'album' : raw.type === 't' ? 'track' : null
+  if (!kind) return null
+  const art = raw.img ?? artUrl(raw.art_id, 9)
+  if (kind === 'artist') {
+    return {
+      kind,
+      id: raw.id,
+      title: raw.name,
+      url: raw.item_url_root ?? '',
+      artUrl: art,
+      location: raw.location ?? undefined,
+      tags: raw.tag_names?.slice(0, 4)
+    }
+  }
+  return {
+    kind,
+    id: raw.id,
+    bandId: raw.band_id,
+    bandName: raw.band_name,
+    title: raw.name,
+    url: raw.item_url_path ?? raw.item_url_root ?? '',
+    artUrl: art,
+    tags: raw.tag_names?.slice(0, 4)
+  }
 }
 
 function toAlbum(item: RawCollectionItem, redownloads: Record<string, string>): Album | null {
@@ -750,6 +823,84 @@ export class BandcampClient {
     }
     if (!track?.streamUrl) throw new Error('This track cannot be streamed right now.')
     return { url: track.streamUrl, detail }
+  }
+
+  async searchDiscover(query: string): Promise<DiscoverResult[]> {
+    const response = await this.request(`${API}/api/bcsearch_public_api/1/autocomplete_elastic`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify({ search_text: query, search_filter: '', full_page: true, fan_id: null })
+    })
+    if (!response.ok) throw new Error(`Bandcamp search failed (${response.status}).`)
+    const data = (await response.json()) as { auto?: { results?: RawSearchResult[] } }
+    return (data.auto?.results ?? [])
+      .map((raw) => toDiscoverResult(raw))
+      .filter((entry): entry is DiscoverResult => Boolean(entry))
+  }
+
+  async fetchArtist(bandId: number): Promise<DiscoverArtist> {
+    const response = await this.request(`${API}/api/mobile/24/band_details?band_id=${bandId}`, {
+      headers: { Accept: 'application/json', Referer: `${API}/` }
+    })
+    if (!response.ok) throw new Error(`Could not load this artist (${response.status}).`)
+    const data = (await response.json()) as BandDetails
+    if (!data.name) throw new Error('Bandcamp did not return that artist.')
+    const releases: DiscoverResult[] = (data.discography ?? [])
+      .filter((entry) => entry.item_id && entry.title)
+      .map((entry) => ({
+        kind: entry.item_type === 'track' ? 'track' : 'album',
+        id: entry.item_id as number,
+        bandId,
+        bandName: entry.band_name ?? data.name,
+        title: entry.title as string,
+        url: data.bandcamp_url ?? '',
+        artUrl: artUrl(entry.art_id, 9),
+        releaseDate: entry.release_date
+      }))
+    return {
+      bandId,
+      name: data.name,
+      url: data.bandcamp_url ?? '',
+      image: imageUrl(data.bio_image_id, 10),
+      bio: stripHtml(data.bio),
+      releases
+    }
+  }
+
+  async fetchDiscoveredAlbum(bandId: number, tralbumId: number, tralbumType: TralbumType): Promise<DiscoverAlbum> {
+    const url = new URL(`${API}/api/mobile/24/tralbum_details`)
+    url.searchParams.set('band_id', String(bandId))
+    url.searchParams.set('tralbum_id', String(tralbumId))
+    url.searchParams.set('tralbum_type', tralbumType)
+    const response = await this.request(url.toString(), {
+      headers: { Accept: 'application/json', Referer: `${API}/` }
+    })
+    if (!response.ok) throw new Error(`Could not load this release (${response.status}).`)
+    const data = (await response.json()) as MobileTralbum
+    if (data.error) throw new Error(data.error_message || 'Bandcamp could not load this release.')
+    const tracks: Track[] = (data.tracks ?? []).map((raw, index) => {
+      const stream = raw.streaming_url?.['mp3-128'] ?? raw.streaming_url?.['mp3-320'] ?? raw.file?.['mp3-128']
+      return {
+        id: raw.track_id ?? raw.id ?? index + 1,
+        title: raw.title ?? 'Untitled',
+        artist: raw.band_name ?? data.band?.name ?? 'Unknown artist',
+        number: raw.track_num ?? raw.track_number ?? index + 1,
+        duration: raw.duration ?? 0,
+        streamUrl: stream,
+        isStreamable: raw.is_streamable !== false
+      }
+    })
+    return {
+      bandId,
+      tralbumId,
+      tralbumType,
+      title: data.title ?? 'Untitled',
+      bandName: data.band?.name ?? 'Unknown artist',
+      url: data.bandcamp_url ?? '',
+      artUrl: artUrl(data.art_id, 10),
+      about: stripHtml(data.about),
+      tracks
+    }
   }
 
   clearMemoryCache(): void {
