@@ -1,6 +1,6 @@
 {
   "name": "side-a",
-  "version": "2.1.1",
+  "version": "2.1.2",
   "description": "A Bandcamp collection player for macOS and Windows",
   "main": "./out/main/index.js",
   "author": "Side A",
@@ -122,12 +122,12 @@
       "contents": [
         {
           "x": 165,
-          "y": 196,
+          "y": 176,
           "type": "file"
         },
         {
           "x": 495,
-          "y": 196,
+          "y": 176,
           "type": "link",
           "path": "/Applications"
         }

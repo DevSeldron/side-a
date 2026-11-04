@@ -1,5 +1,5 @@
 import { execFile } from 'node:child_process'
-import { mkdir, rm, writeFile } from 'node:fs/promises'
+import { mkdir, readFile, rm, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { promisify } from 'node:util'
 import sharp from 'sharp'
@@ -9,13 +9,7 @@ const root = new URL('..', import.meta.url).pathname
 const buildDir = join(root, 'build')
 const iconset = join(buildDir, 'icon.iconset')
 
-const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
-  <rect x="72" y="72" width="880" height="880" rx="176" fill="#1f1f1f"/>
-  <g transform="translate(142 142) scale(18.5)">
-    <path d="M10.5 30.5 21.2 9.5h8.3L18.8 30.5z" fill="#1a7f76"/>
-    <path d="M4 30.5 14.7 9.5h5.2L9.2 30.5z" fill="#2ad4c0"/>
-  </g>
-</svg>`
+const svg = await readFile(join(buildDir, 'icon.svg'), 'utf8')
 
 const entries = [
   ['icon_16x16.png', 16],
