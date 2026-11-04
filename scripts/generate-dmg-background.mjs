@@ -9,25 +9,18 @@ const arrowY = iconY
 
 const svg = `
 <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
-  <defs>
-    <linearGradient id="paper" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#f7f2e7"/>
-      <stop offset="0.6" stop-color="#f0e9da"/>
-      <stop offset="1" stop-color="#e7ddc9"/>
-    </linearGradient>
-  </defs>
-  <rect width="${width}" height="${height}" fill="url(#paper)"/>
-  <circle cx="52" cy="48" r="130" fill="#66e0cc" opacity="0.10"/>
-  <text x="44" y="70" fill="#191612" font-family="-apple-system, Helvetica Neue, sans-serif" font-size="27" font-weight="600" letter-spacing="-0.6">Side A</text>
-  <text x="44" y="94" fill="#7c7666" font-family="-apple-system, Helvetica Neue, sans-serif" font-size="11.5" letter-spacing="2.6">BANDCAMP PLAYER</text>
+  <rect width="${width}" height="${height}" fill="#1f1f1f"/>
+  <rect width="${width}" height="3" fill="#2ad4c0"/>
+  <text x="44" y="64" fill="#ededed" font-family="-apple-system, Helvetica Neue, sans-serif" font-size="26" font-weight="500" letter-spacing="-0.5">Side A</text>
+  <text x="616" y="64" text-anchor="end" fill="#7a7a7a" font-family="-apple-system, Helvetica Neue, sans-serif" font-size="12">1.1.0</text>
 
-  <g stroke="#0f8f7c" stroke-opacity="0.55" stroke-width="2" fill="none" stroke-linecap="round">
+  <g stroke="#2ad4c0" stroke-width="2" fill="none" stroke-linecap="round">
     <path d="M272 ${arrowY} H390" stroke-dasharray="1 9"/>
     <path d="M379 ${arrowY - 7} L391 ${arrowY} L379 ${arrowY + 7}"/>
   </g>
 
-  <text x="330" y="336" text-anchor="middle" fill="#4b463a" font-family="-apple-system, Helvetica Neue, sans-serif" font-size="13">Drag Side A into Applications to install</text>
-  <text x="330" y="372" text-anchor="middle" fill="#8d8474" font-family="-apple-system, Helvetica Neue, sans-serif" font-size="10" letter-spacing="1.5">UNSIGNED BUILD · OPEN ONCE VIA RIGHT-CLICK, OR RUN xattr -cr ON THE APP</text>
+  <text x="330" y="336" text-anchor="middle" fill="#cfcfcf" font-family="-apple-system, Helvetica Neue, sans-serif" font-size="13">Drag Side A into Applications</text>
+  <text x="330" y="370" text-anchor="middle" fill="#7a7a7a" font-family="-apple-system, Helvetica Neue, sans-serif" font-size="9" letter-spacing="1.2">UNSIGNED BUILD. OPEN ONCE WITH RIGHT-CLICK, OR RUN xattr -cr</text>
 </svg>`
 
 const output = join(process.cwd(), 'build', 'dmg-background.png')
