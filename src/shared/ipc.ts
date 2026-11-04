@@ -33,6 +33,7 @@ export const IPC = {
   discoverSearch: 'discover:search',
   discoverArtist: 'discover:artist',
   discoverAlbum: 'discover:album',
+  discoverStream: 'discover:stream',
   eventAuth: 'auth:changed',
   eventSync: 'sync:changed',
   eventOffline: 'offline:changed',

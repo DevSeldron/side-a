@@ -168,6 +168,18 @@ export class MediaGateway {
     return { url: `${MEDIA_SCHEME}://stream/${token}`, expiresAt }
   }
 
+  /**
+   * Tickets for releases that are not in the library (Discover). The URL is a
+   * Bandcamp streaming rendition that needs the session cookies and a bandcamp
+   * Referer, so it is proxied through this scheme instead of played directly.
+   */
+  ticketForUrl(url: string): StreamTicket {
+    const token = randomUUID()
+    const expiresAt = Date.now() + 3 * 60 * 60 * 1000
+    this.tickets.set(token, { url, albumKey: '', trackId: 0, expiresAt })
+    return { url: `${MEDIA_SCHEME}://stream/${token}`, expiresAt }
+  }
+
   coverUrl(albumKey: string, remote?: string): string {
     const local = this.store.get().offline[albumKey]
     if (local?.status === 'ready' && local.coverPath) {

@@ -378,6 +378,7 @@ export interface SideAAPI {
     search: (query: string) => Promise<DiscoverResult[]>
     artist: (bandId: number) => Promise<DiscoverArtist>
     album: (bandId: number, tralbumId: number, tralbumType: TralbumType) => Promise<DiscoverAlbum>
+    stream: (url: string) => Promise<StreamTicket>
   }
   integrations: {
     updateLastfm: (patch: { enabled?: boolean; apiKey?: string; apiSecret?: string }) => Promise<IntegrationsState>

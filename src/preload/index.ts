@@ -45,7 +45,8 @@ const api: SideAAPI = {
   discover: {
     search: (query) => ipcRenderer.invoke(IPC.discoverSearch, query),
     artist: (bandId) => ipcRenderer.invoke(IPC.discoverArtist, bandId),
-    album: (bandId, tralbumId, tralbumType) => ipcRenderer.invoke(IPC.discoverAlbum, bandId, tralbumId, tralbumType)
+    album: (bandId, tralbumId, tralbumType) => ipcRenderer.invoke(IPC.discoverAlbum, bandId, tralbumId, tralbumType),
+    stream: (url) => ipcRenderer.invoke(IPC.discoverStream, url)
   },
   integrations: {
     updateLastfm: (patch) => ipcRenderer.invoke(IPC.lastfmUpdate, patch),

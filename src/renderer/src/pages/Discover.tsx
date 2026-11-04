@@ -25,6 +25,7 @@ export function Discover(): ReactElement {
   const [albumLoading, setAlbumLoading] = useState(false)
   const [playingId, setPlayingId] = useState<number | null>(null)
   const audioRef = useRef<HTMLAudioElement | null>(null)
+  const playToken = useRef(0)
 
   useEffect(() => {
     const text = query.trim()
@@ -56,15 +57,22 @@ export function Discover(): ReactElement {
     }
   }, [query])
 
-  useEffect(() => () => audioRef.current?.pause(), [])
+  useEffect(
+    () => () => {
+      playToken.current += 1
+      audioRef.current?.pause()
+    },
+    []
+  )
 
   const stopAudio = (): void => {
+    playToken.current += 1
     audioRef.current?.pause()
     audioRef.current = null
     setPlayingId(null)
   }
 
-  const playTrack = (track: Track): void => {
+  const playTrack = async (track: Track): Promise<void> => {
     if (!track.streamUrl) {
       pushToast('Bandcamp is not streaming this track.', { tone: 'error' })
       return
@@ -74,18 +82,27 @@ export function Discover(): ReactElement {
       return
     }
     stopAudio()
-    const audio = new Audio(track.streamUrl)
-    audioRef.current = audio
-    setPlayingId(track.id)
-    audio.onended = () => setPlayingId(null)
-    audio.onerror = () => {
+    const token = playToken.current
+    try {
+      // Stream renditions need the Bandcamp session and Referer, so the main
+      // process proxies them over bcmedia:// rather than the page playing the
+      // remote URL directly.
+      const ticket = await window.sideA.discover.stream(track.streamUrl)
+      if (playToken.current !== token) return
+      const audio = new Audio(ticket.url)
+      audioRef.current = audio
+      setPlayingId(track.id)
+      audio.onended = () => setPlayingId(null)
+      audio.onerror = () => {
+        setPlayingId(null)
+        pushToast('This stream stopped early.', { tone: 'error' })
+      }
+      await audio.play()
+    } catch (reason) {
+      if (playToken.current !== token) return
       setPlayingId(null)
-      pushToast('This stream stopped early.', { tone: 'error' })
+      pushToast('Could not play this track', { description: errorMessage(reason), tone: 'error' })
     }
-    void audio.play().catch(() => {
-      setPlayingId(null)
-      pushToast('Bandcamp blocked playback for this track.', { tone: 'error' })
-    })
   }
 
   const openArtist = async (bandId: number): Promise<void> => {
@@ -194,7 +211,7 @@ export function Discover(): ReactElement {
                 <button
                   type="button"
                   className="discover-track-play"
-                  onClick={() => playTrack(track)}
+                  onClick={() => void playTrack(track)}
                   aria-label={playingId === track.id ? `Pause ${track.title}` : `Play ${track.title}`}
                   disabled={!track.isStreamable}
                 >

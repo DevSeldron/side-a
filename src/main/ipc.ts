@@ -150,6 +150,15 @@ export function registerIpc(context: IpcContext): void {
     const type = tralbumType === 't' ? 't' : 'a'
     return client.fetchDiscoveredAlbum(bandId, tralbumId, type)
   })
+  ipcMain.handle(IPC.discoverStream, async (_event, url: unknown) => {
+    if (typeof url !== 'string') throw new Error('Invalid stream URL.')
+    const parsed = new URL(url)
+    const host = parsed.hostname.toLowerCase()
+    if (parsed.protocol !== 'https:' || (host !== 'bandcamp.com' && !host.endsWith('.bcbits.com'))) {
+      throw new Error('Invalid stream URL.')
+    }
+    return media.ticketForUrl(parsed.toString())
+  })
 
   ipcMain.handle(IPC.authLogin, (event) => {
     const parent = BrowserWindow.fromWebContents(event.sender)
