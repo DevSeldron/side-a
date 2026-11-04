@@ -2832,6 +2832,10 @@ code {
   flex-direction: column;
   overflow: hidden;
   background: #07070a;
+  /* Resolve the text colour here: children inherit the computed colour, not the
+     custom property, so the light-theme override below has to land on this
+     element for headings that set no colour of their own. */
+  color: var(--text);
   animation: now-in 0.34s cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 
@@ -2874,7 +2878,8 @@ code {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 30px 38px 10px;
+  /* Clears the inset traffic lights, which float over the top-left corner. */
+  padding: 56px 38px 10px;
   flex: 0 0 auto;
 }
 
