@@ -33,7 +33,12 @@ python3 -m http.server 4173 --directory site
 
 ## Deploying
 
-Copy the folder as-is; all paths are relative so it works from a subdirectory too. The
+This repository deploys the folder to GitHub Pages with
+`.github/workflows/pages.yml`. Enable **Settings → Pages → Source: GitHub Actions**, set
+the custom domain to `sidea.devseldron.xyz`, and point a `CNAME` DNS record at
+`devseldron.github.io`. The workflow runs on every push that touches `site/`.
+
+Anywhere else, copy the folder as-is; all paths are relative so it works from a subdirectory too. The
 only external requests are the GitHub API call and the links to GitHub itself, so the page
 works on any origin. To point it at a different repository, change `REPO` at the top of
 `main.js` and the `github.com/DevSeldron/side-a` links in `index.html`.
