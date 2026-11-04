@@ -31,7 +31,7 @@ export function Offline(): ReactElement {
   return (
     <div className="page">
       <PageIntro
-        kicker="On this Mac"
+        kicker="Stored locally"
         title="Offline"
         description={
           ready.length

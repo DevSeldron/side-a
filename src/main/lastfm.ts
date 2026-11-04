@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto'
-import { BrowserWindow } from 'electron'
+import { app, BrowserWindow } from 'electron'
 import type { LastfmConfig, LastfmState, ScrobbleInput } from '@shared/types'
 import type { Store } from './store'
 import { openSecret, sealSecret } from './secrets'
@@ -385,7 +385,7 @@ export class LastfmService {
         method: 'POST',
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
-          'User-Agent': 'SideA/2.0 (macOS)'
+          'User-Agent': `SideA/${app.getVersion()}`
         },
         body,
         signal: controller.signal

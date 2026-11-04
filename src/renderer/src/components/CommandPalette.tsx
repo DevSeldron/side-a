@@ -103,7 +103,7 @@ export function CommandPalette(): ReactElement | null {
       {
         id: 'offline',
         label: 'Go to Offline',
-        sub: 'Everything saved on this Mac',
+        sub: 'Everything saved on this device',
         icon: <HardDrive size={15} />,
         run: () => {
           setOpen(false)

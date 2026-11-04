@@ -47,8 +47,8 @@ function hslToHex(hue: number, saturation: number, lightness: number): string {
 
 /**
  * Picks the strongest colourful region instead of averaging every pixel, which
- * usually turns busy covers into mud. The result is pulled into a sane
- * saturation and lightness range so it can act as a UI accent.
+ * usually turns busy covers into mud. The result is softened into a slightly
+ * muted saturation and lightness range so it can tint the UI without taking over.
  */
 function accentFromImage(image: NativeImage): string | null {
   if (image.isEmpty()) return null
@@ -87,7 +87,8 @@ function accentFromImage(image: NativeImage): string | null {
     best.g / best.weight,
     best.b / best.weight
   )
-  return hslToHex(hue, clamp(saturation, 0.48, 0.78), clamp(lightness, 0.48, 0.6))
+  const softenedSaturation = clamp(saturation * 0.82, 0.38, 0.6)
+  return hslToHex(hue, softenedSaturation, clamp(lightness, 0.48, 0.6))
 }
 
 function remember(url: string, accent: string): void {

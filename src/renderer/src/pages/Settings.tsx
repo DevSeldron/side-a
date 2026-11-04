@@ -164,7 +164,7 @@ export function Settings(): ReactElement {
       <PageIntro
         kicker="Side A"
         title="Settings"
-        description="Account, appearance, downloads and local data. Everything here stays on this Mac."
+        description="Account, appearance, downloads and local data. Everything here stays on your device."
       />
 
       <div className="settings-grid">
@@ -442,7 +442,7 @@ export function Settings(): ReactElement {
           {lastfm.error ? <p className="integration-error">{lastfm.error}</p> : null}
           <p className="settings-hint">
             Create a free API account on Last.fm, paste its key and shared secret, then connect to authorise Side A in a
-            Last.fm window. The credentials and session are encrypted with the macOS keychain.
+            Last.fm window. The credentials and session are encrypted with your operating system's credential store.
           </p>
         </section>
 
@@ -621,12 +621,11 @@ export function Settings(): ReactElement {
             <span className="settings-icon"><Info size={17} /></span>
             <div>
               <h2>About Side A</h2>
-              <p>A personal Bandcamp client for macOS.</p>
+              <p>A personal Bandcamp client.</p>
             </div>
           </header>
           <div className="storage-rows">
             <div><span>Version</span><strong>{snapshot.appVersion}</strong></div>
-            <div><span>Platform</span><strong>macOS · arm64</strong></div>
             <div><span>Session</span><strong>Local only</strong></div>
           </div>
           <div className="settings-actions">

@@ -78,7 +78,7 @@ export function Welcome(): ReactElement {
           </div>
         </div>
         <footer className="welcome-foot">
-          <span>Side A 2.0</span>
+          <span>Side A {snapshot?.appVersion}</span>
           <span>Not affiliated with Bandcamp</span>
         </footer>
       </section>
