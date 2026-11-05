@@ -2,10 +2,10 @@ import { mkdirSync } from 'node:fs'
 import { join } from 'node:path'
 import sharp from 'sharp'
 
-// One design, drawn in a 1200x630 coordinate space. The site uses it as is and
-// GitHub's 1280x640 social preview fits the same drawing inside its canvas.
-const WIDTH = 1200
-const HEIGHT = 630
+// Drawn in a 1200-unit-wide design space. Each target keeps the design at its
+// own aspect ratio instead of being letterboxed, so the ridges still reach the
+// edges of the GitHub card.
+const DESIGN_WIDTH = 1200
 const TEAL = '#2ad4c0'
 
 // Deterministic pseudo random values so the committed PNG stays byte stable.
@@ -20,12 +20,12 @@ function random(seed) {
   }
 }
 
-function starfield() {
+function starfield(height) {
   const rand = random(11)
   const dots = []
   for (let i = 0; i < 58; i++) {
-    const x = Math.round(rand() * WIDTH)
-    const y = Math.round(rand() * HEIGHT * 0.6)
+    const x = Math.round(rand() * DESIGN_WIDTH)
+    const y = Math.round(rand() * height * 0.6)
     const r = (0.8 + rand() * 1.5).toFixed(2)
     const opacity = (0.26 + rand() * 0.6).toFixed(2)
     const halo = rand() > 0.85 ? ' filter="url(#starHalo)"' : ''
@@ -34,16 +34,16 @@ function starfield() {
   return dots.join('')
 }
 
-function ridge(base, amplitude, seed) {
+function ridge(height, base, amplitude, seed) {
   const rand = random(seed)
   const steps = 8
   const points = []
   for (let i = 0; i <= steps; i++) {
-    const x = Math.round((i * WIDTH) / steps)
+    const x = Math.round((i * DESIGN_WIDTH) / steps)
     const y = Math.round(base - rand() * amplitude)
     points.push(`${x},${y}`)
   }
-  return `M0,${HEIGHT} L${points.join(' L')} L${WIDTH},${HEIGHT} Z`
+  return `M0,${height} L${points.join(' L')} L${DESIGN_WIDTH},${height} Z`
 }
 
 // librsvg resolves fonts through fontconfig, which cannot read the site's woff2,
@@ -51,8 +51,12 @@ function ridge(base, amplitude, seed) {
 // back when "Inter" is not installed.
 const font = 'Helvetica Neue, Helvetica, Arial, sans-serif'
 
-const svg = `
-<svg xmlns="http://www.w3.org/2000/svg" width="${WIDTH}" height="${HEIGHT}" viewBox="0 0 ${WIDTH} ${HEIGHT}">
+function cardSvg(width, height) {
+  const scale = width / DESIGN_WIDTH
+  const h = height / scale
+
+  return `
+<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${DESIGN_WIDTH} ${h}">
   <defs>
     <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0" stop-color="#212121" />
@@ -68,16 +72,16 @@ const svg = `
     </filter>
   </defs>
 
-  <rect width="${WIDTH}" height="${HEIGHT}" fill="url(#sky)" />
-  <rect width="${WIDTH}" height="${HEIGHT}" fill="url(#glow)" />
+  <rect width="${DESIGN_WIDTH}" height="${h}" fill="url(#sky)" />
+  <rect width="${DESIGN_WIDTH}" height="${h}" fill="url(#glow)" />
 
-  <g fill="#96eadd">${starfield()}</g>
+  <g fill="#96eadd">${starfield(h)}</g>
 
-  <path d="${ridge(492, 38, 5)}" fill="${TEAL}" opacity="0.1" />
-  <path d="${ridge(532, 28, 9)}" fill="${TEAL}" opacity="0.14" />
-  <path d="${ridge(572, 22, 13)}" fill="${TEAL}" opacity="0.2" />
+  <path d="${ridge(h, h - 138, 38, 5)}" fill="${TEAL}" opacity="0.1" />
+  <path d="${ridge(h, h - 98, 28, 9)}" fill="${TEAL}" opacity="0.14" />
+  <path d="${ridge(h, h - 58, 22, 13)}" fill="${TEAL}" opacity="0.2" />
 
-  <rect width="${WIDTH}" height="4" fill="${TEAL}" />
+  <rect width="${DESIGN_WIDTH}" height="4" fill="${TEAL}" />
 
   <g font-family="${font}">
     <text x="88" y="104" font-size="30" font-weight="500" fill="#ededed" letter-spacing="-0.6">Side A</text>
@@ -89,16 +93,17 @@ const svg = `
     <text x="88" y="374" font-size="22" fill="#d4d4d4">A Bandcamp player for macOS and Windows</text>
   </g>
 </svg>`
+}
 
 const targets = [
-  { file: join('site', 'assets', 'social-card.png'), width: WIDTH, height: HEIGHT, fit: 'fill' },
-  { file: join('.github', 'social-preview.png'), width: 1280, height: 640, fit: 'contain' }
+  { file: join('site', 'assets', 'social-card.png'), width: 1200, height: 630 },
+  { file: join('.github', 'social-preview.png'), width: 1280, height: 640 }
 ]
 
-for (const { file, width, height, fit } of targets) {
+for (const { file, width, height } of targets) {
   mkdirSync(join(file, '..'), { recursive: true })
-  await sharp(Buffer.from(svg), { density: 144 })
-    .resize(width, height, { fit, position: 'centre', background: '#212121' })
+  await sharp(Buffer.from(cardSvg(width, height)), { density: 144 })
+    .resize(width, height, { fit: 'fill' })
     .png({ compressionLevel: 9 })
     .toFile(file)
   console.log(`wrote ${file} (${width}x${height})`)
