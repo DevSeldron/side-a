@@ -57,7 +57,7 @@ if (await nowButton.count()) {
 
 await page.locator('.nav-item', { hasText: 'Discover' }).click()
 await page.waitForSelector('.discover-search input', { timeout: 10000 })
-await page.locator('.discover-search input').fill('dassuo')
+await page.locator('.discover-search input').fill('Nils Frahm')
 await page.waitForSelector('.discover-card-art img', { timeout: 20000 })
 await page.waitForTimeout(1800)
 await page.mouse.move(1200, 120)
