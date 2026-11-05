@@ -46,23 +46,6 @@ function ridge(base, amplitude, seed) {
   return `M0,${HEIGHT} L${points.join(' L')} L${WIDTH},${HEIGHT} Z`
 }
 
-function equalizer() {
-  const rand = random(23)
-  const bars = []
-  const barWidth = 4
-  const gap = 7
-  let x = 88
-  for (let i = 0; i < 30; i++) {
-    const height = Math.round(8 + rand() * 32)
-    const opacity = (0.3 + rand() * 0.5).toFixed(2)
-    bars.push(
-      `<rect x="${x}" y="${418 - height}" width="${barWidth}" height="${height}" fill="${TEAL}" opacity="${opacity}" />`
-    )
-    x += barWidth + gap
-  }
-  return bars.join('')
-}
-
 // librsvg resolves fonts through fontconfig, which cannot read the site's woff2,
 // so the card uses the platform grotesque directly instead of silently falling
 // back when "Inter" is not installed.
@@ -105,8 +88,6 @@ const svg = `
 
     <text x="88" y="374" font-size="22" fill="#d4d4d4">A Bandcamp player for macOS and Windows</text>
   </g>
-
-  ${equalizer()}
 </svg>`
 
 const targets = [
