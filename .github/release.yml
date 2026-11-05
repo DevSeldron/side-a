@@ -1,7 +1,0 @@
-changelog:
-  exclude:
-    labels:
-      - ignore
-    authors:
-      - codebuff
-      - codebuff[bot]
