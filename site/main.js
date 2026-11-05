@@ -5,7 +5,9 @@ const notesBody = document.querySelector('[data-release-notes]')
 
 const ASSET_MATCHERS = {
   dmg: (name) => name.endsWith('-arm64.dmg'),
-  'mac-zip': (name) => name.endsWith('-arm64-mac.zip'),
+  'dmg-intel': (name) => name.endsWith('-x64.dmg'),
+  'mac-zip': (name) => name.endsWith('-arm64.zip'),
+  'mac-zip-intel': (name) => name.endsWith('-x64.zip'),
   exe: (name) => name.endsWith('-win-x64.exe'),
   'win-zip': (name) => name.endsWith('-win-x64.zip')
 }

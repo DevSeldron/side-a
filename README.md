@@ -5,8 +5,8 @@ Side A signs in to Bandcamp in an isolated session, syncs your library, streams 
 releases, keeps music available offline, and downloads the original files you
 purchased in the format Bandcamp offers.
 
-Built with Electron, React, TypeScript and Vite. Targets **arm64 macOS** and
-**Windows 10 and newer (x64)**.
+Built with Electron, React, TypeScript and Vite. Targets **macOS on Apple silicon
+and Intel** and **Windows 10 and newer (x64)**.
 
 ## Features
 
@@ -42,7 +42,7 @@ Built with Electron, React, TypeScript and Vite. Targets **arm64 macOS** and
 
 ## Requirements
 
-- macOS 12 or newer on Apple silicon (arm64), or Windows 10 / 11 on x64
+- macOS 12 or newer on Apple silicon (arm64) or Intel (x64), or Windows 10 / 11 on x64
 - A Bandcamp account with music in your collection (or use the demo)
 
 Windows support is built on Electron 45, which requires Windows 10 (1809) or newer.
@@ -69,10 +69,18 @@ Useful environment variables:
 ## Packaging
 
 ```bash
-npm run package       # arm64 DMG + ZIP in release/
-npm run package:dir   # unpacked Side A.app in release/mac-arm64/
-npm run package:win   # Windows x64 installer + ZIP in release/
+npm run package            # arm64 + Intel DMG and ZIP in release/
+npm run package:arm        # arm64 only
+npm run package:intel      # Intel (x64) only
+npm run package:dir        # unpacked arm64 Side A.app in release/mac-arm64/
+npm run package:dir:intel  # unpacked Intel Side A.app in release/mac/
+npm run package:win        # Windows x64 installer + ZIP in release/
 ```
+
+The macOS artifacts carry their architecture in the name, for example
+`Side A-<version>-arm64.dmg` and `Side A-<version>-x64.dmg`. Nothing in the app is
+architecture specific: the ALAC decoder is WebAssembly and there are no native Node
+modules, so the Intel build is the same code with a different Electron binary.
 
 The Windows targets are built from `build/icon.ico` (regenerate it with
 `npm run icons:ico` after changing the artwork):
@@ -93,7 +101,7 @@ Gatekeeper from calling the bundle damaged. On first launch:
 - macOS may still quarantine the downloaded app. Drag it into Applications and
   open it normally, or clear the flag once:
   `xattr -cr "/Applications/Side A.app"`. Locally built copies use the same command
-  against `release/mac-arm64/Side A.app`.
+  against `release/mac-arm64/Side A.app`, or `release/mac/Side A.app` for Intel.
 - Windows SmartScreen shows "Windows protected your PC" for the installer and the
   portable exe. Choose **More info → Run anyway**; this disappears once the build is
   signed with a code-signing certificate.

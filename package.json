@@ -1,6 +1,6 @@
 {
   "name": "side-a",
-  "version": "3.5.0",
+  "version": "3.6.0",
   "description": "A Bandcamp collection player for macOS and Windows",
   "main": "./out/main/index.js",
   "author": "Side A",
@@ -13,8 +13,11 @@
     "typecheck": "tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p tsconfig.web.json",
     "icons": "node scripts/generate-icon.mjs",
     "icons:ico": "node scripts/generate-ico.mjs",
-    "package": "npm run build && electron-builder --mac --arm64",
+    "package": "npm run build && electron-builder --mac --arm64 --x64",
+    "package:arm": "npm run build && electron-builder --mac --arm64",
+    "package:intel": "npm run build && electron-builder --mac --x64",
     "package:dir": "npm run build && electron-builder --mac --arm64 --dir",
+    "package:dir:intel": "npm run build && electron-builder --mac --x64 --dir",
     "package:win": "npm run build && electron-builder --win --x64"
   },
   "dependencies": {
@@ -57,17 +60,20 @@
     ],
     "mac": {
       "category": "public.app-category.music",
+      "artifactName": "${productName}-${version}-${arch}.${ext}",
       "target": [
         {
           "target": "dmg",
           "arch": [
-            "arm64"
+            "arm64",
+            "x64"
           ]
         },
         {
           "target": "zip",
           "arch": [
-            "arm64"
+            "arm64",
+            "x64"
           ]
         }
       ],
