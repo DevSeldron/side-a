@@ -47,7 +47,7 @@ export function PlaybackControls({ size = 'sm' }: { size?: 'sm' | 'lg' }): React
       </button>
       <button
         type="button"
-        className={cx('play-toggle', size === 'lg' && 'is-large')}
+        className={cx('play-toggle', playing && 'is-playing', size === 'lg' && 'is-large')}
         onClick={() => void toggle()}
         title={playing ? 'Pause' : 'Play'}
         aria-label={playing ? 'Pause' : 'Play'}

@@ -10,9 +10,10 @@ interface AlbumCardProps {
   album: Album
   priority?: boolean
   compact?: boolean
+  index?: number
 }
 
-export function AlbumCard({ album, priority, compact }: AlbumCardProps): ReactElement {
+export function AlbumCard({ album, priority, compact, index }: AlbumCardProps): ReactElement {
   const current = usePlayer((state) => state.queue[state.index])
   const playing = usePlayer((state) => state.playing)
   const pendingKey = usePlayer((state) => state.pendingKey)
@@ -37,6 +38,7 @@ export function AlbumCard({ album, priority, compact }: AlbumCardProps): ReactEl
     <Link
       to={`/album/${album.key}`}
       className={cx('album-card', compact && 'is-compact', isCurrentAlbum && 'is-current')}
+      style={index === undefined ? undefined : { animationDelay: `${Math.min(index, 12) * 32 + 40}ms` }}
       onDoubleClick={() => void playAlbum(album.key)}
     >
       <div className="album-art">

@@ -4,9 +4,9 @@ import { useApp } from '../store/app'
 import { usePlayer } from '../store/player'
 import { AlbumCard } from '../components/AlbumCard'
 import { EmptyState, PageIntro } from '../components/Page'
-import { cx, plural } from '../lib/format'
+import { cx, parseBandcampDate, plural } from '../lib/format'
 
-type SortKey = 'recent' | 'artist' | 'title' | 'year'
+type SortKey = 'purchased' | 'added' | 'artist' | 'title'
 
 export function Collection(): ReactElement {
   const snapshot = useApp((state) => state.snapshot)
@@ -14,7 +14,7 @@ export function Collection(): ReactElement {
   const saveAllPurchased = useApp((state) => state.saveAllPurchased)
   const playAlbum = usePlayer((state) => state.playAlbum)
   const [query, setQuery] = useState('')
-  const [sort, setSort] = useState<SortKey>('recent')
+  const [sort, setSort] = useState<SortKey>('purchased')
   const [purchasedOnly, setPurchasedOnly] = useState(false)
 
   const collection = snapshot?.collection ?? []
@@ -26,12 +26,19 @@ export function Collection(): ReactElement {
       if (!term) return true
       return album.title.toLowerCase().includes(term) || album.bandName.toLowerCase().includes(term)
     })
-    return [...list].sort((a, b) => {
-      if (sort === 'artist') return a.bandName.localeCompare(b.bandName)
-      if (sort === 'title') return a.title.localeCompare(b.title)
-      if (sort === 'year') return (b.purchased ?? b.added ?? '').localeCompare(a.purchased ?? a.added ?? '')
-      return (b.added ?? '').localeCompare(a.added ?? '')
+    const dated = list.map((album) => ({
+      album,
+      addedAt: parseBandcampDate(album.added)?.getTime() ?? 0,
+      purchasedAt: parseBandcampDate(album.purchased ?? album.added)?.getTime() ?? 0
+    }))
+    dated.sort((a, b) => {
+      if (sort === 'artist') return a.album.bandName.localeCompare(b.album.bandName)
+      if (sort === 'title') return a.album.title.localeCompare(b.album.title)
+      const difference = sort === 'added' ? b.addedAt - a.addedAt : b.purchasedAt - a.purchasedAt
+      if (difference !== 0) return difference
+      return a.album.bandName.localeCompare(b.album.bandName) || a.album.title.localeCompare(b.album.title)
     })
+    return dated.map(({ album }) => album)
   }, [collection, query, sort, purchasedOnly])
 
   const purchased = collection.filter((album) => album.purchased).length
@@ -137,10 +144,10 @@ export function Collection(): ReactElement {
               <label className="select-wrap">
                 <SlidersHorizontal size={14} />
                 <select value={sort} onChange={(event) => setSort(event.target.value as SortKey)} aria-label="Sort collection">
-                  <option value="recent">Recently added</option>
+                  <option value="purchased">Recently purchased</option>
+                  <option value="added">Recently added</option>
                   <option value="artist">Artist A–Z</option>
                   <option value="title">Release A–Z</option>
-                  <option value="year">Purchase date</option>
                 </select>
               </label>
             </div>
@@ -161,11 +168,11 @@ export function Collection(): ReactElement {
             <>
               <div className="grid-heading">
                 <span>{query ? `${plural(filtered.length, 'result')}` : 'All releases'}</span>
-                <em>{sort === 'recent' ? 'Newest first' : sort === 'artist' ? 'By artist' : sort === 'title' ? 'By title' : 'By purchase date'}</em>
+                <em>{sort === 'purchased' ? 'Newest purchases' : sort === 'added' ? 'Newest additions' : sort === 'artist' ? 'By artist' : 'By title'}</em>
               </div>
               <div className="album-grid">
                 {filtered.map((album, index) => (
-                  <AlbumCard key={album.key} album={album} priority={index < 8} />
+                  <AlbumCard key={album.key} album={album} priority={index < 8} index={index} />
                 ))}
               </div>
             </>

@@ -106,7 +106,7 @@ export function Wishlist(): ReactElement {
           ) : (
             <div className={cx('album-grid', 'is-wishlist')}>
               {filtered.map((album, index) => (
-                <AlbumCard key={album.key} album={album} priority={index < 8} />
+                <AlbumCard key={album.key} album={album} priority={index < 8} index={index} />
               ))}
             </div>
           )}

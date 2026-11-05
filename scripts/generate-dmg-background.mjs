@@ -12,7 +12,7 @@ const renderSvg = (scale) => `
   <rect width="${width}" height="${height}" fill="#f5f2ea"/>
   <rect width="${width}" height="4" fill="#18b9a7"/>
   <text x="44" y="60" fill="#171717" font-family="-apple-system, Helvetica Neue, sans-serif" font-size="28" font-weight="500" letter-spacing="-0.6">Side A</text>
-  <text x="616" y="60" text-anchor="end" fill="#5e5e5e" font-family="-apple-system, Helvetica Neue, sans-serif" font-size="13">2.2.0</text>
+  <text x="616" y="60" text-anchor="end" fill="#5e5e5e" font-family="-apple-system, Helvetica Neue, sans-serif" font-size="13">3.0.0</text>
 
   <g stroke="#149e8d" stroke-width="2.4" fill="none" stroke-linecap="round">
     <path d="M272 ${arrowY} H390" stroke-dasharray="1 9"/>

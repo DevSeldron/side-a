@@ -78,8 +78,8 @@ export class LastfmService {
   state(): LastfmState {
     const config = this.config()
     return {
-      configured: Boolean(this.apiKey() && this.apiSecret()),
-      connected: Boolean(this.sessionKey()),
+      configured: Boolean(config.apiKey && config.apiSecret),
+      connected: Boolean(config.sessionKey),
       username: config.username,
       enabled: config.enabled,
       pending: config.pending.length,
@@ -87,29 +87,36 @@ export class LastfmService {
     }
   }
 
-  update(patch: { enabled?: boolean; apiKey?: string; apiSecret?: string }): LastfmState {
+  async update(patch: { enabled?: boolean; apiKey?: string; apiSecret?: string }): Promise<LastfmState> {
+    const config = this.config()
+    let apiKey = config.apiKey
+    let apiSecret = config.apiSecret
     let credentialsChanged = false
+
+    if (typeof patch.apiKey === 'string' && patch.apiKey.trim()) {
+      const next = patch.apiKey.trim()
+      if (next !== (await openSecret(config.apiKey))) {
+        apiKey = await sealSecret(next)
+        credentialsChanged = true
+      }
+    }
+    if (typeof patch.apiSecret === 'string' && patch.apiSecret.trim()) {
+      const next = patch.apiSecret.trim()
+      if (next !== (await openSecret(config.apiSecret))) {
+        apiSecret = await sealSecret(next)
+        credentialsChanged = true
+      }
+    }
+
     this.store.setIntegrations((integrations) => {
-      const config = integrations.lastfm
-      if (typeof patch.enabled === 'boolean') config.enabled = patch.enabled
-      if (typeof patch.apiKey === 'string' && patch.apiKey.trim()) {
-        const next = patch.apiKey.trim()
-        if (next !== this.apiKey()) {
-          config.apiKey = sealSecret(next)
-          credentialsChanged = true
-        }
-      }
-      if (typeof patch.apiSecret === 'string' && patch.apiSecret.trim()) {
-        const next = patch.apiSecret.trim()
-        if (next !== this.apiSecret()) {
-          config.apiSecret = sealSecret(next)
-          credentialsChanged = true
-        }
-      }
+      const next = integrations.lastfm
+      if (typeof patch.enabled === 'boolean') next.enabled = patch.enabled
+      next.apiKey = apiKey
+      next.apiSecret = apiSecret
       if (credentialsChanged) {
-        config.sessionKey = ''
-        config.username = undefined
-        config.pending = []
+        next.sessionKey = ''
+        next.username = undefined
+        next.pending = []
       }
     })
     this.lastError = undefined
@@ -118,7 +125,8 @@ export class LastfmService {
   }
 
   async connect(parent?: BrowserWindow | null): Promise<LastfmState> {
-    if (!this.apiKey() || !this.apiSecret()) {
+    const apiKey = await this.apiKey()
+    if (!apiKey || !(await this.apiSecret())) {
       throw new Error('Add your Last.fm API key and secret first')
     }
     if (this.authWindow) throw new Error('Last.fm sign-in is already open')
@@ -153,7 +161,7 @@ export class LastfmService {
       if (this.authWindow === win) this.authWindow = null
     })
     void win
-      .loadURL(`${AUTH_URL}?api_key=${encodeURIComponent(this.apiKey())}&token=${encodeURIComponent(token)}`)
+      .loadURL(`${AUTH_URL}?api_key=${encodeURIComponent(apiKey)}&token=${encodeURIComponent(token)}`)
       .catch(() => undefined)
 
     try {
@@ -196,8 +204,9 @@ export class LastfmService {
         void check()
       })
 
+      const sealedSession = await sealSecret(session.key)
       this.store.setIntegrations((integrations) => {
-        integrations.lastfm.sessionKey = sealSecret(session.key)
+        integrations.lastfm.sessionKey = sealedSession
         integrations.lastfm.username = session.name
         integrations.lastfm.enabled = true
       })
@@ -229,7 +238,7 @@ export class LastfmService {
   }
 
   async nowPlaying(input: ScrobbleInput): Promise<void> {
-    if (!this.config().enabled || !this.sessionKey()) return
+    if (!this.config().enabled || !(await this.sessionKey())) return
     const item = sanitize(input)
     if (!item) return
     const stamp = `${item.artist}\u0000${item.title}\u0000${item.timestamp}`
@@ -259,7 +268,7 @@ export class LastfmService {
   }
 
   async scrobble(input: ScrobbleInput): Promise<void> {
-    if (!this.config().enabled || !this.sessionKey()) return
+    if (!this.config().enabled || !(await this.sessionKey())) return
     const item = sanitize(input)
     if (!item) return
     const sent = await this.send(item)
@@ -269,7 +278,7 @@ export class LastfmService {
 
   async flush(): Promise<void> {
     const config = this.config()
-    if (!config.enabled || !this.sessionKey() || config.pending.length === 0) return
+    if (!config.enabled || !(await this.sessionKey()) || config.pending.length === 0) return
     const batch = config.pending.slice(0, 25)
     let sent = 0
     for (const item of batch) {
@@ -294,15 +303,15 @@ export class LastfmService {
     return this.store.get().integrations.lastfm
   }
 
-  private apiKey(): string {
+  private async apiKey(): Promise<string> {
     return openSecret(this.config().apiKey)
   }
 
-  private apiSecret(): string {
+  private async apiSecret(): Promise<string> {
     return openSecret(this.config().apiSecret)
   }
 
-  private sessionKey(): string {
+  private async sessionKey(): Promise<string> {
     return openSecret(this.config().sessionKey)
   }
 
@@ -352,13 +361,13 @@ export class LastfmService {
     params: Record<string, string | number | undefined> = {},
     options: { session?: boolean } = {}
   ): Promise<Record<string, any>> {
-    const apiKey = this.apiKey()
-    const apiSecret = this.apiSecret()
+    const apiKey = await this.apiKey()
+    const apiSecret = await this.apiSecret()
     if (!apiKey || !apiSecret) throw new Error('Last.fm is not configured')
 
     const signed: Record<string, string> = { method, api_key: apiKey }
     if (options.session) {
-      const session = this.sessionKey()
+      const session = await this.sessionKey()
       if (!session) throw new Error('Connect Last.fm first')
       signed.sk = session
     }

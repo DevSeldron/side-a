@@ -256,7 +256,14 @@ export function registerIpc(context: IpcContext): void {
     if (typeof input.accent === 'string' && /^#[0-9a-f]{6}$/i.test(input.accent.trim())) {
       allowed.accent = normalizeAccent(input.accent)
     }
-    if (input.theme === 'dark' || input.theme === 'light') allowed.theme = input.theme
+    if (
+      input.theme === 'dark' ||
+      input.theme === 'light' ||
+      input.theme === 'blurred-dark' ||
+      input.theme === 'blurred-light'
+    ) {
+      allowed.theme = input.theme
+    }
     if (typeof input.coverTheme === 'boolean') allowed.coverTheme = input.coverTheme
     if (typeof input.backgroundGradient === 'boolean') allowed.backgroundGradient = input.backgroundGradient
     if (input.gradientPosition === 'top' || input.gradientPosition === 'bottom') {
@@ -303,10 +310,10 @@ export function registerIpc(context: IpcContext): void {
   // Returning a single service's state here used to leave the renderer with a
   // snapshot whose `integrations.discord` was undefined, which crashed the
   // settings page on the next render.
-  ipcMain.handle(IPC.lastfmUpdate, (_event, patch: unknown) => {
+  ipcMain.handle(IPC.lastfmUpdate, async (_event, patch: unknown) => {
     if (!patch || typeof patch !== 'object') throw new Error('Invalid Last.fm settings')
     const input = patch as Record<string, unknown>
-    lastfm.update({
+    await lastfm.update({
       enabled: typeof input.enabled === 'boolean' ? input.enabled : undefined,
       apiKey: typeof input.apiKey === 'string' ? input.apiKey : undefined,
       apiSecret: typeof input.apiSecret === 'string' ? input.apiSecret : undefined

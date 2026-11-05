@@ -86,7 +86,11 @@ export function applyTheme(accent: string, theme: ThemeMode, rainbow = false): v
   const root = document.documentElement
   const hex = normalizeAccent(accent)
   const base = parseHex(hex) ?? [102, 224, 204]
-  root.dataset.theme = theme === 'light' ? 'light' : 'dark'
+  const blurred = theme === 'blurred-dark' || theme === 'blurred-light'
+  const light = theme === 'light' || theme === 'blurred-light'
+  root.dataset.theme = light ? 'light' : 'dark'
+  if (blurred) root.dataset.blur = 'true'
+  else delete root.dataset.blur
   root.dataset.rainbow = rainbow ? 'true' : 'false'
   setAccent(root, base)
 

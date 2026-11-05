@@ -38,7 +38,7 @@ export function TrackList({ album, detail, offlineReady }: TrackListProps): Reac
         <span className="tracklist-source">{offlineReady ? 'Offline copy' : 'Source'}</span>
         <span className="tracklist-time">Length</span>
       </div>
-      {detail.tracks.map((track) => {
+      {detail.tracks.map((track, index) => {
         const isCurrent = current?.albumKey === album.key && current.id === track.id
         const entry = downloads?.[`${album.key}:${track.id}`]
         const busy = entry?.status === 'downloading'
@@ -46,7 +46,8 @@ export function TrackList({ album, detail, offlineReady }: TrackListProps): Reac
         return (
           <div
             key={track.id}
-            className={cx('track-row', isCurrent && 'is-current')}
+            className={cx('track-row', isCurrent && 'is-current', isCurrent && playing && 'is-playing')}
+            style={{ animationDelay: `${Math.min(index, 10) * 26}ms` }}
             role="listitem"
             tabIndex={0}
             onClick={() => void onPlay(track.id)}

@@ -1,5 +1,5 @@
-import { useEffect, useState, type ReactElement } from 'react'
-import { Navigate, Route, Routes } from 'react-router-dom'
+import { useEffect, useLayoutEffect, useRef, useState, type ReactElement } from 'react'
+import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { AlertTriangle, RefreshCw } from 'lucide-react'
 import { useApp } from './store/app'
 import { usePlayer } from './store/player'
@@ -11,8 +11,8 @@ import { PlayerBar, PlayerSpacer } from './components/PlayerBar'
 import { NowPlaying } from './components/NowPlaying'
 import { CommandPalette } from './components/CommandPalette'
 import { Toasts } from './components/Toasts'
-import { Brand } from './components/Brand'
 import { MountainBackdrop } from './components/MountainBackdrop'
+import { StartupSplash } from './components/StartupSplash'
 import { Welcome } from './pages/Welcome'
 import { Collection } from './pages/Collection'
 import { Wishlist } from './pages/Wishlist'
@@ -30,6 +30,12 @@ export default function App(): ReactElement {
   const snapshot = useApp((state) => state.snapshot)
   const setPaletteOpen = useApp((state) => state.setPaletteOpen)
   const track = usePlayer((state) => state.queue[state.index])
+  const location = useLocation()
+  const mainRef = useRef<HTMLElement>(null)
+
+  useLayoutEffect(() => {
+    mainRef.current?.scrollTo({ top: 0, left: 0, behavior: 'instant' })
+  }, [location.key])
 
   useEffect(() => {
     void init()
@@ -50,6 +56,9 @@ export default function App(): ReactElement {
   const mountainBackdrop = snapshot?.settings.mountainBackdrop ?? false
   const reduceMotion = snapshot?.settings.reduceMotion ?? false
   const [coverAccent, setCoverAccent] = useState<string | null>(null)
+  const [showSplash, setShowSplash] = useState(true)
+  const [splashLeaving, setSplashLeaving] = useState(false)
+  const splashStarted = useRef(Date.now())
   const coverUrl = track?.coverUrl ?? ''
 
   useEffect(() => {
@@ -89,6 +98,22 @@ export default function App(): ReactElement {
   }, [reduceMotion])
 
   useEffect(() => {
+    if (!ready || !showSplash) return
+    let exitTimer: number | undefined
+    // Let the reveal finish on fast launches without making slower ones wait
+    // longer than they already do.
+    const delay = reduceMotion ? 120 : Math.max(0, 1600 - (Date.now() - splashStarted.current))
+    const timer = window.setTimeout(() => {
+      setSplashLeaving(true)
+      exitTimer = window.setTimeout(() => setShowSplash(false), reduceMotion ? 20 : 480)
+    }, delay)
+    return () => {
+      window.clearTimeout(timer)
+      if (exitTimer) window.clearTimeout(exitTimer)
+    }
+  }, [ready, reduceMotion, showSplash])
+
+  useEffect(() => {
     const onKey = (event: KeyboardEvent): void => {
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
         event.preventDefault()
@@ -99,18 +124,8 @@ export default function App(): ReactElement {
     return () => window.removeEventListener('keydown', onKey)
   }, [setPaletteOpen])
 
-  if (!ready) {
-    return (
-      <div className="splash">
-        <div className="splash-inner">
-          <Brand />
-          <div className="splash-loader">
-            <span />
-          </div>
-          <p>Finding your records</p>
-        </div>
-      </div>
-    )
+  if (!ready || showSplash) {
+    return <StartupSplash leaving={splashLeaving} />
   }
 
   if (loadingError) {
@@ -146,7 +161,7 @@ export default function App(): ReactElement {
       <Sidebar />
       <div className="app-body">
         <TopBar />
-        <main className="app-main">
+        <main ref={mainRef} className="app-main">
           <Routes>
             <Route path="/" element={<Collection />} />
             <Route path="/wishlist" element={<Wishlist />} />

@@ -167,7 +167,7 @@ export interface SyncState {
 
 export type Accent = string
 
-export type ThemeMode = 'dark' | 'light'
+export type ThemeMode = 'dark' | 'light' | 'blurred-dark' | 'blurred-light'
 
 export type TrackQuality = 'mp3-128' | 'mp3-v0' | 'mp3-320'
 

@@ -20,7 +20,7 @@ export function PlayerBar(): ReactElement | null {
 
   return (
     <footer className="player-bar">
-      <div className="player-track">
+      <div className="player-track" key={`${track.albumKey}-${track.id}`}>
         <Link to={`/album/${track.albumKey}`} className="player-art">
           <Artwork src={track.coverUrl} alt={track.albumTitle} />
           {track.offline ? <span className="player-offline-dot" title="Offline copy" /> : null}

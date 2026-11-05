@@ -5,11 +5,11 @@ import { safeStorage } from 'electron'
  * is available. The prefixes make it possible to read data written on a machine
  * where encryption was unavailable.
  */
-export function sealSecret(value: string): string {
+export async function sealSecret(value: string): Promise<string> {
   if (!value) return ''
   try {
-    if (safeStorage.isEncryptionAvailable()) {
-      return `enc:${safeStorage.encryptString(value).toString('base64')}`
+    if (await safeStorage.isAsyncEncryptionAvailable()) {
+      return `enc:${(await safeStorage.encryptStringAsync(value)).toString('base64')}`
     }
   } catch {
     // Fall through to the plain-text envelope below.
@@ -17,11 +17,18 @@ export function sealSecret(value: string): string {
   return `raw:${Buffer.from(value, 'utf8').toString('base64')}`
 }
 
-export function openSecret(value: string): string {
+export async function openSecret(value: string): Promise<string> {
   if (!value) return ''
   try {
     if (value.startsWith('enc:')) {
-      return safeStorage.decryptString(Buffer.from(value.slice(4), 'base64'))
+      const encrypted = Buffer.from(value.slice(4), 'base64')
+      let decrypted = await safeStorage.decryptStringAsync(encrypted)
+      // A rotated keychain can ask for one more pass so the value is re-encrypted
+      // with the current key before it is used.
+      if (decrypted.shouldReEncrypt) {
+        decrypted = await safeStorage.decryptStringAsync(encrypted)
+      }
+      return decrypted.result
     }
     if (value.startsWith('raw:')) {
       return Buffer.from(value.slice(4), 'base64').toString('utf8')

@@ -27,6 +27,13 @@ import { PageIntro } from '../components/Page'
 import { UserAvatar } from '../components/UserAvatar'
 import { cx, formatBytes, shortPath } from '../lib/format'
 
+const THEMES = [
+  { id: 'dark', label: 'Dark' },
+  { id: 'light', label: 'Light' },
+  { id: 'blurred-dark', label: 'Blurred Dark' },
+  { id: 'blurred-light', label: 'Blurred Light' }
+] as const
+
 const FORMATS = [
   { id: 'flac', label: 'FLAC (lossless)' },
   { id: 'flac-24', label: 'FLAC 24-bit' },
@@ -225,21 +232,21 @@ export function Settings(): ReactElement {
             <span className="settings-icon" onClick={tapAppearance}><Palette size={17} /></span>
             <div>
               <h2>Appearance</h2>
-              <p>Light or dark theme with a custom accent colour</p>
+              <p>Dark, light, or a blurred version of either with a custom accent colour</p>
             </div>
           </header>
           <div className="theme-row">
-            {(['dark', 'light'] as const).map((mode) => (
+            {THEMES.map((mode) => (
               <button
                 type="button"
-                key={mode}
-                className={cx('theme-choice', settings.theme === mode && 'is-active')}
-                aria-pressed={settings.theme === mode}
-                onClick={() => void updateSettings({ theme: mode })}
+                key={mode.id}
+                className={cx('theme-choice', settings.theme === mode.id && 'is-active')}
+                aria-pressed={settings.theme === mode.id}
+                onClick={() => void updateSettings({ theme: mode.id })}
               >
-                <span className={cx('theme-preview', `is-${mode}`)} />
-                <span className="theme-choice-label">{mode === 'dark' ? 'Dark' : 'Light'}</span>
-                {settings.theme === mode ? <Check size={14} /> : null}
+                <span className={cx('theme-preview', `is-${mode.id}`)} />
+                <span className="theme-choice-label">{mode.label}</span>
+                {settings.theme === mode.id ? <Check size={14} /> : null}
               </button>
             ))}
           </div>
@@ -318,7 +325,7 @@ export function Settings(): ReactElement {
           />
           <SettingToggle
             title="Reduce motion"
-            description="Tone down transitions and artwork movement"
+            description="Tone down transitions, backdrop drift and artwork movement"
             checked={settings.reduceMotion}
             onChange={(value) => void updateSettings({ reduceMotion: value })}
           />

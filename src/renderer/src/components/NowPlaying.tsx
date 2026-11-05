@@ -33,10 +33,10 @@ export function NowPlaying(): ReactElement | null {
 
       <div className="now-body">
         <div className="now-main">
-          <div className={cx('now-art', loading && 'is-loading')}>
+          <div className={cx('now-art', loading && 'is-loading')} key={`${track.albumKey}-${track.id}-art`}>
             <Artwork src={track.coverUrl} alt={track.albumTitle} eager />
           </div>
-          <div className="now-meta">
+          <div className="now-meta" key={`${track.albumKey}-${track.id}-meta`}>
             <span className="now-number">Track {String(track.number).padStart(2, '0')}</span>
             <h1>{track.title}</h1>
             <p>
@@ -66,6 +66,7 @@ export function NowPlaying(): ReactElement | null {
                 type="button"
                 key={`${entry.albumKey}-${entry.id}`}
                 className={cx('now-queue-row', position === index && 'is-current')}
+                style={{ animationDelay: `${Math.min(position, 10) * 28}ms` }}
                 onClick={() => void loadAt(position, true)}
               >
                 <span className="now-queue-number">{position === index ? '▶' : String(entry.number).padStart(2, '0')}</span>

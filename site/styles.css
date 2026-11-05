@@ -258,7 +258,81 @@ code {
 
 /* Hero */
 
+.hero {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  background:
+    radial-gradient(62% 54% at 50% 100%, rgba(42, 212, 192, 0.17), transparent 72%),
+    linear-gradient(180deg, #212121 0%, #1c2523 68%, #212121 100%);
+}
+
+.hero::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 1;
+  height: 210px;
+  background: linear-gradient(180deg, transparent, var(--bg) 78%);
+  pointer-events: none;
+}
+
+.hero-sky {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.hero-stars,
+.hero-mountains {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  display: block;
+}
+
+.hero-stars {
+  top: 0;
+  height: 100%;
+  color: #96eadd;
+  opacity: 0.68;
+}
+
+.hero-star {
+  fill: currentColor;
+}
+
+.hero-star.is-bright {
+  filter: drop-shadow(0 0 5px rgba(42, 212, 192, 0.8));
+}
+
+.hero-mountains {
+  bottom: 0;
+  height: 78%;
+}
+
+.hero-ridge {
+  fill: var(--accent);
+}
+
+.hero-ridge-far {
+  opacity: 0.14;
+}
+
+.hero-ridge-mid {
+  opacity: 0.2;
+}
+
+.hero-ridge-near {
+  opacity: 0.28;
+}
+
 .hero-inner {
+  position: relative;
+  z-index: 2;
   max-width: var(--max);
   margin: 0 auto;
   padding: 116px 40px 132px;
@@ -817,6 +891,18 @@ code {
   .hero-inner {
     padding-top: 64px;
     padding-bottom: 76px;
+  }
+
+  .hero::after {
+    height: 150px;
+  }
+
+  .hero-mountains {
+    height: 72%;
+  }
+
+  .hero-stars {
+    opacity: 0.52;
   }
 
   .hero h1 {
