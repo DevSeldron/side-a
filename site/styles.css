@@ -19,7 +19,7 @@
   --accent: #2ad4c0;
   --accent-ink: #06231f;
   --max: 1320px;
-  --nav-h: 96px;
+  --nav-h: 84px;
   --font: 'Inter Variable', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
 }
 
@@ -37,7 +37,7 @@ body {
   background: var(--bg);
   color: var(--text);
   font-family: var(--font);
-  font-size: 18px;
+  font-size: 16.5px;
   line-height: 1.6;
   letter-spacing: -0.005em;
   -webkit-font-smoothing: antialiased;
@@ -97,14 +97,14 @@ code {
   align-items: center;
   justify-content: center;
   gap: 10px;
-  height: 48px;
-  padding: 0 24px;
+  height: 44px;
+  padding: 0 22px;
   border: 1px solid transparent;
   border-radius: 0;
   background: var(--panel-soft);
   color: var(--text);
   font-family: inherit;
-  font-size: 17px;
+  font-size: 15.5px;
   font-weight: 500;
   line-height: 1;
   white-space: nowrap;
@@ -131,16 +131,16 @@ code {
 }
 
 .button.large {
-  height: 62px;
-  padding: 0 36px;
-  font-size: 22px;
+  height: 54px;
+  padding: 0 32px;
+  font-size: 19px;
 }
 
 .button.block {
   width: 100%;
   justify-content: space-between;
-  height: 54px;
-  font-size: 17px;
+  height: 48px;
+  font-size: 15.5px;
 }
 
 .size {
@@ -175,7 +175,7 @@ code {
 
 .brand {
   flex: 0 0 auto;
-  font-size: 28px;
+  font-size: 25px;
   font-weight: 500;
   letter-spacing: -0.02em;
 }
@@ -183,12 +183,12 @@ code {
 .nav-links {
   display: flex;
   align-items: center;
-  gap: 40px;
-  margin: 0 auto;
+  gap: 30px;
+  margin-left: 6px;
 }
 
 .nav-links a {
-  font-size: 21px;
+  font-size: 18px;
   color: var(--text-soft);
   letter-spacing: -0.01em;
   transition: color 0.15s ease;
@@ -203,10 +203,11 @@ code {
   align-items: center;
   gap: 28px;
   flex: 0 0 auto;
+  margin-left: auto;
 }
 
 .github {
-  font-size: 21px;
+  font-size: 18px;
   color: var(--text-soft);
   transition: color 0.15s ease;
 }
@@ -216,9 +217,9 @@ code {
 }
 
 .nav-download {
-  height: 56px;
-  padding: 0 28px;
-  font-size: 21px;
+  height: 48px;
+  padding: 0 24px;
+  font-size: 18px;
 }
 
 .menu-toggle {
@@ -335,12 +336,12 @@ code {
   z-index: 2;
   max-width: var(--max);
   margin: 0 auto;
-  padding: 116px 40px 132px;
+  padding: 96px 40px 110px;
 }
 
 .hero h1 {
   max-width: 1200px;
-  font-size: clamp(52px, 7.2vw, 110px);
+  font-size: clamp(44px, 5.9vw, 88px);
   line-height: 1.05;
   font-weight: 400;
   letter-spacing: -0.04em;
@@ -352,8 +353,8 @@ code {
 
 .lede {
   max-width: 980px;
-  margin-top: 44px;
-  font-size: clamp(20px, 1.9vw, 28px);
+  margin-top: 34px;
+  font-size: clamp(17px, 1.6vw, 23px);
   line-height: 1.5;
   color: var(--text-soft);
 }
@@ -361,20 +362,20 @@ code {
 .hero-actions {
   display: flex;
   align-items: center;
-  gap: 18px;
+  gap: 16px;
   flex-wrap: wrap;
-  margin-top: 44px;
+  margin-top: 36px;
 }
 
 .version {
   margin-left: 8px;
-  font-size: 19px;
+  font-size: 16.5px;
   color: var(--text-soft);
 }
 
 .support {
-  margin-top: 22px;
-  font-size: 17px;
+  margin-top: 18px;
+  font-size: 15px;
   color: var(--text-soft);
 }
 
@@ -383,7 +384,7 @@ code {
 .section {
   max-width: var(--max);
   margin: 0 auto;
-  padding: 96px 40px;
+  padding: 80px 40px;
   border-top: 1px solid var(--line);
 }
 
@@ -395,7 +396,7 @@ code {
   display: block;
   margin-bottom: 16px;
   color: var(--accent);
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -404,7 +405,7 @@ code {
 .section-head h2,
 .split-copy h2,
 .notes-head h2 {
-  font-size: clamp(40px, 4.4vw, 64px);
+  font-size: clamp(32px, 3.6vw, 52px);
   line-height: 1.02;
   font-weight: 500;
   letter-spacing: -0.035em;
@@ -412,8 +413,8 @@ code {
 
 .section-head p {
   max-width: 860px;
-  margin-top: 22px;
-  font-size: 19px;
+  margin-top: 18px;
+  font-size: 17px;
   color: var(--muted);
 }
 
@@ -436,8 +437,8 @@ code {
 }
 
 .shot figcaption {
-  margin-top: 12px;
-  font-size: 14px;
+  margin-top: 10px;
+  font-size: 13px;
   color: var(--dim);
   letter-spacing: 0.02em;
 }
@@ -475,15 +476,15 @@ code {
 }
 
 .feature h3 {
-  margin: 14px 0 10px;
-  font-size: 24px;
+  margin: 12px 0 9px;
+  font-size: 21px;
   font-weight: 500;
   letter-spacing: -0.02em;
 }
 
 .feature p {
   max-width: 52ch;
-  font-size: 16.5px;
+  font-size: 15.5px;
   color: var(--muted);
 }
 
@@ -509,8 +510,8 @@ code {
 }
 
 .split-copy p {
-  margin-bottom: 18px;
-  font-size: 17px;
+  margin-bottom: 16px;
+  font-size: 16px;
   color: var(--muted);
 }
 
@@ -523,9 +524,9 @@ code {
 
 .ticks li {
   position: relative;
-  padding: 14px 0 14px 26px;
+  padding: 13px 0 13px 26px;
   border-bottom: 1px solid var(--line);
-  font-size: 16px;
+  font-size: 15px;
   color: var(--text-soft);
 }
 
@@ -576,7 +577,7 @@ code {
 }
 
 .download-head h3 {
-  font-size: 24px;
+  font-size: 21px;
   font-weight: 500;
   letter-spacing: -0.02em;
 }
@@ -595,8 +596,8 @@ code {
 }
 
 .download-note {
-  margin-top: 20px;
-  font-size: 15px;
+  margin-top: 18px;
+  font-size: 14px;
   line-height: 1.6;
   color: var(--muted);
 }
@@ -720,8 +721,8 @@ code {
   align-items: center;
   justify-content: space-between;
   gap: 24px;
-  padding: 24px 0;
-  font-size: 20px;
+  padding: 21px 0;
+  font-size: 18px;
   font-weight: 500;
   letter-spacing: -0.01em;
   cursor: pointer;
@@ -815,17 +816,17 @@ code {
 
 @media (max-width: 1080px) {
   .nav-links {
-    gap: 26px;
+    gap: 20px;
   }
 
   .nav-links a,
   .github {
-    font-size: 18px;
+    font-size: 17px;
   }
 
   .nav-download {
-    height: 50px;
-    font-size: 18px;
+    height: 46px;
+    font-size: 17px;
   }
 
   .split {
@@ -854,7 +855,7 @@ code {
   }
 
   .brand {
-    font-size: 24px;
+    font-size: 22px;
   }
 
   .nav-links,
@@ -906,12 +907,12 @@ code {
   }
 
   .hero h1 {
-    font-size: clamp(42px, 11vw, 64px);
+    font-size: clamp(36px, 10vw, 54px);
   }
 
   .lede {
-    margin-top: 30px;
-    font-size: 19px;
+    margin-top: 26px;
+    font-size: 17px;
   }
 
   .hero-actions {
@@ -920,9 +921,9 @@ code {
   }
 
   .button.large {
-    height: 54px;
-    padding: 0 26px;
-    font-size: 19px;
+    height: 48px;
+    padding: 0 24px;
+    font-size: 17px;
   }
 
   .version {
@@ -937,7 +938,7 @@ code {
   }
 
   .section-head p {
-    font-size: 17px;
+    font-size: 16px;
   }
 
   .feature-grid,
