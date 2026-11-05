@@ -3,11 +3,16 @@ const REPO = 'DevSeldron/side-a'
 const versionTargets = document.querySelectorAll('[data-version]')
 const notesBody = document.querySelector('[data-release-notes]')
 
+// The portable Windows zip also ends in -x64.zip, so the macOS matchers must
+// ignore anything tagged as a Windows build or the Intel ZIP button would hand
+// out the Windows download.
+const isMacAsset = (name) => !name.includes('-win-')
+
 const ASSET_MATCHERS = {
-  dmg: (name) => name.endsWith('-arm64.dmg'),
-  'dmg-intel': (name) => name.endsWith('-x64.dmg'),
-  'mac-zip': (name) => name.endsWith('-arm64.zip'),
-  'mac-zip-intel': (name) => name.endsWith('-x64.zip'),
+  dmg: (name) => isMacAsset(name) && name.endsWith('-arm64.dmg'),
+  'dmg-intel': (name) => isMacAsset(name) && name.endsWith('-x64.dmg'),
+  'mac-zip': (name) => isMacAsset(name) && name.endsWith('-arm64.zip'),
+  'mac-zip-intel': (name) => isMacAsset(name) && name.endsWith('-x64.zip'),
   exe: (name) => name.endsWith('-win-x64.exe'),
   'win-zip': (name) => name.endsWith('-win-x64.zip')
 }
