@@ -312,7 +312,7 @@ export function Settings(): ReactElement {
           ) : null}
           <SettingToggle
             title="Mountain backdrop"
-            description="A starry sky over simplified mountains in your accent colour, turned off on the void release"
+            description="A starry sky over simplified mountains in your accent colour"
             checked={settings.mountainBackdrop}
             onChange={toggleMountainBackdrop}
           />

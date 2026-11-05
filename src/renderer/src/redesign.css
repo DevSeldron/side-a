@@ -268,13 +268,18 @@ h4 {
 /* The illustrated sky is lighter than the flat canvas, so keep secondary
    copy above the contrast it would have on the solid background. */
 :root[data-theme='dark'][data-backdrop='mountains']:not([data-tribute='void']) {
-  --muted: #bdb7ae;
-  --muted-dim: #a39d94;
+  --muted: color-mix(in srgb, var(--accent) 62%, var(--text) 38%);
+  --muted-dim: color-mix(in srgb, var(--accent) 45%, var(--text) 55%);
 }
 
 :root[data-theme='light'][data-backdrop='mountains']:not([data-tribute='void']) {
-  --muted: #55525c;
-  --muted-dim: #625f69;
+  --accent-text: color-mix(in srgb, var(--accent) 52%, var(--text) 48%);
+  --muted: color-mix(in srgb, var(--accent) 50%, var(--text) 50%);
+  --muted-dim: color-mix(in srgb, var(--accent) 42%, var(--text) 58%);
+}
+
+:root[data-theme='light'] .now-playing {
+  --accent-text: var(--accent);
 }
 
 :root[data-backdrop='mountains'] .mountain-backdrop {
@@ -517,7 +522,7 @@ h4 {
 
 .toolbar-search:focus-within {
   background: transparent;
-  border-bottom-color: var(--accent);
+  border-bottom-color: var(--accent-text);
 }
 
 .toolbar-search input {
@@ -585,7 +590,7 @@ h4 {
 }
 
 .album-card:hover .album-title {
-  color: var(--accent);
+  color: var(--accent-text);
 }
 
 .album-sub {
@@ -745,7 +750,7 @@ h4 {
 .gradient-choice > svg {
   flex: 0 0 auto;
   margin-left: auto;
-  color: var(--accent);
+  color: var(--accent-text);
 }
 
 .gradient-choice-preview {
@@ -843,7 +848,7 @@ h4 {
 
 .demo-card strong,
 .demo-card .text-button {
-  color: var(--accent);
+  color: var(--accent-text);
 }
 
 .demo-card span {
@@ -852,13 +857,13 @@ h4 {
 
 :root[data-theme='light'] .demo-card {
   border-color: var(--line);
-  border-left-color: var(--accent);
+  border-left-color: var(--accent-text);
   background: transparent;
 }
 
 :root[data-theme='light'] .demo-card strong,
 :root[data-theme='light'] .demo-card .text-button {
-  color: var(--accent);
+  color: var(--accent-text);
 }
 
 :root[data-theme='light'] .demo-card span {
@@ -1064,7 +1069,7 @@ h4 {
 }
 
 .welcome-editorial h1 em {
-  color: var(--accent);
+  color: var(--accent-text);
   font-style: normal;
 }
 
@@ -1089,7 +1094,7 @@ h4 {
 }
 
 .welcome-features svg {
-  color: var(--accent);
+  color: var(--accent-text);
 }
 
 .welcome-features strong {
@@ -1127,7 +1132,7 @@ h4 {
 }
 
 .panel-eyebrow {
-  color: var(--accent);
+  color: var(--accent-text);
 }
 
 .welcome-panel-head h2 {
@@ -1234,7 +1239,7 @@ h4 {
 }
 
 .input-with-icon:focus-within {
-  border-color: var(--accent);
+  border-color: var(--accent-text);
   color: var(--text);
 }
 
@@ -1260,7 +1265,7 @@ h4 {
 }
 
 .discover-search:focus-within {
-  border-bottom-color: var(--accent);
+  border-bottom-color: var(--accent-text);
 }
 
 .discover-artist-row {

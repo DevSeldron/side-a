@@ -18,6 +18,7 @@
   --danger: #ff7a6b;
   --ok: #74dfae;
   --accent: #66e0cc;
+  --accent-text: var(--accent);
   --accent-ink: #042420;
   --accent-soft: rgba(102, 224, 204, 0.14);
   --accent-line: rgba(102, 224, 204, 0.34);
@@ -293,7 +294,7 @@ code {
 }
 
 .icon-button.is-active {
-  color: var(--accent);
+  color: var(--accent-text);
 }
 
 .text-button {
@@ -329,7 +330,7 @@ code {
 }
 
 .pill.is-bought {
-  color: var(--accent);
+  color: var(--accent-text);
   background: var(--accent-soft);
   border-color: var(--accent-line);
 }
@@ -398,7 +399,7 @@ code {
   place-items: center;
   width: 30px;
   height: 30px;
-  color: var(--accent);
+  color: var(--accent-text);
   flex: 0 0 auto;
 }
 
@@ -631,7 +632,7 @@ code {
 }
 
 .nav-item em.is-live {
-  color: var(--accent);
+  color: var(--accent-text);
 }
 
 .nav-item:hover {
@@ -656,7 +657,7 @@ code {
 }
 
 .nav-item.is-active svg {
-  color: var(--accent);
+  color: var(--accent-text);
   opacity: 1;
 }
 
@@ -788,7 +789,7 @@ code {
   width: 30px;
   height: 30px;
   border-radius: 8px;
-  color: var(--accent);
+  color: var(--accent-text);
   background: var(--accent-soft);
 }
 
@@ -951,7 +952,7 @@ code {
 }
 
 .sync-pill.is-syncing {
-  color: var(--accent);
+  color: var(--accent-text);
   border-color: var(--accent-line);
 }
 
@@ -975,7 +976,7 @@ code {
 }
 
 .sync-pill.is-syncing .sync-copy strong {
-  color: var(--accent);
+  color: var(--accent-text);
 }
 
 .sync-pill.is-error .sync-copy strong {
@@ -1072,7 +1073,7 @@ code {
   font-weight: 650;
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: var(--accent);
+  color: var(--accent-text);
 }
 
 .page-intro h1 {
@@ -1151,7 +1152,7 @@ code {
 .toolbar-search:focus-within {
   border-color: var(--accent-line);
   background: rgba(var(--tint), 0.04);
-  color: var(--accent);
+  color: var(--accent-text);
 }
 
 .toolbar-search input {
@@ -1208,7 +1209,7 @@ code {
 }
 
 .chip-toggle.is-on {
-  color: var(--accent);
+  color: var(--accent-text);
   border-color: var(--accent-line);
   background: var(--accent-soft);
 }
@@ -1372,7 +1373,7 @@ code {
 }
 
 .flag svg {
-  color: var(--accent);
+  color: var(--accent-text);
 }
 
 .album-meta {
@@ -1402,7 +1403,7 @@ code {
 }
 
 .album-card:hover .album-title {
-  color: var(--accent);
+  color: var(--accent-text);
 }
 
 .album-sub {
@@ -1446,7 +1447,7 @@ code {
   border-radius: 50%;
   border: 1px solid var(--line);
   background: rgba(var(--tint), 0.03);
-  color: var(--accent);
+  color: var(--accent-text);
 }
 
 .empty-state h2 {
@@ -1607,7 +1608,7 @@ code {
 
 .offline-progress-card strong {
   font-size: 12px;
-  color: var(--accent);
+  color: var(--accent-text);
 }
 
 .offline-progress-card span {
@@ -1730,7 +1731,7 @@ code {
 
 .track-download:hover {
   background: var(--accent-soft);
-  color: var(--accent);
+  color: var(--accent-text);
 }
 
 .track-download.is-done {
@@ -1769,7 +1770,7 @@ code {
 
 .theme-choice > svg {
   margin-left: auto;
-  color: var(--accent);
+  color: var(--accent-text);
 }
 
 .theme-preview {
@@ -1921,7 +1922,7 @@ code {
 
 .track-row.is-current .track-row-play {
   opacity: 1;
-  color: var(--accent);
+  color: var(--accent-text);
 }
 
 .track-name {
@@ -1941,7 +1942,7 @@ code {
 }
 
 .track-row.is-current .track-title {
-  color: var(--accent);
+  color: var(--accent-text);
   font-weight: 580;
 }
 
@@ -2066,7 +2067,7 @@ code {
 }
 
 .offline-title:hover {
-  color: var(--accent);
+  color: var(--accent-text);
 }
 
 .offline-status-line {
@@ -2109,7 +2110,7 @@ code {
 .local-note > svg {
   flex: 0 0 auto;
   margin-top: 1px;
-  color: var(--accent);
+  color: var(--accent-text);
 }
 
 .local-note strong {
@@ -2167,7 +2168,7 @@ code {
   font-weight: 650;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: var(--accent);
+  color: var(--accent-text);
 }
 
 .download-active-row {
@@ -2261,7 +2262,7 @@ code {
 }
 
 .download-title:hover {
-  color: var(--accent);
+  color: var(--accent-text);
 }
 
 .download-band {
@@ -2290,7 +2291,7 @@ code {
 }
 
 .download-state svg {
-  color: var(--accent);
+  color: var(--accent-text);
 }
 
 .download-state svg.lucide-alert-circle {
@@ -2349,7 +2350,7 @@ code {
   border-radius: 9px;
   border: 1px solid var(--line);
   background: rgba(var(--tint), 0.03);
-  color: var(--accent);
+  color: var(--accent-text);
 }
 
 .settings-head > div {
@@ -2833,7 +2834,7 @@ code {
 }
 
 .player-title:hover {
-  color: var(--accent);
+  color: var(--accent-text);
 }
 
 .player-artist {
@@ -2946,7 +2947,7 @@ code {
   font-weight: 650;
   letter-spacing: 0.2em;
   text-transform: uppercase;
-  color: var(--accent);
+  color: var(--accent-text);
 }
 
 .now-album {
@@ -3140,7 +3141,7 @@ code {
 }
 
 .now-queue-row.is-current .now-queue-number {
-  color: var(--accent);
+  color: var(--accent-text);
 }
 
 .now-queue-copy {
@@ -3219,7 +3220,7 @@ code {
 }
 
 .palette-input-row:focus-within {
-  color: var(--accent);
+  color: var(--accent-text);
 }
 
 .palette-input-row input {
@@ -3294,7 +3295,7 @@ code {
 }
 
 .palette-row.is-active .palette-icon {
-  color: var(--accent);
+  color: var(--accent-text);
   border-color: var(--accent-line);
 }
 
@@ -3414,7 +3415,7 @@ code {
   font-weight: 650;
   letter-spacing: 0.17em;
   text-transform: uppercase;
-  color: var(--accent);
+  color: var(--accent-text);
 }
 
 .modal-head h2 {
@@ -3499,7 +3500,7 @@ code {
 }
 
 .format-row.is-selected .format-radio {
-  border-color: var(--accent);
+  border-color: var(--accent-text);
 }
 
 .format-row.is-selected .format-radio::after {
@@ -3583,7 +3584,7 @@ code {
   flex: 0 0 auto;
   border-radius: 50%;
   background: rgba(var(--tint), 0.05);
-  color: var(--accent);
+  color: var(--accent-text);
 }
 
 .toast.is-error .toast-icon {
@@ -3691,7 +3692,7 @@ code {
   border-radius: 999px;
   border: 1px solid var(--accent-line);
   background: var(--accent-soft);
-  color: var(--accent);
+  color: var(--accent-text);
   font-size: 9.5px;
   font-weight: 620;
   letter-spacing: 0.14em;
@@ -3708,7 +3709,7 @@ code {
 
 .welcome-editorial h1 em {
   font-style: normal;
-  color: var(--accent);
+  color: var(--accent-text);
 }
 
 .welcome-editorial-body > p {
@@ -3739,7 +3740,7 @@ code {
 .welcome-features svg {
   flex: 0 0 auto;
   margin-top: 1px;
-  color: var(--accent);
+  color: var(--accent-text);
 }
 
 .welcome-features span {
@@ -4231,7 +4232,7 @@ code {
   font-weight: 650;
   letter-spacing: 0.17em;
   text-transform: uppercase;
-  color: var(--accent);
+  color: var(--accent-text);
 }
 
 .discover-band { font-size: 12.5px; color: var(--muted); }
@@ -4251,7 +4252,7 @@ code {
   overflow-wrap: anywhere;
 }
 
-.discover-band-link:hover { color: var(--accent); }
+.discover-band-link:hover { color: var(--accent-text); }
 
 .discover-about {
   margin: 10px 0 14px;
@@ -4292,7 +4293,7 @@ code {
   color: var(--text);
 }
 
-.discover-track.is-playing .discover-track-play { border-color: var(--accent); color: var(--accent); }
+.discover-track.is-playing .discover-track-play { border-color: var(--accent-text); color: var(--accent-text); }
 .discover-track-play:disabled { opacity: 0.4; }
 
 .discover-track-number {
@@ -4329,7 +4330,7 @@ code {
   border-radius: 999px;
   border: 1px solid var(--accent-line);
   background: var(--accent-soft);
-  color: var(--accent);
+  color: var(--accent-text);
   font-size: 10.5px;
   font-weight: 650;
   letter-spacing: 0.06em;
@@ -4339,7 +4340,7 @@ code {
 
 .update-pill:hover {
   background: var(--accent-line);
-  border-color: var(--accent);
+  border-color: var(--accent-text);
 }
 
 /* Reduced motion */
