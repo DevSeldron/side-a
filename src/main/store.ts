@@ -49,6 +49,7 @@ export function defaultSettings(downloadDir: string): Settings {
     coverTheme: false,
     backgroundGradient: false,
     gradientPosition: 'bottom',
+    mountainBackdrop: false,
     rainbow: false,
     rainbowUnlocked: false,
     showWishlist: true,

@@ -4,7 +4,7 @@ import { AlertTriangle, RefreshCw } from 'lucide-react'
 import { useApp } from './store/app'
 import { usePlayer } from './store/player'
 import { startIntegrations } from './lib/integrations'
-import { applyBackgroundGradient, applyTheme, FALLBACK_ACCENT } from './lib/theme'
+import { applyBackgroundGradient, applyMountainBackdrop, applyTheme, FALLBACK_ACCENT } from './lib/theme'
 import { Sidebar } from './components/Sidebar'
 import { TopBar } from './components/TopBar'
 import { PlayerBar, PlayerSpacer } from './components/PlayerBar'
@@ -12,6 +12,7 @@ import { NowPlaying } from './components/NowPlaying'
 import { CommandPalette } from './components/CommandPalette'
 import { Toasts } from './components/Toasts'
 import { Brand } from './components/Brand'
+import { MountainBackdrop } from './components/MountainBackdrop'
 import { Welcome } from './pages/Welcome'
 import { Collection } from './pages/Collection'
 import { Wishlist } from './pages/Wishlist'
@@ -46,6 +47,7 @@ export default function App(): ReactElement {
   const coverTheme = snapshot?.settings.coverTheme ?? false
   const backgroundGradient = snapshot?.settings.backgroundGradient ?? false
   const gradientPosition = snapshot?.settings.gradientPosition ?? 'bottom'
+  const mountainBackdrop = snapshot?.settings.mountainBackdrop ?? false
   const reduceMotion = snapshot?.settings.reduceMotion ?? false
   const [coverAccent, setCoverAccent] = useState<string | null>(null)
   const coverUrl = track?.coverUrl ?? ''
@@ -73,6 +75,10 @@ export default function App(): ReactElement {
   useEffect(() => {
     applyBackgroundGradient(backgroundGradient, gradientPosition)
   }, [backgroundGradient, gradientPosition])
+
+  useEffect(() => {
+    applyMountainBackdrop(mountainBackdrop)
+  }, [mountainBackdrop])
 
   useEffect(() => {
     applyTheme(coverTheme && coverAccent ? coverAccent : accent, theme, rainbow)
@@ -136,6 +142,7 @@ export default function App(): ReactElement {
 
   return (
     <div className="app-shell">
+      <MountainBackdrop />
       <Sidebar />
       <div className="app-body">
         <TopBar />

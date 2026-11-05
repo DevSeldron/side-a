@@ -86,6 +86,14 @@ export function Settings(): ReactElement {
     void updateSettings({ rainbow: value, ...(value ? { coverTheme: false } : {}) })
   }
 
+  const toggleBackgroundGradient = (value: boolean): void => {
+    void updateSettings({ backgroundGradient: value, ...(value ? { mountainBackdrop: false } : {}) })
+  }
+
+  const toggleMountainBackdrop = (value: boolean): void => {
+    void updateSettings({ mountainBackdrop: value, ...(value ? { backgroundGradient: false } : {}) })
+  }
+
   const tapAppearance = (): void => {
     if (settings.rainbowUnlocked) return
     unlockTaps.current += 1
@@ -283,7 +291,7 @@ export function Settings(): ReactElement {
             title="Background gradient"
             description="Fade the background from gray into your accent colour, light mode starts at white"
             checked={settings.backgroundGradient}
-            onChange={(value) => void updateSettings({ backgroundGradient: value })}
+            onChange={toggleBackgroundGradient}
           />
           {settings.backgroundGradient ? (
             <div className="gradient-choices">
@@ -302,6 +310,12 @@ export function Settings(): ReactElement {
               ))}
             </div>
           ) : null}
+          <SettingToggle
+            title="Mountain backdrop"
+            description="A starry sky over simplified mountains in your accent colour, turned off on the void release"
+            checked={settings.mountainBackdrop}
+            onChange={toggleMountainBackdrop}
+          />
           <SettingToggle
             title="Reduce motion"
             description="Tone down transitions and artwork movement"

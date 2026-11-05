@@ -75,6 +75,13 @@ export function applyBackgroundGradient(enabled: boolean, position: 'top' | 'bot
   root.dataset.gradient = position === 'top' ? 'top' : 'bottom'
 }
 
+/** The backdrop's sky, stars and ridges all read the live accent variables. */
+export function applyMountainBackdrop(enabled: boolean): void {
+  const root = document.documentElement
+  if (enabled) root.dataset.backdrop = 'mountains'
+  else delete root.dataset.backdrop
+}
+
 export function applyTheme(accent: string, theme: ThemeMode, rainbow = false): void {
   const root = document.documentElement
   const hex = normalizeAccent(accent)

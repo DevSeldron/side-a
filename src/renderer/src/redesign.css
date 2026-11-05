@@ -234,6 +234,126 @@ h4 {
   background: var(--bg);
 }
 
+/* Mountain backdrop. The fixed layer sits behind the app's content and uses
+   the live accent variables, so every colour follows rainbow mode too. */
+.mountain-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  background:
+    radial-gradient(58% 48% at 50% 86%, rgba(var(--accent-rgb), 0.18), transparent 68%),
+    linear-gradient(
+      180deg,
+      var(--bg) 0%,
+      color-mix(in srgb, var(--bg) 88%, var(--accent) 12%) 64%,
+      color-mix(in srgb, var(--bg) 76%, var(--accent) 24%) 100%
+    );
+  transition: opacity 0.35s ease, visibility 0.35s ease;
+}
+
+:root[data-backdrop='mountains'] .app-shell {
+  position: relative;
+  isolation: isolate;
+  background: transparent;
+}
+
+:root[data-backdrop='mountains'] .app-main {
+  background: transparent;
+}
+
+/* The illustrated sky is lighter than the flat canvas, so keep secondary
+   copy above the contrast it would have on the solid background. */
+:root[data-theme='dark'][data-backdrop='mountains']:not([data-tribute='void']) {
+  --muted: #bdb7ae;
+  --muted-dim: #a39d94;
+}
+
+:root[data-theme='light'][data-backdrop='mountains']:not([data-tribute='void']) {
+  --muted: #55525c;
+  --muted-dim: #625f69;
+}
+
+:root[data-backdrop='mountains'] .mountain-backdrop {
+  opacity: 1;
+  visibility: visible;
+}
+
+:root[data-theme='light'] .mountain-backdrop {
+  background:
+    radial-gradient(58% 48% at 50% 86%, rgba(var(--accent-rgb), 0.24), transparent 68%),
+    linear-gradient(
+      180deg,
+      #fbf8f1 0%,
+      color-mix(in srgb, #ffffff 82%, var(--accent) 18%) 64%,
+      color-mix(in srgb, #ffffff 68%, var(--accent) 32%) 100%
+    );
+}
+
+.mountain-stars,
+.mountain-range {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.mountain-stars {
+  color: color-mix(in srgb, var(--accent) 62%, var(--text) 38%);
+}
+
+.mountain-star {
+  fill: currentColor;
+}
+
+.mountain-star.is-bright {
+  filter: drop-shadow(0 0 5px rgba(var(--accent-rgb), 0.7));
+}
+
+.mountain-far,
+.mountain-mid,
+.mountain-near {
+  fill: var(--accent);
+}
+
+.mountain-far {
+  opacity: 0.2;
+}
+
+.mountain-mid {
+  opacity: 0.26;
+}
+
+.mountain-near {
+  opacity: 0.34;
+}
+
+:root[data-theme='light'] .mountain-far,
+:root[data-theme='light'] .mountain-mid,
+:root[data-theme='light'] .mountain-near {
+  fill: color-mix(in srgb, var(--accent) 56%, var(--text) 44%);
+}
+
+:root[data-theme='light'] .mountain-far {
+  opacity: 0.22;
+}
+
+:root[data-theme='light'] .mountain-mid {
+  opacity: 0.3;
+}
+
+:root[data-theme='light'] .mountain-near {
+  opacity: 0.42;
+}
+
+:root[data-motion='reduced'] .mountain-backdrop {
+  transition: none;
+}
+
 .page {
   padding: 8px 40px 56px;
   max-width: 1560px;
@@ -1255,6 +1375,12 @@ h4 {
 :root[data-tribute='void'] .player-bar {
   background: #000000 !important;
   background-image: none !important;
+}
+
+:root[data-tribute='void'] .mountain-backdrop {
+  opacity: 0;
+  visibility: hidden;
+  transition: none;
 }
 
 /* Splash */

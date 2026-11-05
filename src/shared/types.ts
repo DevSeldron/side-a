@@ -294,6 +294,7 @@ export interface Settings {
   coverTheme: boolean
   backgroundGradient: boolean
   gradientPosition: 'top' | 'bottom'
+  mountainBackdrop: boolean
   rainbow: boolean
   rainbowUnlocked: boolean
   showWishlist: boolean
