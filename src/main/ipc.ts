@@ -16,6 +16,7 @@ import type { BandcampClient } from './bandcamp'
 import type { DiscordService, DiscordUpdate } from './discord'
 import type { LastfmService } from './lastfm'
 import type { Library } from './library'
+import type { LocalLibrary } from './localLibrary'
 import type { MediaGateway } from './media'
 import type { PurchaseManager } from './purchases'
 import type { Store, } from './store'
@@ -28,6 +29,7 @@ interface IpcContext {
   client: BandcampClient
   store: Store
   library: Library
+  local: LocalLibrary
   purchases: PurchaseManager
   trackDownloads: TrackDownloadManager
   auth: AuthManager
@@ -103,7 +105,7 @@ function broadcast(channel: string, payload: unknown): void {
 }
 
 export function registerIpc(context: IpcContext): void {
-  const { client, store, library, purchases, trackDownloads, auth, media, lastfm, discord, getMainWindow } = context
+  const { client, store, library, local, purchases, trackDownloads, auth, media, lastfm, discord, getMainWindow } = context
 
   const snapshot = async (): Promise<LibrarySnapshot> => {
     const state = store.get()
@@ -121,6 +123,7 @@ export function registerIpc(context: IpcContext): void {
       sync: state.sync,
       settings: state.settings,
       integrations: integrationState(lastfm, discord),
+      local: local.snapshot(),
       demo: authState.status === 'demo',
       appVersion: app.getVersion()
     }
@@ -163,6 +166,32 @@ export function registerIpc(context: IpcContext): void {
       throw new Error('Invalid stream URL')
     }
     return media.ticketForUrl(parsed.toString())
+  })
+
+  ipcMain.handle(IPC.localSnapshot, () => local.snapshot())
+  ipcMain.handle(IPC.localChooseFolder, async () => {
+    const result = await dialog.showOpenDialog({
+      title: 'Add music folders to Side A',
+      properties: ['openDirectory', 'multiSelections', 'createDirectory']
+    })
+    if (result.canceled || !result.filePaths.length) return null
+    for (const path of result.filePaths) local.addFolder(path)
+    return local.scan()
+  })
+  ipcMain.handle(IPC.localRemoveFolder, async (_event, path: unknown) => {
+    if (typeof path !== 'string' || !path.trim()) throw new Error('A folder is required')
+    const known = local.snapshot().folders.some((folder) => folder.path === path)
+    if (!known) throw new Error('That folder is not in your local library')
+    return local.removeFolder(path)
+  })
+  ipcMain.handle(IPC.localRescan, () => local.scan())
+  ipcMain.handle(IPC.localStream, async (_event, id: unknown) => {
+    if (typeof id !== 'string' || !/^[a-f0-9]{40}$/.test(id)) throw new Error('Invalid local track id')
+    return local.stream(id)
+  })
+  ipcMain.handle(IPC.localReveal, async (_event, id: unknown) => {
+    if (typeof id !== 'string' || !/^[a-f0-9]{40}$/.test(id)) throw new Error('Invalid local track id')
+    await local.reveal(id)
   })
 
   ipcMain.handle(IPC.authLogin, (event) => {

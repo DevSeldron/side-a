@@ -1,7 +1,7 @@
-import type { PresenceInput } from '@shared/types'
+import type { LocalTrack, PresenceInput } from '@shared/types'
+import { useLocalPlayer } from '../store/localPlayer'
 import { usePlayer, type PlayerTrack } from '../store/player'
-
-type PlayerState = ReturnType<typeof usePlayer.getState>
+import { useAudioFocus, type AudioSource } from './audioFocus'
 
 /** Last.fm ignores tracks shorter than this. */
 const MIN_TRACK_SECONDS = 30
@@ -12,9 +12,27 @@ const SEEK_TOLERANCE = 4
 /** Coalesces bursts of updates (scrubbing) into one presence call. */
 const PRESENCE_DEBOUNCE_MS = 350
 
+interface PlaybackSnapshot {
+  playing: boolean
+  currentTime: number
+  duration: number
+}
+
+interface IntegrationTrack {
+  key: string
+  title: string
+  artist: string
+  album: string
+  albumArtist: string
+  duration: number
+  trackNumber?: number
+  coverUrl?: string
+  itemUrl?: string
+}
+
 interface PlaySession {
   key: string
-  track: PlayerTrack
+  track: IntegrationTrack
   /** Unix seconds when this play started. */
   startedAt: number
   /** Seconds actually listened to, so pauses and seeks do not inflate it. */
@@ -38,8 +56,30 @@ let pendingPresence: PresenceInput | null = null
 let hasPendingPresence = false
 let presenceTimer: ReturnType<typeof setTimeout> | null = null
 
-function trackKey(track: PlayerTrack): string {
-  return `${track.albumKey}:${track.id}`
+function fromBandcamp(track: PlayerTrack): IntegrationTrack {
+  return {
+    key: `bandcamp:${track.albumKey}:${track.id}`,
+    title: track.title,
+    artist: track.artist,
+    album: track.albumTitle,
+    albumArtist: track.bandName,
+    duration: track.duration,
+    trackNumber: track.number,
+    coverUrl: track.coverUrl,
+    itemUrl: track.itemUrl
+  }
+}
+
+function fromLocal(track: LocalTrack): IntegrationTrack {
+  return {
+    key: `local:${track.id}`,
+    title: track.title,
+    artist: track.artist,
+    album: track.album,
+    albumArtist: track.albumArtist,
+    duration: track.duration,
+    trackNumber: track.trackNumber
+  }
 }
 
 function scrobbleThreshold(duration: number): number {
@@ -57,27 +97,27 @@ function announce(play: PlaySession): void {
     .nowPlaying({
       artist: track.artist,
       title: track.title,
-      album: track.albumTitle || undefined,
-      albumArtist: track.bandName || undefined,
+      album: track.album || undefined,
+      albumArtist: track.albumArtist || undefined,
       duration: track.duration || undefined,
-      trackNumber: track.number || undefined,
+      trackNumber: track.trackNumber || undefined,
       timestamp: play.startedAt,
       key: `${play.key}:${play.startedAt}`
     })
     .catch(() => undefined)
 }
 
-function scrobble(track: PlayerTrack, startedAt: number): void {
+function scrobble(track: IntegrationTrack, startedAt: number): void {
   void window.sideA.integrations
     .scrobble({
       artist: track.artist,
       title: track.title,
-      album: track.albumTitle || undefined,
-      albumArtist: track.bandName || undefined,
+      album: track.album || undefined,
+      albumArtist: track.albumArtist || undefined,
       duration: track.duration || undefined,
-      trackNumber: track.number || undefined,
+      trackNumber: track.trackNumber || undefined,
       timestamp: startedAt,
-      key: `${trackKey(track)}:${startedAt}`
+      key: `${track.key}:${startedAt}`
     })
     .catch(() => undefined)
 }
@@ -89,9 +129,9 @@ function settle(play: PlaySession): void {
   scrobble(play.track, play.startedAt)
 }
 
-function newSession(state: PlayerState, track: PlayerTrack): PlaySession {
+function newSession(state: PlaybackSnapshot, track: IntegrationTrack): PlaySession {
   return {
-    key: trackKey(track),
+    key: track.key,
     track,
     startedAt: Math.floor(Date.now() / 1000),
     listened: 0,
@@ -101,15 +141,10 @@ function newSession(state: PlayerState, track: PlayerTrack): PlaySession {
   }
 }
 
-function trackSession(state: PlayerState, track: PlayerTrack | undefined): void {
-  const key = track ? trackKey(track) : ''
-  if (session && session.key !== key) {
+function trackSession(state: PlaybackSnapshot, track: IntegrationTrack): void {
+  if (session && session.key !== track.key) {
     settle(session)
     session = null
-  }
-  if (!track) {
-    session = null
-    return
   }
   if (!session) session = newSession(state, track)
 
@@ -138,17 +173,18 @@ function trackSession(state: PlayerState, track: PlayerTrack | undefined): void 
   settle(session)
 }
 
-function presenceFor(state: PlayerState, track: PlayerTrack | undefined): PresenceInput | null {
-  if (!track) return null
+function presenceFor(state: PlaybackSnapshot, track: IntegrationTrack, source: AudioSource): PresenceInput {
   return {
     playing: state.playing,
     title: track.title,
     artist: track.artist,
-    album: track.albumTitle || undefined,
-    band: track.bandName || undefined,
+    album: track.album || undefined,
+    band: track.albumArtist || undefined,
     duration: state.duration || track.duration || undefined,
     position: state.currentTime,
-    coverUrl: track.coverUrl || undefined,
+    // Discord can only fetch public HTTPS artwork. Embedded local art stays
+    // available in the app and media session, but cannot be sent to Discord.
+    coverUrl: source === 'bandcamp' ? track.coverUrl || undefined : undefined,
     itemUrl: track.itemUrl
   }
 }
@@ -186,20 +222,44 @@ function pushPresence(input: PresenceInput | null): void {
   presenceTimer = setTimeout(flushPresence, PRESENCE_DEBOUNCE_MS)
 }
 
-function onPlayerState(state: PlayerState): void {
-  const track = state.queue[state.index]
+function onPlayerState(state: PlaybackSnapshot, source: AudioSource, track: IntegrationTrack | undefined): void {
+  const active = useAudioFocus.getState().source
+  // A paused source can keep a queue loaded without being the one the listener
+  // is using. Only the focused source drives scrobbles and presence.
+  if (active && active !== source && !state.playing) return
+
+  if (!track) {
+    if (!active || active === source) {
+      if (session) settle(session)
+      session = null
+      if (shouldSendPresence(null)) pushPresence(null)
+    }
+    return
+  }
+
   trackSession(state, track)
-  const input = presenceFor(state, track)
-  if (shouldSendPresence(input)) pushPresence(input)
+  if (!active || active === source) {
+    const input = presenceFor(state, track, source)
+    if (shouldSendPresence(input)) pushPresence(input)
+  }
 }
 
 /**
- * Bridges playback to Discord Rich Presence and Last.fm. Safe to call more than
- * once; the subscription is installed on the first call.
+ * Bridges both playback stores to Discord Rich Presence and Last.fm. Safe to
+ * call more than once; the subscriptions are installed on the first call.
  */
 export function startIntegrations(): void {
   if (started) return
   started = true
-  usePlayer.subscribe((state) => onPlayerState(state))
-  onPlayerState(usePlayer.getState())
+  usePlayer.subscribe((state) => {
+    const track = state.queue[state.index]
+    onPlayerState(state, 'bandcamp', track ? fromBandcamp(track) : undefined)
+  })
+  useLocalPlayer.subscribe((state) => {
+    const track = state.queue[state.index]
+    onPlayerState(state, 'local', track ? fromLocal(track) : undefined)
+  })
+  const bandcampState = usePlayer.getState()
+  const bandcampTrack = bandcampState.queue[bandcampState.index]
+  onPlayerState(bandcampState, 'bandcamp', bandcampTrack ? fromBandcamp(bandcampTrack) : undefined)
 }

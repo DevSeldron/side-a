@@ -33,10 +33,35 @@ export function registerMediaScheme(): void {
   ])
 }
 
-function mimeFor(path: string): string {
+export function mimeFor(path: string): string {
   switch (extname(path).toLowerCase()) {
     case '.mp3':
       return 'audio/mpeg'
+    case '.m4a':
+    case '.mp4':
+      return 'audio/mp4'
+    case '.flac':
+      return 'audio/flac'
+    case '.wav':
+    case '.wave':
+      return 'audio/wav'
+    case '.ogg':
+    case '.oga':
+    case '.opus':
+      return 'audio/ogg'
+    case '.aif':
+    case '.aiff':
+      return 'audio/aiff'
+    case '.wma':
+      return 'audio/x-ms-wma'
+    case '.ape':
+      return 'audio/ape'
+    case '.wv':
+      return 'audio/wavpack'
+    case '.dsf':
+      return 'audio/dsf'
+    case '.dff':
+      return 'audio/dff'
     case '.jpg':
     case '.jpeg':
       return 'image/jpeg'
@@ -67,7 +92,7 @@ function parseRange(header: string | null, size: number): { start: number; end: 
   return { start, end }
 }
 
-function rangeResponse(path: string, request: Request): Response {
+export function rangeResponse(path: string, request: Request): Response {
   const size = existsSync(path) ? statSync(path).size : 0
   if (!size) return new Response(null, { status: 404 })
   const range = parseRange(request.headers.get('Range'), size)

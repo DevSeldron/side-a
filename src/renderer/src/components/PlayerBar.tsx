@@ -2,6 +2,8 @@ import type { CSSProperties, ReactElement } from 'react'
 import { Link } from 'react-router-dom'
 import { ChevronUp, ListMusic, Volume1, Volume2, VolumeX } from 'lucide-react'
 import { usePlayer } from '../store/player'
+import { useLocalPlayer } from '../store/localPlayer'
+import { useAudioFocus } from '../lib/audioFocus'
 import { Artwork } from './Artwork'
 import { PlaybackControls, SeekBar } from './Playback'
 import { cx } from '../lib/format'
@@ -67,6 +69,9 @@ export function PlayerBar(): ReactElement | null {
 }
 
 export function PlayerSpacer(): ReactElement {
-  const hasTrack = usePlayer((state) => state.queue.length > 0)
+  const source = useAudioFocus((state) => state.source)
+  const bandcampTracks = usePlayer((state) => state.queue.length)
+  const localTracks = useLocalPlayer((state) => state.queue.length)
+  const hasTrack = source === 'local' ? localTracks > 0 : bandcampTracks > 0
   return <div className={cx('player-spacer', hasTrack && 'is-visible')} aria-hidden="true" />
 }

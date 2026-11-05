@@ -943,7 +943,7 @@ export class BandcampClient {
     const cached = this.purchaseInfoCache.get(redownloadUrl)
     if (cached) return cached
     const response = await this.request(redownloadUrl, { headers: { Referer: `${API}/` } })
-    if (!response.ok) throw new Error(`The download page returned ${response.status}.`)
+    if (!response.ok) throw new Error(`The download page returned ${response.status}`)
     const html = await response.text()
     const blob = extractPageBlob(html) as Record<string, unknown> | null
     const items = (blob?.digital_items ?? blob?.download_items) as Array<Record<string, unknown>> | undefined

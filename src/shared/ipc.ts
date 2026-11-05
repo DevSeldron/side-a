@@ -35,11 +35,19 @@ export const IPC = {
   discoverArtist: 'discover:artist',
   discoverAlbum: 'discover:album',
   discoverStream: 'discover:stream',
+  localSnapshot: 'local:snapshot',
+  localChooseFolder: 'local:choose-folder',
+  localRemoveFolder: 'local:remove-folder',
+  localRescan: 'local:rescan',
+  localStream: 'local:stream',
+  localReveal: 'local:reveal',
   eventAuth: 'auth:changed',
   eventSync: 'sync:changed',
   eventOffline: 'offline:changed',
   eventPurchase: 'purchase:changed',
   eventSettings: 'settings:changed',
   eventIntegration: 'integration:changed',
-  eventLibrary: 'library:changed'
+  eventLibrary: 'library:changed',
+  eventLocal: 'local:changed',
+  eventLocalScan: 'local:scan'
 } as const

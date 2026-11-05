@@ -409,7 +409,7 @@ export class LastfmService {
       if (data?.error) {
         throw new LastfmError(Number(data.error), String(data.message ?? 'Last.fm rejected the request'))
       }
-      if (!response.ok) throw new Error(`Last.fm returned ${response.status}.`)
+      if (!response.ok) throw new Error(`Last.fm returned ${response.status}`)
       return data
     } finally {
       clearTimeout(timer)

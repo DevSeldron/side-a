@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import type { AlbumDetail } from '@shared/types'
 import { useApp } from './app'
+import { clearAudioFocus, requestAudioFocus, useAudioFocus } from '../lib/audioFocus'
 import { coverUrl, errorMessage } from '../lib/format'
 
 export interface PlayerTrack {
@@ -245,9 +246,13 @@ export const usePlayer = create<PlayerState>()((set, get) => ({
     initialized = true
     ensureAudio()
     installMediaSessionHandlers()
+    useAudioFocus.subscribe((state) => {
+      if (state.source !== 'bandcamp') audio?.pause()
+    })
   },
 
   playAlbum: async (albumKey, startTrackId) => {
+    requestAudioFocus('bandcamp')
     set({ pendingKey: albumKey, error: null })
     try {
       const detail = await window.sideA.library.album(albumKey)
@@ -297,6 +302,7 @@ export const usePlayer = create<PlayerState>()((set, get) => ({
   loadAt: async (index, autoplay = true) => {
     const track = get().queue[index]
     if (!track) return
+    requestAudioFocus('bandcamp')
     const token = ++loadToken
     set({
       index,
@@ -337,6 +343,7 @@ export const usePlayer = create<PlayerState>()((set, get) => ({
       if (first) await get().playAlbum(first.key)
       return
     }
+    requestAudioFocus('bandcamp')
     const element = ensureAudio()
     if (!element.src) {
       await get().loadAt(get().index < 0 ? 0 : get().index, true)
@@ -471,5 +478,6 @@ export const usePlayer = create<PlayerState>()((set, get) => ({
     })
     const session = mediaSession()
     if (session) session.metadata = null
+    clearAudioFocus('bandcamp')
   }
 }))

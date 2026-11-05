@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import {
   ArrowDownToLine,
   Command,
+  FolderOpen,
   HardDrive,
   Heart,
   Library,
@@ -16,6 +17,7 @@ import {
 import type { Album } from '@shared/types'
 import { useApp } from '../store/app'
 import { usePlayer } from '../store/player'
+import { useLocalPlayer } from '../store/localPlayer'
 import { coverUrl, cx } from '../lib/format'
 
 interface PaletteItem {
@@ -35,6 +37,7 @@ export function CommandPalette(): ReactElement | null {
   const saveAllPurchased = useApp((state) => state.saveAllPurchased)
   const navigate = useNavigate()
   const playAlbum = usePlayer((state) => state.playAlbum)
+  const playLocal = useLocalPlayer((state) => state.playTracks)
   const [query, setQuery] = useState('')
   const [active, setActive] = useState(0)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -75,14 +78,35 @@ export function CommandPalette(): ReactElement | null {
       }
     }))
 
-    if (term && releaseItems.length) return releaseItems
     if (term) {
+      const localItems: PaletteItem[] = snapshot.local.tracks
+        .filter((track) => {
+          return (
+            track.title.toLowerCase().includes(term) ||
+            track.artist.toLowerCase().includes(term) ||
+            track.album.toLowerCase().includes(term)
+          )
+        })
+        .slice(0, 5)
+        .map((track) => ({
+          id: `local-${track.id}`,
+          label: track.title,
+          sub: `${track.artist} / ${track.album}`,
+          art: track.coverUrl,
+          icon: <FolderOpen size={15} />,
+          run: () => {
+            setOpen(false)
+            navigate('/local')
+            void playLocal(snapshot.local.tracks, track.id)
+          }
+        }))
+      const results = [...releaseItems, ...localItems]
+      if (results.length) return results
       return [
-        ...releaseItems,
         {
           id: 'no-results',
-          label: 'No releases found',
-          sub: 'Try a different artist or album',
+          label: 'No releases or local tracks found',
+          sub: 'Try a different artist, album or song',
           icon: <Search size={15} />,
           run: () => undefined
         }
@@ -108,6 +132,16 @@ export function CommandPalette(): ReactElement | null {
         run: () => {
           setOpen(false)
           navigate('/offline')
+        }
+      },
+      {
+        id: 'local',
+        label: 'Go to Local',
+        sub: `${snapshot.local.tracks.length} songs from your own folders`,
+        icon: <FolderOpen size={15} />,
+        run: () => {
+          setOpen(false)
+          navigate('/local')
         }
       },
       {
@@ -153,7 +187,7 @@ export function CommandPalette(): ReactElement | null {
     ]
 
     return [...releaseItems, ...actions]
-  }, [snapshot, query, setOpen, navigate, playAlbum, sync, saveAllPurchased])
+  }, [snapshot, query, setOpen, navigate, playAlbum, playLocal, sync, saveAllPurchased])
 
   useEffect(() => {
     setActive(0)

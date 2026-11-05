@@ -6,6 +6,7 @@ import { BandcampClient } from './bandcamp'
 import { DiscordService } from './discord'
 import { LastfmService } from './lastfm'
 import { Library } from './library'
+import { LocalLibrary, registerLocalMediaScheme } from './localLibrary'
 import { MediaGateway, registerMediaScheme } from './media'
 import { PurchaseManager } from './purchases'
 import { TrackDownloadManager } from './trackDownloads'
@@ -17,6 +18,7 @@ import type { AuthState, OfflineEntry, PurchaseDownload, Settings, SyncState } f
 
 app.setName('Side A')
 registerMediaScheme()
+registerLocalMediaScheme()
 
 const gotLock = app.requestSingleInstanceLock()
 if (!gotLock) {
@@ -26,6 +28,7 @@ if (!gotLock) {
   let store: Store
   let client: BandcampClient
   let library: Library
+  let local: LocalLibrary
   let purchases: PurchaseManager
   let trackDownloads: TrackDownloadManager
   let media: MediaGateway
@@ -168,6 +171,10 @@ if (!gotLock) {
       onOfflineChanged: (entry) => broadcastEvent(IPC.eventOffline, entry),
       onLibraryChanged: (payload) => broadcastEvent(IPC.eventLibrary, payload)
     })
+    local = new LocalLibrary({
+      onChanged: (snapshot) => broadcastEvent(IPC.eventLocal, snapshot),
+      onScan: (scan) => broadcastEvent(IPC.eventLocalScan, scan)
+    })
     purchases = new PurchaseManager(client, store, library, {
       onPurchaseChanged: (entry) => broadcastEvent(IPC.eventPurchase, entry)
     })
@@ -193,10 +200,12 @@ if (!gotLock) {
     await library.initOffline()
     purchases.init()
     media.register()
+    local.register()
     registerIpc({
       client,
       store,
       library,
+      local,
       purchases,
       trackDownloads,
       auth,
@@ -259,6 +268,7 @@ if (!gotLock) {
     store?.flush()
     auth?.dispose()
     media?.dispose()
+    local?.dispose()
     lastfm?.dispose()
     discord?.dispose()
   })

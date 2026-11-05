@@ -23,6 +23,8 @@ export function TopBar(): ReactElement {
       ? 'Local listening'
       : location.pathname.startsWith('/downloads')
         ? 'Original files'
+        : location.pathname.startsWith('/local')
+          ? 'Local files'
         : location.pathname.startsWith('/settings')
           ? 'Preferences'
           : location.pathname.startsWith('/album')

@@ -605,8 +605,8 @@ export function Settings(): ReactElement {
             <button type="button" className="button small ghost" onClick={() => void chooseDownloadDir()}>Choose</button>
           </div>
           <p className="settings-hint">
-            The folder is created automatically, existing files with the same name get a numbered suffix instead of being overwritten.
-            Purchased releases still use the Formats page, which can fetch FLAC and other lossless files
+            The folder is created automatically, existing files with the same name get a numbered suffix instead of being overwritten,
+            while purchased releases still use the Formats page, which can fetch FLAC and other lossless files
           </p>
         </section>
 
@@ -634,7 +634,7 @@ export function Settings(): ReactElement {
             </button>
           </div>
           <p className="settings-hint">
-            Clearing caches removes cached release details and artwork, never your offline music or downloaded purchases.
+            Clearing caches removes cached release details and artwork, never your offline music or downloaded purchases
           </p>
         </section>
 

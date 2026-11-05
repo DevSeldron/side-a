@@ -3,11 +3,15 @@ import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { AlertTriangle, RefreshCw } from 'lucide-react'
 import { useApp } from './store/app'
 import { usePlayer } from './store/player'
+import { useLocalPlayer } from './store/localPlayer'
 import { startIntegrations } from './lib/integrations'
+import { useAudioFocus } from './lib/audioFocus'
 import { applyBackgroundGradient, applyMountainBackdrop, applyTheme, FALLBACK_ACCENT } from './lib/theme'
 import { Sidebar } from './components/Sidebar'
 import { TopBar } from './components/TopBar'
 import { PlayerBar, PlayerSpacer } from './components/PlayerBar'
+import { LocalPlayerBar } from './components/LocalPlayerBar'
+import { LocalNowPlaying } from './components/LocalNowPlaying'
 import { NowPlaying } from './components/NowPlaying'
 import { CommandPalette } from './components/CommandPalette'
 import { Toasts } from './components/Toasts'
@@ -21,15 +25,18 @@ import { Offline } from './pages/Offline'
 import { Downloads } from './pages/Downloads'
 import { Discover } from './pages/Discover'
 import { Settings } from './pages/Settings'
+import { Local } from './pages/Local'
 
 export default function App(): ReactElement {
   const init = useApp((state) => state.init)
   const initPlayer = usePlayer((state) => state.init)
+  const initLocalPlayer = useLocalPlayer((state) => state.init)
   const ready = useApp((state) => state.ready)
   const loadingError = useApp((state) => state.loadingError)
   const snapshot = useApp((state) => state.snapshot)
   const setPaletteOpen = useApp((state) => state.setPaletteOpen)
   const track = usePlayer((state) => state.queue[state.index])
+  const audioSource = useAudioFocus((state) => state.source)
   const location = useLocation()
   const mainRef = useRef<HTMLElement>(null)
 
@@ -40,8 +47,9 @@ export default function App(): ReactElement {
   useEffect(() => {
     void init()
     initPlayer()
+    initLocalPlayer()
     startIntegrations()
-  }, [init, initPlayer])
+  }, [init, initPlayer, initLocalPlayer])
 
   useEffect(() => {
     document.documentElement.dataset.platform = window.sideA.platform
@@ -168,6 +176,7 @@ export default function App(): ReactElement {
             <Route path="/album/:key" element={<AlbumPage />} />
             <Route path="/offline" element={<Offline />} />
             <Route path="/downloads" element={<Downloads />} />
+            <Route path="/local" element={<Local />} />
             <Route path="/discover" element={<Discover />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="*" element={<Navigate to="/" replace />} />
@@ -175,8 +184,9 @@ export default function App(): ReactElement {
           <PlayerSpacer />
         </main>
       </div>
-      <PlayerBar />
+      {audioSource === 'local' ? <LocalPlayerBar /> : <PlayerBar />}
       <NowPlaying />
+      <LocalNowPlaying />
       <CommandPalette />
       <Toasts />
     </div>

@@ -284,7 +284,7 @@ export function Discover(): ReactElement {
       ) : error ? (
         <p className="discover-empty">{error}</p>
       ) : query.trim().length >= 2 && !loading && results.length === 0 ? (
-        <p className="discover-empty">Nothing on Bandcamp matched “{query.trim()}”.</p>
+        <p className="discover-empty">Nothing on Bandcamp matched “{query.trim()}”</p>
       ) : (
         <div className="discover-results">
           {artists.length > 0 ? (

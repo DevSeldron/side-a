@@ -3,6 +3,7 @@ import { NavLink, useNavigate } from 'react-router-dom'
 import {
   ArrowDownToLine,
   Compass,
+  FolderOpen,
   HardDrive,
   Heart,
   Library,
@@ -11,6 +12,7 @@ import {
 } from 'lucide-react'
 import { useApp } from '../store/app'
 import { usePlayer } from '../store/player'
+import { useLocalPlayer } from '../store/localPlayer'
 import { UserAvatar } from './UserAvatar'
 import { cx, formatBytes } from '../lib/format'
 
@@ -30,6 +32,7 @@ export function Sidebar(): ReactElement {
 
   const doLogout = async (): Promise<void> => {
     usePlayer.getState().stop()
+    useLocalPlayer.getState().stop()
     await logout()
     navigate('/')
   }
@@ -68,6 +71,11 @@ export function Sidebar(): ReactElement {
             <ArrowDownToLine size={18} />
             <span>Downloads</span>
             {activeDownloads > 0 ? <em className="is-live">{activeDownloads}</em> : null}
+          </NavLink>
+          <NavLink to="/local" className={({ isActive }) => cx('nav-item', isActive && 'is-active')}>
+            <FolderOpen size={18} />
+            <span>Local</span>
+            <em>{snapshot.local.tracks.length}</em>
           </NavLink>
         </nav>
 

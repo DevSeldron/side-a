@@ -51,6 +51,14 @@ const api: SideAAPI = {
     album: (bandId, tralbumId, tralbumType) => ipcRenderer.invoke(IPC.discoverAlbum, bandId, tralbumId, tralbumType),
     stream: (url) => ipcRenderer.invoke(IPC.discoverStream, url)
   },
+  local: {
+    snapshot: () => ipcRenderer.invoke(IPC.localSnapshot),
+    chooseFolder: () => ipcRenderer.invoke(IPC.localChooseFolder),
+    removeFolder: (path) => ipcRenderer.invoke(IPC.localRemoveFolder, path),
+    rescan: () => ipcRenderer.invoke(IPC.localRescan),
+    stream: (id) => ipcRenderer.invoke(IPC.localStream, id),
+    reveal: (id) => ipcRenderer.invoke(IPC.localReveal, id)
+  },
   integrations: {
     updateLastfm: (patch) => ipcRenderer.invoke(IPC.lastfmUpdate, patch),
     connectLastfm: () => ipcRenderer.invoke(IPC.lastfmConnect),

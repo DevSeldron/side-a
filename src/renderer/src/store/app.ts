@@ -4,6 +4,8 @@ import type {
   DiscordPatch,
   IntegrationsState,
   LibrarySnapshot,
+  LocalLibrarySnapshot,
+  LocalScanState,
   OfflineEntry,
   PurchaseDownload,
   Settings,
@@ -52,6 +54,9 @@ interface AppState {
   disconnectLastfm: () => Promise<void>
   updateDiscord: (patch: DiscordPatch) => Promise<void>
   retryIntegrations: () => Promise<void>
+  chooseLocalFolder: () => Promise<void>
+  removeLocalFolder: (path: string) => Promise<void>
+  rescanLocal: () => Promise<void>
   pushToast: (title: string, options?: { description?: string; tone?: ToastTone }) => void
   dismissToast: (id: number) => void
   checkUpdate: () => Promise<UpdateInfo>
@@ -64,6 +69,8 @@ interface AppState {
   applyTrackDownload: (entry: TrackDownload) => void
   applySettings: (settings: Settings) => void
   applyIntegrations: (integrations: IntegrationsState) => void
+  applyLocal: (snapshot: LocalLibrarySnapshot) => void
+  applyLocalScan: (scan: LocalScanState) => void
 }
 
 let toastCounter = 1
@@ -98,6 +105,8 @@ export const useApp = create<AppState>()((set, get) => ({
       window.sideA.on(IPC.eventDownload, (entry) => get().applyTrackDownload(entry))
       window.sideA.on(IPC.eventSettings, (settings) => get().applySettings(settings))
       window.sideA.on(IPC.eventIntegration, (integrations) => get().applyIntegrations(integrations))
+      window.sideA.on(IPC.eventLocal, (snapshot) => get().applyLocal(snapshot))
+      window.sideA.on(IPC.eventLocalScan, (scan) => get().applyLocalScan(scan))
       window.sideA.on(IPC.eventLibrary, () => {
         void get().refresh()
       })
@@ -382,6 +391,56 @@ export const useApp = create<AppState>()((set, get) => ({
     }
   },
 
+  chooseLocalFolder: async () => {
+    try {
+      const snapshot = await window.sideA.local.chooseFolder()
+      if (!snapshot) return
+      get().applyLocal(snapshot)
+      get().pushToast('Local library scanned', {
+        description: snapshot.tracks.length
+          ? `${snapshot.tracks.length} tracks across ${snapshot.folders.length} ${snapshot.folders.length === 1 ? 'folder' : 'folders'}`
+          : 'No supported audio files were found in that folder',
+        tone: snapshot.tracks.length ? 'success' : 'info'
+      })
+    } catch (error) {
+      get().pushToast('Could not scan that folder', {
+        description: errorMessage(error),
+        tone: 'error'
+      })
+    }
+  },
+
+  removeLocalFolder: async (path) => {
+    try {
+      const snapshot = await window.sideA.local.removeFolder(path)
+      get().applyLocal(snapshot)
+      get().pushToast('Folder removed from the local library', { description: path, tone: 'info' })
+    } catch (error) {
+      get().pushToast('Could not remove that folder', {
+        description: errorMessage(error),
+        tone: 'error'
+      })
+    }
+  },
+
+  rescanLocal: async () => {
+    try {
+      const snapshot = await window.sideA.local.rescan()
+      get().applyLocal(snapshot)
+      get().pushToast('Local library is up to date', {
+        description: snapshot.tracks.length
+          ? `${snapshot.tracks.length} tracks indexed`
+          : 'Add a folder with MP3, FLAC, WAV or other audio files',
+        tone: snapshot.tracks.length ? 'success' : 'info'
+      })
+    } catch (error) {
+      get().pushToast('Could not rescan your music folders', {
+        description: errorMessage(error),
+        tone: 'error'
+      })
+    }
+  },
+
   pushToast: (title, options) => {
     const toast: ToastItem = {
       id: toastCounter++,
@@ -509,6 +568,19 @@ export const useApp = create<AppState>()((set, get) => ({
           lastfm: integrations?.lastfm ?? snapshot.integrations.lastfm,
           discord: integrations?.discord ?? snapshot.integrations.discord
         }
+      }))
+    }))
+  },
+
+  applyLocal: (snapshot) => {
+    set((state) => ({ ...withSnapshot(state, (current) => ({ ...current, local: snapshot })) }))
+  },
+
+  applyLocalScan: (scan) => {
+    set((state) => ({
+      ...withSnapshot(state, (current) => ({
+        ...current,
+        local: { ...current.local, scan }
       }))
     }))
   }

@@ -192,6 +192,62 @@ export interface TrackDownload {
   completedAt?: number
 }
 
+export interface LocalTrack {
+  /** Stable SHA-1 of the absolute file path. */
+  id: string
+  path: string
+  fileName: string
+  folder: string
+  title: string
+  artist: string
+  albumArtist: string
+  album: string
+  /** Stable grouping key for an album/artist pair. */
+  albumKey: string
+  genre?: string
+  year?: number
+  trackNumber?: number
+  discNumber?: number
+  duration: number
+  format: string
+  container?: string
+  codec?: string
+  bitrate?: number
+  sampleRate?: number
+  bitsPerSample?: number
+  lossless: boolean
+  coverUrl?: string
+  size: number
+  modifiedAt: number
+  addedAt: number
+}
+
+export interface LocalFolder {
+  path: string
+  addedAt: number
+  lastScannedAt?: number
+  trackCount: number
+}
+
+export type LocalScanStatus = 'idle' | 'scanning' | 'ready' | 'error'
+
+export interface LocalScanState {
+  status: LocalScanStatus
+  scanned: number
+  total: number
+  message: string
+  currentFile?: string
+  error?: string
+}
+
+export interface LocalLibrarySnapshot {
+  tracks: LocalTrack[]
+  folders: LocalFolder[]
+  scan: LocalScanState
+  totalDuration: number
+  lastScannedAt?: number
+}
+
 export interface ScrobbleInput {
   artist: string
   title: string
@@ -313,6 +369,7 @@ export interface LibrarySnapshot {
   settings: Settings
   integrations: IntegrationsState
   trackDownloads: Record<string, TrackDownload>
+  local: LocalLibrarySnapshot
   demo: boolean
   appVersion: string
 }
@@ -336,6 +393,8 @@ export interface LibraryEventMap {
   'download:changed': TrackDownload
   'integration:changed': IntegrationsState
   'library:changed': { collectionCount: number; wishlistCount: number; lastSyncedAt?: number }
+  'local:changed': LocalLibrarySnapshot
+  'local:scan': LocalScanState
 }
 
 export type LibraryEvent = keyof LibraryEventMap
@@ -389,6 +448,14 @@ export interface SideAAPI {
     artist: (bandId: number) => Promise<DiscoverArtist>
     album: (bandId: number, tralbumId: number, tralbumType: TralbumType) => Promise<DiscoverAlbum>
     stream: (url: string) => Promise<StreamTicket>
+  }
+  local: {
+    snapshot: () => Promise<LocalLibrarySnapshot>
+    chooseFolder: () => Promise<LocalLibrarySnapshot | null>
+    removeFolder: (path: string) => Promise<LocalLibrarySnapshot>
+    rescan: () => Promise<LocalLibrarySnapshot>
+    stream: (id: string) => Promise<StreamTicket>
+    reveal: (id: string) => Promise<void>
   }
   integrations: {
     updateLastfm: (patch: { enabled?: boolean; apiKey?: string; apiSecret?: string }) => Promise<IntegrationsState>
