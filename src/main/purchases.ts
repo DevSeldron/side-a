@@ -237,7 +237,15 @@ export class PurchaseManager {
   async reveal(key: string): Promise<void> {
     const entry = this.store.get().purchases[key]
     if (!entry?.filePath) throw new Error('There is no downloaded file to show yet')
+    if (!existsSync(entry.filePath)) throw new Error('That file is no longer where it was saved')
     shell.showItemInFolder(entry.filePath)
+  }
+
+  /** Keys of finished purchases whose file is still on disk. */
+  savedKeys(): string[] {
+    return Object.values(this.store.get().purchases)
+      .filter((entry) => entry.status === 'done' && entry.filePath && existsSync(entry.filePath))
+      .map((entry) => entry.key)
   }
 
   private set(entry: PurchaseDownload): void {

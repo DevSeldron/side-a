@@ -475,6 +475,8 @@ export interface SideAAPI {
   downloads: {
     track: (albumKey: string, trackId: number, quality: TrackQuality) => Promise<TrackDownload>
     reveal: (id: string) => Promise<void>
+    /** Keys and ids whose saved file is still on disk. */
+    saved: () => Promise<{ purchases: string[]; tracks: string[] }>
   }
   settings: {
     update: (patch: Partial<Settings>) => Promise<Settings>

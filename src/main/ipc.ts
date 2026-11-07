@@ -288,6 +288,10 @@ export function registerIpc(context: IpcContext): void {
     if (typeof id !== 'string' || !/^[pt]\d+:\d+$/.test(id)) throw new Error('Invalid download id')
     await trackDownloads.reveal(id)
   })
+  ipcMain.handle(IPC.downloadsSaved, () => ({
+    purchases: purchases.savedKeys(),
+    tracks: trackDownloads.savedIds()
+  }))
 
   ipcMain.handle(IPC.likesToggle, (_event, input: unknown) => {
     if (!input || typeof input !== 'object') throw new Error('Invalid track')

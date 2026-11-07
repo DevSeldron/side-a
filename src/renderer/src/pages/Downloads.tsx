@@ -34,6 +34,9 @@ export function Downloads(): ReactElement {
   const chooseDownloadDir = useApp((state) => state.chooseDownloadDir)
   const [picked, setPicked] = useState<Album | null>(null)
   const [dismissed, setDismissed] = useState<string[]>([])
+  // Files leave disk (deleted by hand, or left behind after a folder change),
+  // so the main process reports which saved files are still there.
+  const [saved, setSaved] = useState<{ purchases: Set<string>; tracks: Set<string> } | null>(null)
   const shown = useRef<string[]>([])
 
   // Leaving the page counts as having read the panel, so coming back does not
@@ -41,6 +44,24 @@ export function Downloads(): ReactElement {
   useEffect(() => {
     return () => {
       acknowledge(shown.current)
+    }
+  }, [])
+
+  useEffect(() => {
+    let alive = true
+    const load = (): void => {
+      void window.sideA.downloads
+        .saved()
+        .then((result) => {
+          if (alive) setSaved({ purchases: new Set(result.purchases), tracks: new Set(result.tracks) })
+        })
+        .catch(() => undefined)
+    }
+    load()
+    window.addEventListener('focus', load)
+    return () => {
+      alive = false
+      window.removeEventListener('focus', load)
     }
   }, [])
 
@@ -139,9 +160,13 @@ export function Downloads(): ReactElement {
                 {entry.status === 'downloading' ? <ProgressBar value={entry.progress} /> : null}
               </div>
               {entry.status === 'done' ? (
-                <button type="button" className="button small ghost" onClick={() => revealTrack(entry.id)}>
-                  Show file
-                </button>
+                saved && !saved.tracks.has(entry.id) ? (
+                  <span className="download-muted">File missing</span>
+                ) : (
+                  <button type="button" className="button small ghost" onClick={() => revealTrack(entry.id)}>
+                    Show file
+                  </button>
+                )
               ) : (
                 <span className="download-format">{entry.quality.replace('mp3-', 'MP3 ').toUpperCase()}</span>
               )}
@@ -214,9 +239,13 @@ export function Downloads(): ReactElement {
                 </span>
                 <div className="download-actions">
                   {done ? (
-                    <button type="button" className="button small ghost" onClick={() => void window.sideA.purchases.reveal(album.key)}>
-                      Show file
-                    </button>
+                    saved && !saved.purchases.has(album.key) ? (
+                      <span className="download-muted">File missing</span>
+                    ) : (
+                      <button type="button" className="button small ghost" onClick={() => void window.sideA.purchases.reveal(album.key)}>
+                        Show file
+                      </button>
+                    )
                   ) : album.purchaseDownloadable ? (
                     <button type="button" className="button small primary" onClick={() => setPicked(album)} disabled={busy}>
                       {busy ? <Loader2 size={14} className="spin" /> : <ArrowDownToLine size={14} />}

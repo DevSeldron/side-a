@@ -49,7 +49,6 @@ export function Offline(): ReactElement {
           <div className="stat"><strong>{ready.length}</strong><span>Releases</span></div>
           <div className="stat"><strong>{tracks}</strong><span>Tracks</span></div>
           <div className="stat"><strong>{formatBytes(bytes)}</strong><span>On disk</span></div>
-          <div className="stat"><strong>{purchased}</strong><span>Purchased</span></div>
         </div>
       </PageIntro>
 

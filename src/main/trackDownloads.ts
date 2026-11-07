@@ -113,7 +113,15 @@ export class TrackDownloadManager {
   async reveal(id: string): Promise<void> {
     const entry = this.store.get().trackDownloads[id]
     if (!entry?.filePath) throw new Error('That track has not finished downloading yet')
+    if (!existsSync(entry.filePath)) throw new Error('That file is no longer where it was saved')
     shell.showItemInFolder(entry.filePath)
+  }
+
+  /** Ids of finished track downloads whose file is still on disk. */
+  savedIds(): string[] {
+    return Object.values(this.store.get().trackDownloads)
+      .filter((entry) => entry.status === 'done' && entry.filePath && existsSync(entry.filePath))
+      .map((entry) => entry.id)
   }
 
   private set(entry: TrackDownload): void {
