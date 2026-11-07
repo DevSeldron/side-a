@@ -1,5 +1,5 @@
 import { useMemo, useState, type ReactElement } from 'react'
-import { ArrowDownToLine, BadgeCheck, Library, Search, Shuffle, SlidersHorizontal, X } from 'lucide-react'
+import { ArrowDownToLine, BadgeCheck, Library, Loader2, Search, Shuffle, SlidersHorizontal, X } from 'lucide-react'
 import { useApp } from '../store/app'
 import { usePlayer } from '../store/player'
 import { AlbumCard } from '../components/AlbumCard'
@@ -12,7 +12,8 @@ export function Collection(): ReactElement {
   const snapshot = useApp((state) => state.snapshot)
   const sync = useApp((state) => state.sync)
   const saveAllPurchased = useApp((state) => state.saveAllPurchased)
-  const playAlbum = usePlayer((state) => state.playAlbum)
+  const playShuffle = usePlayer((state) => state.playShuffle)
+  const shuffleLoading = usePlayer((state) => state.shuffleLoading)
   const [query, setQuery] = useState('')
   const [sort, setSort] = useState<SortKey>('purchased')
   const [purchasedOnly, setPurchasedOnly] = useState(false)
@@ -47,8 +48,7 @@ export function Collection(): ReactElement {
 
   const shufflePlay = (): void => {
     if (!filtered.length) return
-    const pick = filtered[Math.floor(Math.random() * filtered.length)]
-    if (pick) void playAlbum(pick.key)
+    void playShuffle(filtered.map((album) => album.key))
   }
 
   if (!snapshot) return <div className="page" />
@@ -69,9 +69,14 @@ export function Collection(): ReactElement {
               <ArrowDownToLine size={16} />
               Save purchases offline
             </button>
-            <button type="button" className="button primary" onClick={shufflePlay} disabled={!filtered.length}>
-              <Shuffle size={16} />
-              Shuffle play
+            <button
+              type="button"
+              className="button primary"
+              onClick={shufflePlay}
+              disabled={!filtered.length || shuffleLoading}
+            >
+              {shuffleLoading ? <Loader2 size={16} className="spin" /> : <Shuffle size={16} />}
+              {shuffleLoading ? 'Building mix' : 'Shuffle play'}
             </button>
           </>
         }

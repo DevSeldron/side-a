@@ -28,6 +28,7 @@ interface PlayerState {
   playing: boolean
   loading: boolean
   pendingKey: string | null
+  shuffleLoading: boolean
   currentTime: number
   duration: number
   buffered: number
@@ -39,6 +40,8 @@ interface PlayerState {
   error: string | null
   init: () => void
   playAlbum: (albumKey: string, startTrackId?: number) => Promise<void>
+  /** Builds a queue of random tracks drawn from across the collection. */
+  playShuffle: (albumKeys: string[]) => Promise<void>
   loadAt: (index: number, autoplay?: boolean) => Promise<void>
   play: () => Promise<void>
   pause: () => void
@@ -74,6 +77,68 @@ function buildOrder(length: number, start: number, shuffle: boolean): number[] {
     ;[rest[index], rest[swap]] = [rest[swap] as number, rest[index] as number]
   }
   return start >= 0 && start < length ? [start, ...rest] : rest
+}
+
+/** Fisher-Yates copy, so callers never mutate the array they pass in. */
+function shuffleCopy<T>(items: readonly T[]): T[] {
+  const copy = [...items]
+  for (let index = copy.length - 1; index > 0; index -= 1) {
+    const swap = Math.floor(Math.random() * (index + 1))
+    const first = copy[index]
+    const second = copy[swap]
+    if (first === undefined || second === undefined) continue
+    copy[index] = second
+    copy[swap] = first
+  }
+  return copy
+}
+
+/**
+ * Breaks up runs of the same release, so a mix does not play three tracks off
+ * one album back to back.
+ */
+function spreadReleases(tracks: PlayerTrack[]): PlayerTrack[] {
+  const shuffled = shuffleCopy(tracks)
+  for (let index = 1; index < shuffled.length; index += 1) {
+    const previous = shuffled[index - 1]
+    const current = shuffled[index]
+    if (!previous || !current || previous.albumKey !== current.albumKey) continue
+    const swap = shuffled.findIndex(
+      (candidate, position) => position > index && candidate.albumKey !== previous.albumKey
+    )
+    const other = swap === -1 ? undefined : shuffled[swap]
+    if (!other || swap < index) continue
+    shuffled[swap] = current
+    shuffled[index] = other
+  }
+  return shuffled
+}
+
+/** How many tracks a shuffle mix gathers before it starts playing. */
+const SHUFFLE_TRACK_TARGET = 60
+const SHUFFLE_TRACKS_PER_RELEASE = 3
+const SHUFFLE_RELEASE_LIMIT = 24
+const SHUFFLE_FETCH_BATCH = 6
+
+function toPlayerTrack(
+  track: AlbumDetail['tracks'][number],
+  detail: AlbumDetail,
+  cover: string,
+  offline: boolean
+): PlayerTrack {
+  return {
+    id: track.id,
+    title: track.title,
+    artist: track.artist || detail.bandName,
+    number: track.number,
+    duration: track.duration,
+    albumKey: detail.key,
+    albumTitle: detail.title,
+    bandName: detail.bandName,
+    coverUrl: cover,
+    itemUrl: detail.itemUrl,
+    offline
+  }
 }
 
 function storedNumber(key: string, fallback: number): number {
@@ -231,6 +296,7 @@ export const usePlayer = create<PlayerState>()((set, get) => ({
   playing: false,
   loading: false,
   pendingKey: null,
+  shuffleLoading: false,
   currentTime: 0,
   duration: 0,
   buffered: 0,
@@ -293,6 +359,62 @@ export const usePlayer = create<PlayerState>()((set, get) => ({
     } catch (error) {
       set({ pendingKey: null, loading: false })
       useApp.getState().pushToast('Could not play this release', {
+        description: errorMessage(error),
+        tone: 'error'
+      })
+    }
+  },
+
+  playShuffle: async (albumKeys) => {
+    const keys = shuffleCopy([...new Set(albumKeys)]).slice(0, SHUFFLE_RELEASE_LIMIT)
+    if (!keys.length) return
+    requestAudioFocus('bandcamp')
+    set({ shuffleLoading: true, error: null })
+    try {
+      const snapshot = useApp.getState().snapshot
+      const picks: PlayerTrack[] = []
+      for (
+        let cursor = 0;
+        cursor < keys.length && picks.length < SHUFFLE_TRACK_TARGET;
+        cursor += SHUFFLE_FETCH_BATCH
+      ) {
+        const batch = keys.slice(cursor, cursor + SHUFFLE_FETCH_BATCH)
+        const details = await Promise.all(
+          batch.map(async (key) => {
+            try {
+              return await window.sideA.library.album(key)
+            } catch {
+              // A release that will not load should not break the whole mix.
+              return null
+            }
+          })
+        )
+        for (const detail of details) {
+          if (!detail || picks.length >= SHUFFLE_TRACK_TARGET) continue
+          const offline = snapshot?.offline[detail.key]?.status === 'ready'
+          const album =
+            snapshot?.collection.find((entry) => entry.key === detail.key) ??
+            snapshot?.wishlist.find((entry) => entry.key === detail.key)
+          const cover = offline ? `bcmedia://cover/${detail.key}` : detail.artUrl || (album ? coverUrl(album, 10) : '')
+          const selection = shuffleCopy(detail.tracks).slice(0, SHUFFLE_TRACKS_PER_RELEASE)
+          for (const track of selection) picks.push(toPlayerTrack(track, detail, cover, offline))
+        }
+      }
+      if (!picks.length) throw new Error('No streamable tracks in your collection')
+      const queue = spreadReleases(picks)
+      set({
+        queue,
+        index: 0,
+        order: buildOrder(queue.length, 0, get().shuffle),
+        shuffleLoading: false,
+        currentTime: 0,
+        duration: queue[0]?.duration ?? 0,
+        buffered: 0
+      })
+      await get().loadAt(0, true)
+    } catch (error) {
+      set({ shuffleLoading: false, loading: false })
+      useApp.getState().pushToast('Could not build a shuffle mix', {
         description: errorMessage(error),
         tone: 'error'
       })

@@ -1,6 +1,6 @@
 {
   "name": "side-a",
-  "version": "3.6.0",
+  "version": "3.7.0",
   "description": "A Bandcamp collection player for macOS and Windows",
   "main": "./out/main/index.js",
   "author": "Side A",

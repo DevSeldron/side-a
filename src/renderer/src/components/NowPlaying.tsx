@@ -14,6 +14,9 @@ export function NowPlaying(): ReactElement | null {
   const loadAt = usePlayer((state) => state.loadAt)
   const loading = usePlayer((state) => state.loading)
 
+  // A queue spanning several releases reads better numbered by position.
+  const mixedRelease = new Set(queue.map((entry) => entry.albumKey)).size > 1
+
   if (!expanded || !track) return null
 
   return (
@@ -69,7 +72,9 @@ export function NowPlaying(): ReactElement | null {
                 style={{ animationDelay: `${Math.min(position, 10) * 28}ms` }}
                 onClick={() => void loadAt(position, true)}
               >
-                <span className="now-queue-number">{position === index ? '▶' : String(entry.number).padStart(2, '0')}</span>
+                <span className="now-queue-number">
+                  {position === index ? '▶' : String(mixedRelease ? position + 1 : entry.number).padStart(2, '0')}
+                </span>
                 <span className="now-queue-copy">
                   <strong>{entry.title}</strong>
                   <span>{entry.artist}</span>

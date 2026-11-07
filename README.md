@@ -13,7 +13,8 @@ and Intel** and **Windows 10 and newer (x64)**.
 - **Real Bandcamp sign-in** — a dedicated, persistent Bandcamp session. Your
   password is entered on Bandcamp's own page; Side A only keeps the session cookie.
 - **Collection and wishlist** — synced from your fan profile, with search, sorting,
-  purchase filtering and a shuffle action.
+  purchase filtering, and shuffle play that builds a mix of random tracks from across
+  your collection.
 - **Full-release streaming** — tracklists and 128 kbps streams come from Bandcamp's
   mobile tralbum API. Stream tokens are proxied through `bcmedia://` so the renderer
   never handles raw Bandcamp URLs.
