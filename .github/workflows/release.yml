@@ -16,12 +16,11 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          # Both Mac architectures build together so one latest-mac yml lists
+          # every zip the updater can choose from
           - os: macos-latest
-            label: macOS arm64
-            args: --mac --arm64
-          - os: macos-latest
-            label: macOS x64 Intel
-            args: --mac --x64
+            label: macOS arm64 and x64
+            args: --mac --arm64 --x64
           - os: windows-latest
             label: Windows x64
             args: --win --x64
@@ -64,6 +63,20 @@ jobs:
             echo "mounted and verified $image"
           done
 
+      # electron-updater reads these files from the release, so a missing one
+      # silently disables updates instead of failing the build here
+      - name: Verify update metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          metadata=(release/*.yml)
+          if [ ${#metadata[@]} -eq 0 ]; then
+            echo "electron-builder produced no update metadata"
+            exit 1
+          fi
+          ls -lh release/*.yml release/*.blockmap
+
       - uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.label }}
@@ -71,6 +84,8 @@ jobs:
             release/*.dmg
             release/*.zip
             release/*.exe
+            release/*.yml
+            release/*.blockmap
           if-no-files-found: error
 
   release:
@@ -82,6 +97,11 @@ jobs:
         with:
           fetch-depth: 0
 
+      # Node reads the changelog directly, the release job installs nothing
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
       - uses: actions/download-artifact@v4
         with:
           path: artifacts
@@ -91,6 +111,12 @@ jobs:
         env:
           TAG: ${{ github.ref_name }}
         run: |
+          set -euo pipefail
+          if node scripts/release-notes.mjs; then
+            cat notes.md
+            exit 0
+          fi
+          echo "No changelog entry for $TAG, using commit subjects"
           PREVIOUS=$(git describe --tags --abbrev=0 "$TAG^" 2>/dev/null || true)
           {
             echo "## What's new"

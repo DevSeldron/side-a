@@ -44,7 +44,7 @@ await page.mouse.move(1200, 120)
 await page.screenshot({ path: `${out}/playing.png` })
 console.log('playing.png')
 
-const nowButton = page.locator('.player-side .icon-button[title="Now playing"]')
+const nowButton = page.locator('.player-side .icon-button[title="Open now playing"]')
 if (await nowButton.count()) {
   await nowButton.click()
   await page.waitForSelector('.now-playing', { timeout: 8000 })

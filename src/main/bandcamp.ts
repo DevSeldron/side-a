@@ -11,6 +11,7 @@ import type {
   Track,
   TralbumType
 } from '@shared/types'
+import { DETAILS_VERSION } from '@shared/types'
 import { findRedownload } from './redownloads'
 
 export const BANDCAMP_PARTITION = 'persist:bandcamp'
@@ -144,6 +145,26 @@ interface MobileTralbum {
   release_date?: string | number
   error?: boolean
   error_message?: string
+}
+
+/**
+ * Labels publish other artists' music through their own storefront, and the
+ * mobile API puts the credit in different places depending on the release.
+ * Compilations carry the per-track artist in `band_name` and the label in
+ * `tralbum_artist`; label singles do the reverse and report the storefront in
+ * `band_name`. The first value that is not the storefront is therefore the real
+ * credit, and the storefront is only the last resort.
+ */
+function creditedArtist(
+  storefront: string | undefined,
+  ...candidates: Array<string | undefined>
+): string | undefined {
+  const store = storefront?.trim().toLowerCase()
+  for (const candidate of candidates) {
+    const value = candidate?.trim()
+    if (value && value.toLowerCase() !== store) return value
+  }
+  return storefront?.trim() || undefined
 }
 
 /**
@@ -812,7 +833,9 @@ export class BandcampClient {
       return {
         id: raw.track_id ?? raw.id ?? index + 1,
         title: raw.title ?? 'Untitled',
-        artist: raw.band_name ?? raw.artist ?? data.band?.name ?? album.bandName,
+        artist:
+          creditedArtist(data.band?.name ?? album.bandName, raw.artist, raw.band_name, data.tralbum_artist) ??
+          'Unknown artist',
         number: raw.track_num ?? raw.track_number ?? index + 1,
         duration: raw.duration ?? 0,
         streamUrl: stream,
@@ -823,6 +846,7 @@ export class BandcampClient {
     const artId = data.art_id ?? album.artId
     const detail: AlbumDetail = {
       key: album.key,
+      version: DETAILS_VERSION,
       tralbumId: album.tralbumId,
       tralbumType: album.tralbumType,
       bandId: data.band?.band_id ?? album.bandId,
@@ -914,7 +938,7 @@ export class BandcampClient {
       return {
         id: raw.track_id ?? raw.id ?? index + 1,
         title: raw.title ?? 'Untitled',
-        artist: raw.band_name ?? data.band?.name ?? 'Unknown artist',
+        artist: creditedArtist(data.band?.name, raw.artist, raw.band_name, data.tralbum_artist) ?? 'Unknown artist',
         number: raw.track_num ?? raw.track_number ?? index + 1,
         duration: raw.duration ?? 0,
         streamUrl: stream,

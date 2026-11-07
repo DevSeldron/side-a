@@ -6,7 +6,7 @@ import { useApp } from '../store/app'
 import { usePlayer } from '../store/player'
 import { Artwork } from '../components/Artwork'
 import { EmptyState, PageIntro, ProgressBar } from '../components/Page'
-import { coverUrl, formatBytes, plural } from '../lib/format'
+import { coverUrl, formatBytes } from '../lib/format'
 
 export function Offline(): ReactElement {
   const snapshot = useApp((state) => state.snapshot)
@@ -31,13 +31,7 @@ export function Offline(): ReactElement {
   return (
     <div className="page">
       <PageIntro
-        kicker="Stored locally"
         title="Offline"
-        description={
-          ready.length
-            ? `${plural(ready.length, 'release')} and ${plural(tracks, 'track')} stored locally, ${formatBytes(bytes)} of music that plays without a connection`
-            : 'Save releases for flights, trains and dead zones, Side A stores a 128 kbps copy locally, purchases can also be kept as original files'
-        }
         actions={
           <>
             <button type="button" className="button ghost" onClick={() => void window.sideA.offline.openFolder()}>

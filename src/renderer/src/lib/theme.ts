@@ -59,9 +59,24 @@ function setAccent(root: HTMLElement, rgb: [number, number, number], ink?: strin
   root.style.setProperty('--accent', hex)
   root.style.setProperty('--accent-rgb', `${r}, ${g}, ${b}`)
   root.style.setProperty('--accent-ink', ink ?? accentInk(hex))
+  // While the beat glow runs it owns the tinted variables, so a rainbow frame
+  // does not overwrite the pulse between animation frames.
+  if (root.dataset.beat === 'true') return
   root.style.setProperty('--accent-soft', `rgba(${r}, ${g}, ${b}, 0.14)`)
   root.style.setProperty('--accent-line', `rgba(${r}, ${g}, ${b}, 0.36)`)
   root.style.setProperty('--accent-glow', `rgba(${r}, ${g}, ${b}, 0.22)`)
+}
+
+/** Hands the accent tokens back when the beat loop stops. */
+export function resetAccentVars(): void {
+  const root = document.documentElement
+  const hex = normalizeAccent(root.style.getPropertyValue('--accent'))
+  const rgb = parseHex(hex) ?? [102, 224, 204]
+  const channels = rgb.join(', ')
+  root.style.removeProperty('--accent-text')
+  root.style.setProperty('--accent-soft', `rgba(${channels}, 0.14)`)
+  root.style.setProperty('--accent-line', `rgba(${channels}, 0.36)`)
+  root.style.setProperty('--accent-glow', `rgba(${channels}, 0.22)`)
 }
 
 /**

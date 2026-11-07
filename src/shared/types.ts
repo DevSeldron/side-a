@@ -96,8 +96,18 @@ export interface Track {
   isStreamable?: boolean
 }
 
+/**
+ * Bumped whenever a cached release detail would carry stale information, so
+ * copies written by an older build are re-fetched instead of trusted. Version
+ * 2 fixed the order track credits are chosen in: the storefront name is only a
+ * fallback, never a credit.
+ */
+export const DETAILS_VERSION = 2
+
 export interface AlbumDetail {
   key: string
+  /** Cache marker, missing on details written before versioning. */
+  version?: number
   tralbumId: number
   tralbumType: TralbumType
   bandId: number
@@ -355,6 +365,8 @@ export interface Settings {
   coverBackdrop: boolean
   /** Flat black canvas, independent of the light/dark theme. */
   solidBlack: boolean
+  /** Pulse accent glows with the bass of the playing track. */
+  beatGlow: boolean
   rainbow: boolean
   rainbowUnlocked: boolean
   showWishlist: boolean
@@ -373,9 +385,25 @@ export interface LibrarySnapshot {
   settings: Settings
   integrations: IntegrationsState
   trackDownloads: Record<string, TrackDownload>
+  liked: Record<string, LikedTrack>
   local: LocalLibrarySnapshot
   demo: boolean
   appVersion: string
+}
+
+export interface LikedTrack {
+  /** `${albumKey}:${trackId}`, used as the record key. */
+  key: string
+  albumKey: string
+  id: number
+  title: string
+  artist: string
+  bandName: string
+  albumTitle: string
+  coverUrl: string
+  itemUrl?: string
+  duration: number
+  likedAt: number
 }
 
 export interface StreamTicket {
@@ -395,6 +423,7 @@ export interface LibraryEventMap {
   'purchase:changed': PurchaseDownload
   'settings:changed': Settings
   'download:changed': TrackDownload
+  'likes:changed': Record<string, LikedTrack>
   'integration:changed': IntegrationsState
   'library:changed': { collectionCount: number; wishlistCount: number; lastSyncedAt?: number }
   'local:changed': LocalLibrarySnapshot
@@ -420,6 +449,10 @@ export interface SideAAPI {
   }
   playback: {
     stream: (albumKey: string, trackId: number) => Promise<StreamTicket>
+    /** Whole track bytes, so the next song can be decoded before it is needed. */
+    buffer: (albumKey: string, trackId: number) => Promise<ArrayBuffer>
+    /** Appends one line to the playback log in the app's data directory. */
+    log: (event: string, detail?: Record<string, unknown>) => Promise<void>
   }
   offline: {
     save: (key: string) => Promise<OfflineEntry>
@@ -470,6 +503,10 @@ export interface SideAAPI {
     scrobble: (input: ScrobbleInput) => Promise<IntegrationsState>
     presence: (input: PresenceInput | null) => Promise<IntegrationsState>
     retryPending: () => Promise<IntegrationsState>
+  }
+  likes: {
+    /** Adds the track to liked songs, or removes it when it is already liked. */
+    toggle: (track: LikedTrack) => Promise<Record<string, LikedTrack>>
   }
   on: <K extends LibraryEvent>(
     event: K,

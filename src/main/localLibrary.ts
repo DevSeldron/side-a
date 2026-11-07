@@ -407,7 +407,16 @@ export class LocalLibrary {
   register(): void {
     protocol.handle(LOCAL_MEDIA_SCHEME, async (request) => {
       try {
-        return await this.handleMedia(request)
+        const response = await this.handleMedia(request)
+        // The visualizer reads local audio through Web Audio, which only sees
+        // cross-origin media when the response is CORS-clean.
+        const headers = new Headers(response.headers)
+        headers.set('Access-Control-Allow-Origin', '*')
+        return new Response(response.body, {
+          status: response.status,
+          statusText: response.statusText,
+          headers
+        })
       } catch (error) {
         console.error('Local media request failed', request.url, error)
         return new Response(null, { status: 500 })

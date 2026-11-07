@@ -13,6 +13,7 @@ import { TrackDownloadManager } from './trackDownloads'
 import { ensureDataDirs, Store } from './store'
 import { getAppPaths } from './paths'
 import { broadcastEvent, registerIpc } from './ipc'
+import { startAutoUpdater } from './updater'
 import { IPC } from '@shared/ipc'
 import type { AuthState, OfflineEntry, PurchaseDownload, Settings, SyncState } from '@shared/types'
 
@@ -221,6 +222,7 @@ if (!gotLock) {
     void discord.ensureConnected()
     void lastfm.flush().catch(() => undefined)
     await createWindow()
+    startAutoUpdater()
 
     if (process.env.SIDEA_DEMO === '1') {
       setTimeout(() => {

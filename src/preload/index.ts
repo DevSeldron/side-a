@@ -17,7 +17,9 @@ const api: SideAAPI = {
     openExternal: (url) => ipcRenderer.invoke(IPC.openExternal, url)
   },
   playback: {
-    stream: (albumKey, trackId) => ipcRenderer.invoke(IPC.playbackStream, albumKey, trackId)
+    stream: (albumKey, trackId) => ipcRenderer.invoke(IPC.playbackStream, albumKey, trackId),
+    buffer: (albumKey, trackId) => ipcRenderer.invoke(IPC.playbackBuffer, albumKey, trackId),
+    log: (event, detail) => ipcRenderer.invoke(IPC.playbackLog, event, detail)
   },
   offline: {
     save: (key) => ipcRenderer.invoke(IPC.offlineSave, key),
@@ -33,6 +35,9 @@ const api: SideAAPI = {
   downloads: {
     track: (albumKey, trackId, quality) => ipcRenderer.invoke(IPC.trackDownload, albumKey, trackId, quality),
     reveal: (id) => ipcRenderer.invoke(IPC.trackReveal, id)
+  },
+  likes: {
+    toggle: (track) => ipcRenderer.invoke(IPC.likesToggle, track)
   },
   settings: {
     update: (patch) => ipcRenderer.invoke(IPC.settingsUpdate, patch),

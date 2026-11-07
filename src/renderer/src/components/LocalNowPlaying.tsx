@@ -1,4 +1,4 @@
-import type { ReactElement } from 'react'
+import { useEffect, useRef, useState, type ReactElement } from 'react'
 import { ChevronDown, Disc3 } from 'lucide-react'
 import { useLocalPlayer } from '../store/localPlayer'
 import { Artwork } from './Artwork'
@@ -13,11 +13,30 @@ export function LocalNowPlaying(): ReactElement | null {
   const setExpanded = useLocalPlayer((state) => state.setExpanded)
   const loadAt = useLocalPlayer((state) => state.loadAt)
   const loading = useLocalPlayer((state) => state.loading)
+  const [closing, setClosing] = useState(false)
+  const closeTimer = useRef<number | null>(null)
+
+  useEffect(() => {
+    return () => {
+      if (closeTimer.current) window.clearTimeout(closeTimer.current)
+    }
+  }, [])
+
+  // Play the panel out before unmounting it, so closing the full-screen view
+  // animates instead of cutting straight to the page underneath.
+  const close = (): void => {
+    if (closing) return
+    setClosing(true)
+    closeTimer.current = window.setTimeout(() => {
+      setExpanded(false)
+      setClosing(false)
+    }, 266)
+  }
 
   if (!expanded || !track) return null
 
   return (
-    <div className="now-playing local-now-playing">
+    <div className={cx('now-playing local-now-playing', closing && 'is-closing')}>
       <div className="now-backdrop" style={{ backgroundImage: `url(${track.coverUrl})` }} aria-hidden="true" />
       <div className="now-grain" aria-hidden="true" />
 
@@ -26,7 +45,7 @@ export function LocalNowPlaying(): ReactElement | null {
           <span className="now-kicker">Now playing / Local</span>
           <span className="now-album">{track.album}</span>
         </div>
-        <button type="button" className="icon-button now-close" onClick={() => setExpanded(false)} title="Close now playing">
+        <button type="button" className="icon-button now-close" onClick={close} title="Close now playing">
           <ChevronDown size={22} />
         </button>
       </header>

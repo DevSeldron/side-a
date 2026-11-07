@@ -2,6 +2,7 @@ import { existsSync } from 'node:fs'
 import { mkdir, open, rename, rm, stat, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { shell } from 'electron'
+import { DETAILS_VERSION } from '@shared/types'
 import type { Album, AlbumDetail, AuthState, OfflineEntry, SaveAllResult, SyncState } from '@shared/types'
 import { absoluteArt, BandcampClient } from './bandcamp'
 import { getAppPaths } from './paths'
@@ -207,7 +208,9 @@ export class Library {
     const album = this.findAlbum(key)
     if (!album) throw new Error('This release is no longer in your library')
     const cached = this.store.get().details[key]
-    if (!force && cached) return cached
+    // Details cached by an older build can carry the wrong track credits, so
+    // they are treated as absent rather than returned as-is.
+    if (!force && cached && cached.version === DETAILS_VERSION) return cached
     const existing = this.detailRequests.get(key)
     if (existing) return existing
     const request = this.client

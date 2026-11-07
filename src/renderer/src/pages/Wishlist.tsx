@@ -4,7 +4,7 @@ import { useApp } from '../store/app'
 import { usePlayer } from '../store/player'
 import { AlbumCard } from '../components/AlbumCard'
 import { EmptyState, PageIntro } from '../components/Page'
-import { cx, plural } from '../lib/format'
+import { cx, parseBandcampDate } from '../lib/format'
 
 export function Wishlist(): ReactElement {
   const snapshot = useApp((state) => state.snapshot)
@@ -26,6 +26,13 @@ export function Wishlist(): ReactElement {
     })
   }, [wishlist, query, sort])
 
+  const artists = new Set(wishlist.map((album) => album.bandName)).size
+  const now = new Date()
+  const thisMonth = wishlist.filter((album) => {
+    const added = parseBandcampDate(album.added)
+    return Boolean(added && added.getFullYear() === now.getFullYear() && added.getMonth() === now.getMonth())
+  }).length
+
   if (!snapshot) return <div className="page" />
 
   const shufflePlay = (): void => {
@@ -37,20 +44,29 @@ export function Wishlist(): ReactElement {
   return (
     <div className="page">
       <PageIntro
-        kicker="Saved for later"
         title="Wishlist"
-        description={
-          wishlist.length
-            ? `${plural(wishlist.length, 'release')} on your Bandcamp wishlist, preview them here, then buy on Bandcamp`
-            : 'Releases you add to your Bandcamp wishlist will show up here'
-        }
         actions={
           <button type="button" className="button primary" onClick={shufflePlay} disabled={!filtered.length}>
             <Shuffle size={16} />
             Play something
           </button>
         }
-      />
+      >
+        <div className="stat-row">
+          <div className="stat">
+            <strong>{wishlist.length}</strong>
+            <span>Releases</span>
+          </div>
+          <div className="stat">
+            <strong>{artists}</strong>
+            <span>Artists</span>
+          </div>
+          <div className="stat">
+            <strong>{thisMonth}</strong>
+            <span>This month</span>
+          </div>
+        </div>
+      </PageIntro>
 
       {wishlist.length === 0 ? (
         <EmptyState

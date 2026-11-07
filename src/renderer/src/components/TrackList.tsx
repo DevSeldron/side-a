@@ -3,7 +3,8 @@ import { Check, Download, Loader2, Pause, Play } from 'lucide-react'
 import type { Album, AlbumDetail } from '@shared/types'
 import { usePlayer } from '../store/player'
 import { useApp } from '../store/app'
-import { cx, formatDuration } from '../lib/format'
+import { LikeButton } from './LikeButton'
+import { coverUrl, cx, formatDuration } from '../lib/format'
 
 interface TrackListProps {
   album: Album
@@ -43,6 +44,19 @@ export function TrackList({ album, detail, offlineReady }: TrackListProps): Reac
         const entry = downloads?.[`${album.key}:${track.id}`]
         const busy = entry?.status === 'downloading'
         const done = entry?.status === 'done'
+        const likedTrack = {
+          key: `${album.key}:${track.id}`,
+          albumKey: album.key,
+          id: track.id,
+          title: track.title,
+          artist: track.artist || detail.bandName,
+          bandName: detail.bandName,
+          albumTitle: detail.title,
+          coverUrl: detail.artUrl || coverUrl(album, 10),
+          itemUrl: detail.itemUrl,
+          duration: track.duration,
+          likedAt: 0
+        }
         return (
           <div
             key={track.id}
@@ -77,6 +91,7 @@ export function TrackList({ album, detail, offlineReady }: TrackListProps): Reac
             <span className="tracklist-source">{offlineReady ? 'Offline' : track.isStreamable === false ? 'Preview' : 'Stream'}</span>
             <span className="tracklist-time">
               <span className="track-duration">{formatDuration(track.duration)}</span>
+              <LikeButton track={likedTrack} />
               <button
                 type="button"
                 className={cx('track-download', done && 'is-done', busy && 'is-busy')}

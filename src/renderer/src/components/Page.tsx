@@ -9,7 +9,7 @@ export function PageIntro({
   actions,
   children
 }: {
-  kicker: string
+  kicker?: string
   title: string
   description?: string
   actions?: ReactNode
@@ -18,7 +18,7 @@ export function PageIntro({
   return (
     <section className="page-intro">
       <div className="page-intro-copy">
-        <span className="page-kicker">{kicker}</span>
+        {kicker ? <span className="page-kicker">{kicker}</span> : null}
         <h1>{title}</h1>
         {description ? <p>{description}</p> : null}
         {children}

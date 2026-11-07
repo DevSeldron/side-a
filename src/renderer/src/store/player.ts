@@ -1,7 +1,8 @@
 import { create } from 'zustand'
-import type { AlbumDetail } from '@shared/types'
+import type { AlbumDetail, LikedTrack } from '@shared/types'
 import { useApp } from './app'
 import { clearAudioFocus, requestAudioFocus, useAudioFocus } from '../lib/audioFocus'
+import { GaplessEngine } from '../lib/gapless'
 import { coverUrl, errorMessage } from '../lib/format'
 
 export interface PlayerTrack {
@@ -40,6 +41,8 @@ interface PlayerState {
   error: string | null
   init: () => void
   playAlbum: (albumKey: string, startTrackId?: number) => Promise<void>
+  /** Plays liked songs in the order shown, starting at the chosen row. */
+  playLiked: (tracks: LikedTrack[], start?: number) => Promise<void>
   /** Builds a queue of random tracks drawn from across the collection. */
   playShuffle: (albumKeys: string[]) => Promise<void>
   loadAt: (index: number, autoplay?: boolean) => Promise<void>
@@ -58,10 +61,25 @@ interface PlayerState {
   stop: () => void
 }
 
-let audio: HTMLAudioElement | null = null
+let audio: AudioContext | null = null
+let engine: GaplessEngine | null = null
 let initialized = false
 let loadToken = 0
-let lastErrorAt = 0
+
+/** Bass energy of the streaming player, for the beat glow. */
+export function playerBeatLevel(): number {
+  return engine?.beatLevel() ?? 0
+}
+
+function audioContext(): AudioContext {
+  if (!audio) audio = new AudioContext()
+  if (audio.state === 'suspended') void audio.resume()
+  return audio
+}
+
+function logPlayback(event: string, detail?: Record<string, unknown>): void {
+  void window.sideA.playback.log(event, detail).catch(() => undefined)
+}
 
 /**
  * Builds a playback order that starts at the current track and visits every
@@ -198,56 +216,69 @@ function updatePosition(duration: number, position: number): void {
   }
 }
 
-function ensureAudio(): HTMLAudioElement {
-  if (audio) return audio
-  const element = new Audio()
-  element.preload = 'auto'
-  element.volume = usePlayer.getState().volume
-  element.muted = usePlayer.getState().muted
-  element.addEventListener('timeupdate', () => {
-    const state = usePlayer.getState()
-    usePlayer.setState({ currentTime: element.currentTime, buffered: bufferedEnd(element) })
-    updatePosition(state.duration || element.duration, element.currentTime)
-  })
-  element.addEventListener('durationchange', () => {
-    if (Number.isFinite(element.duration) && element.duration > 0) {
-      usePlayer.setState({ duration: element.duration })
-    }
-  })
-  element.addEventListener('progress', () => {
-    usePlayer.setState({ buffered: bufferedEnd(element) })
-  })
-  element.addEventListener('play', () => {
-    usePlayer.setState({ playing: true, loading: false })
-    const session = mediaSession()
-    if (session) session.playbackState = 'playing'
-  })
-  element.addEventListener('pause', () => {
-    usePlayer.setState({ playing: false })
-    const session = mediaSession()
-    if (session && !element.ended) session.playbackState = 'paused'
-  })
-  element.addEventListener('waiting', () => usePlayer.setState({ loading: true }))
-  element.addEventListener('playing', () => usePlayer.setState({ loading: false }))
-  element.addEventListener('canplay', () => usePlayer.setState({ loading: false }))
-  element.addEventListener('ended', () => usePlayer.getState().handleEnded())
-  element.addEventListener('error', () => {
-    if (!element.currentSrc) return
-    const now = Date.now()
-    if (now - lastErrorAt < 1500) return
-    lastErrorAt = now
-    usePlayer.setState({ loading: false, playing: false, error: 'This track could not be played' })
-    useApp.getState().pushToast('Playback error', {        description: 'The stream may have expired, try the track again',
-      tone: 'error'
-    })
-  })
-  audio = element
-  return element
+/** The queue index an automatic advance lands on, or null when playback stops. */
+function resolveNextIndex(auto: boolean): number | null {
+  const { queue, index, repeat, shuffle, order } = usePlayer.getState()
+  if (!queue.length) return null
+  if (auto && repeat === 'one') return index
+  const active = order.length === queue.length ? order : buildOrder(queue.length, index, shuffle)
+  const position = Math.max(0, active.indexOf(index))
+  let nextPosition = position + 1
+  if (nextPosition >= active.length) {
+    if (auto && repeat === 'off') return null
+    nextPosition = 0
+  }
+  return active[nextPosition] ?? 0
 }
 
-function bufferedEnd(element: HTMLAudioElement): number {
-  if (!element.buffered || element.buffered.length === 0) return 0
-  return element.buffered.end(element.buffered.length - 1)
+/**
+ * The single audio engine for the Bandcamp queue. It decodes each track and
+ * schedules the next one on the audio clock, so joins are gapless, and it keeps
+ * every position calculation relative to the track body rather than to when a
+ * source node happened to start.
+ */
+function playerEngine(): GaplessEngine {
+  if (engine) return engine
+  const created = new GaplessEngine({
+    context: audioContext,
+    fetchBytes: (index) => {
+      const track = usePlayer.getState().queue[index]
+      if (!track) return Promise.reject(new Error('That track is no longer in the queue'))
+      return window.sideA.playback.buffer(track.albumKey, track.id)
+    },
+    nextIndex: () => resolveNextIndex(true),
+    onStart: (index, duration) => {
+      const state = usePlayer.getState()
+      updateMediaSession(state.queue[index])
+      usePlayer.setState({
+        index,
+        duration,
+        currentTime: 0,
+        buffered: duration,
+        playing: true,
+        loading: false
+      })
+    },
+    onProgress: (position, duration) => {
+      usePlayer.setState({ currentTime: position })
+      updatePosition(duration, position)
+    },
+    onEnded: () => {
+      const target = resolveNextIndex(true)
+      if (target === null) {
+        usePlayer.setState({ playing: false })
+        return
+      }
+      void usePlayer.getState().loadAt(target, true)
+    },
+    onPrepareError: (index, error) => logPlayback('prepare-error', { index, error: String(error) }),
+    log: logPlayback,
+    overlap: 0.008
+  })
+  engine = created
+  const state = usePlayer.getState()
+  created.setVolume(state.volume, state.muted)
+  return created
 }
 
 function installMediaSessionHandlers(): void {
@@ -310,11 +341,12 @@ export const usePlayer = create<PlayerState>()((set, get) => ({
   init: () => {
     if (initialized) return
     initialized = true
-    ensureAudio()
     installMediaSessionHandlers()
     useAudioFocus.subscribe((state) => {
-      if (state.source !== 'bandcamp') audio?.pause()
+      if (state.source !== 'bandcamp') usePlayer.getState().pause()
     })
+    const player = playerEngine()
+    setInterval(() => player.tick(), 100)
   },
 
   playAlbum: async (albumKey, startTrackId) => {
@@ -363,6 +395,36 @@ export const usePlayer = create<PlayerState>()((set, get) => ({
         tone: 'error'
       })
     }
+  },
+
+  playLiked: async (tracks, start = 0) => {
+    if (!tracks.length) return
+    requestAudioFocus('bandcamp')
+    const queue: PlayerTrack[] = tracks.map((track, position) => ({
+      id: track.id,
+      title: track.title,
+      artist: track.artist,
+      number: position + 1,
+      duration: track.duration,
+      albumKey: track.albumKey,
+      albumTitle: track.albumTitle,
+      bandName: track.bandName,
+      coverUrl: track.coverUrl,
+      itemUrl: track.itemUrl,
+      offline: false
+    }))
+    const index = Math.min(Math.max(0, start), queue.length - 1)
+    set({
+      queue,
+      index,
+      order: buildOrder(queue.length, index, get().shuffle),
+      pendingKey: null,
+      error: null,
+      currentTime: 0,
+      duration: queue[index]?.duration ?? 0,
+      buffered: 0
+    })
+    await get().loadAt(index, true)
   },
 
   playShuffle: async (albumKeys) => {
@@ -436,19 +498,16 @@ export const usePlayer = create<PlayerState>()((set, get) => ({
       error: null
     })
     updateMediaSession(track)
+    const player = playerEngine()
     try {
-      const ticket = await window.sideA.playback.stream(track.albumKey, track.id)
+      await player.load(index, autoplay)
       if (token !== loadToken) return
-      const element = ensureAudio()
-      element.src = ticket.url
-      element.load()
-      if (autoplay) {
-        element.volume = get().volume
-        element.muted = get().muted
-        await element.play()
-      } else {
-        set({ loading: false })
-      }
+      set({
+        loading: false,
+        playing: autoplay,
+        duration: player.duration,
+        buffered: player.duration
+      })
     } catch (error) {
       if (token !== loadToken) return
       set({ loading: false, playing: false, error: errorMessage(error) })
@@ -466,23 +525,20 @@ export const usePlayer = create<PlayerState>()((set, get) => ({
       return
     }
     requestAudioFocus('bandcamp')
-    const element = ensureAudio()
-    if (!element.src) {
+    const player = playerEngine()
+    if (!player.duration) {
       await get().loadAt(get().index < 0 ? 0 : get().index, true)
       return
     }
-    try {
-      await element.play()
-    } catch (error) {
-      useApp.getState().pushToast('Could not resume playback', {
-        description: errorMessage(error),
-        tone: 'error'
-      })
-    }
+    player.play()
+    set({ playing: true })
   },
 
   pause: () => {
-    audio?.pause()
+    playerEngine().pause()
+    set({ playing: false })
+    const session = mediaSession()
+    if (session) session.playbackState = 'paused'
   },
 
   toggle: async () => {
@@ -529,36 +585,32 @@ export const usePlayer = create<PlayerState>()((set, get) => ({
   },
 
   seek: (time) => {
-    const element = ensureAudio()
-    const duration = get().duration || element.duration || 0
-    const next = Math.min(Math.max(time, 0), duration || time)
-    if (Number.isFinite(next)) {
-      element.currentTime = next
-      set({ currentTime: next })
-    }
+    const player = playerEngine()
+    const duration = player.duration || get().duration
+    const next = Math.min(Math.max(time, 0), duration || 0)
+    if (!Number.isFinite(next)) return
+    player.seek(next)
+    set({ currentTime: next })
   },
 
   setVolume: (volume) => {
     const next = Math.min(1, Math.max(0, volume))
-    const element = ensureAudio()
-    element.volume = next
-    element.muted = next === 0 ? element.muted : false
     localStorage.setItem('sidea.volume', String(next))
     if (next > 0 && get().muted) {
-      element.muted = false
       localStorage.setItem('sidea.muted', 'false')
       set({ volume: next, muted: false })
+      engine?.setVolume(next, false)
       return
     }
     set({ volume: next })
+    engine?.setVolume(next, get().muted)
   },
 
   toggleMute: () => {
-    const element = ensureAudio()
     const muted = !get().muted
-    element.muted = muted
     localStorage.setItem('sidea.muted', String(muted))
     set({ muted })
+    engine?.setVolume(get().volume, muted)
   },
 
   toggleShuffle: () => {
@@ -567,25 +619,23 @@ export const usePlayer = create<PlayerState>()((set, get) => ({
     const nextOrder = queue.length ? buildOrder(queue.length, index, shuffle) : order
     localStorage.setItem('sidea.shuffle', String(shuffle))
     set({ shuffle, order: nextOrder })
+    engine?.reprepare()
   },
 
   cycleRepeat: () => {
     const order: RepeatMode[] = ['off', 'all', 'one']
-    const current = order.indexOf(get().repeat)
-    const repeat = order[(current + 1) % order.length] ?? 'off'
+    const currentRepeat = order.indexOf(get().repeat)
+    const repeat = order[(currentRepeat + 1) % order.length] ?? 'off'
     localStorage.setItem('sidea.repeat', repeat)
     set({ repeat })
+    engine?.reprepare()
   },
 
   setExpanded: (expanded) => set({ expanded }),
 
   stop: () => {
     loadToken += 1
-    if (audio) {
-      audio.pause()
-      audio.removeAttribute('src')
-      audio.load()
-    }
+    engine?.stop()
     set({
       queue: [],
       index: -1,

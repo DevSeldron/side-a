@@ -3,6 +3,7 @@ import type { LocalTrack } from '@shared/types'
 import { useApp } from './app'
 import { usePlayer } from './player'
 import { clearAudioFocus, requestAudioFocus, useAudioFocus } from '../lib/audioFocus'
+import { createBeatState, readBeatLevel, resetBeatState } from '../lib/beat'
 import { errorMessage } from '../lib/format'
 
 type RepeatMode = 'off' | 'all' | 'one'
@@ -45,6 +46,11 @@ let audio: HTMLAudioElement | null = null
 let initialized = false
 let loadToken = 0
 let lastErrorAt = 0
+let beatContext: AudioContext | null = null
+let beatAnalyser: AnalyserNode | null = null
+let beatGain: GainNode | null = null
+let beatSource: MediaElementAudioSourceNode | null = null
+const localBeat = createBeatState()
 
 function buildOrder(length: number, start: number, shuffle: boolean): number[] {
   const natural = Array.from({ length }, (_, index) => index)
@@ -191,6 +197,8 @@ function ensureAudio(): HTMLAudioElement {
   if (audio) return audio
   const element = new Audio()
   element.preload = 'auto'
+  // CORS-clean media lets the beat tap read the stream without tainting it.
+  element.crossOrigin = 'anonymous'
   element.volume = useLocalPlayer.getState().volume
   element.muted = useLocalPlayer.getState().muted
   element.addEventListener('timeupdate', () => {
@@ -217,7 +225,10 @@ function ensureAudio(): HTMLAudioElement {
     if (session && isLocalActive() && !element.ended) session.playbackState = 'paused'
   })
   element.addEventListener('waiting', () => useLocalPlayer.setState({ loading: true }))
-  element.addEventListener('playing', () => useLocalPlayer.setState({ loading: false }))
+  element.addEventListener('playing', () => {
+    useLocalPlayer.setState({ loading: false })
+    ensureBeatTap(element)
+  })
   element.addEventListener('canplay', () => useLocalPlayer.setState({ loading: false }))
   element.addEventListener('ended', () => useLocalPlayer.getState().handleEnded())
   element.addEventListener('error', () => {
@@ -233,6 +244,65 @@ function ensureAudio(): HTMLAudioElement {
   })
   audio = element
   return element
+}
+
+/**
+ * Routes the local element through Web Audio once so it can be analysed. The
+ * analyser sits in that path; the store's volume and mute live on the gain
+ * after it, because routing bypasses the element's own volume control.
+ */
+function ensureBeatTap(element: HTMLAudioElement): void {
+  try {
+    if (beatSource) {
+      applyBeatGain()
+      if (beatContext?.state === 'suspended') void beatContext.resume().catch(() => {})
+      return
+    }
+    const context = new AudioContext()
+    const analyser = context.createAnalyser()
+    analyser.fftSize = 2048
+    analyser.smoothingTimeConstant = 0.12
+    const gain = context.createGain()
+    // Routing the element through Web Audio bypasses its own volume control,
+    // so the store's volume and mute live on this gain from now on.
+    const { volume, muted } = useLocalPlayer.getState()
+    gain.gain.value = muted ? 0 : volume
+    const source = context.createMediaElementSource(element)
+    source.connect(analyser)
+    analyser.connect(gain)
+    gain.connect(context.destination)
+    beatContext = context
+    beatAnalyser = analyser
+    beatGain = gain
+    beatSource = source
+    // The gain owns loudness now; leaving the element at full avoids squaring
+    // the two volumes if the browser still applies the element's own control.
+    element.volume = 1
+    element.muted = false
+    resetBeatState(localBeat)
+    if (context.state === 'suspended') void context.resume().catch(() => {})
+  } catch (error) {
+    // The visualizer is optional; playback stays untouched either way.
+    console.warn('Local beat tap unavailable', error)
+  }
+}
+
+/** Pushes the store's volume and mute onto the Web Audio gain, if routed. */
+function applyBeatGain(): void {
+  if (!beatGain) return
+  const { volume, muted } = useLocalPlayer.getState()
+  beatGain.gain.value = muted || volume === 0 ? 0 : volume
+}
+
+/** Clears the detector between tracks; the routed source follows the element. */
+function dropBeatTap(): void {
+  resetBeatState(localBeat)
+}
+
+/** Low-end level of the local element, for the shared beat effect. */
+export function localBeatLevel(): number {
+  if (!beatAnalyser || !audio) return 0
+  return readBeatLevel(beatAnalyser, beatContext?.sampleRate ?? 48000, audio.currentTime, localBeat)
 }
 
 function bufferedEnd(element: HTMLAudioElement): number {
@@ -309,6 +379,7 @@ export const useLocalPlayer = create<LocalPlayerState>()((set, get) => ({
       const element = ensureAudio()
       element.src = ticket.url
       element.load()
+      dropBeatTap()
       if (autoplay) {
         element.volume = get().volume
         element.muted = get().muted
@@ -415,9 +486,11 @@ export const useLocalPlayer = create<LocalPlayerState>()((set, get) => ({
       element.muted = false
       localStorage.setItem('sidea.local.muted', 'false')
       set({ volume: next, muted: false })
+      applyBeatGain()
       return
     }
     set({ volume: next })
+    applyBeatGain()
   },
 
   toggleMute: () => {
@@ -426,6 +499,7 @@ export const useLocalPlayer = create<LocalPlayerState>()((set, get) => ({
     element.muted = muted
     localStorage.setItem('sidea.local.muted', String(muted))
     set({ muted })
+    applyBeatGain()
   },
 
   toggleShuffle: () => {
@@ -453,6 +527,7 @@ export const useLocalPlayer = create<LocalPlayerState>()((set, get) => ({
       audio.removeAttribute('src')
       audio.load()
     }
+    dropBeatTap()
     set({
       queue: [],
       index: -1,

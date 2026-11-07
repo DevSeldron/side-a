@@ -1,0 +1,29 @@
+[
+  {
+    "version": "4.0.0",
+    "title": "Side A 4",
+    "intro": "A big one, here is what changed",
+    "highlights": [
+      {
+        "title": "Seamless albums",
+        "description": "Tracks hand straight over to each other, so a record plays like a record instead of a queue of files"
+      },
+      {
+        "title": "Liked songs",
+        "description": "Tap the heart on any track to keep it, then play or shuffle the whole shelf from its own page"
+      },
+      {
+        "title": "A calmer look",
+        "description": "Lighter text, tidier page headers and a player bar with the clutter taken out"
+      },
+      {
+        "title": "Make it yours",
+        "description": "Backdrops, blurred themes and a customisation group in Settings that folds away when you are done"
+      },
+      {
+        "title": "Wishlist at a glance",
+        "description": "The wishlist now counts releases, artists and whatever landed this month"
+      }
+    ]
+  }
+]

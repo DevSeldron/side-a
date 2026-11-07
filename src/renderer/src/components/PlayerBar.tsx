@@ -1,11 +1,12 @@
 import type { CSSProperties, ReactElement } from 'react'
 import { Link } from 'react-router-dom'
-import { ChevronUp, ListMusic, Volume1, Volume2, VolumeX } from 'lucide-react'
+import { ChevronUp, Volume1, Volume2, VolumeX } from 'lucide-react'
 import { usePlayer } from '../store/player'
 import { useLocalPlayer } from '../store/localPlayer'
 import { useAudioFocus } from '../lib/audioFocus'
 import { Artwork } from './Artwork'
 import { PlaybackControls, SeekBar } from './Playback'
+import { LikeButton, likedFromPlayer } from './LikeButton'
 import { cx } from '../lib/format'
 
 export function PlayerBar(): ReactElement | null {
@@ -41,6 +42,7 @@ export function PlayerBar(): ReactElement | null {
       </div>
 
       <div className="player-side">
+        <LikeButton track={likedFromPlayer(track)} size={16} className="player-like" />
         <div className="player-volume">
           <button type="button" className="icon-button subtle" onClick={toggleMute} title={muted ? 'Unmute' : 'Mute'}>
             <VolumeIcon size={17} />
@@ -57,9 +59,6 @@ export function PlayerBar(): ReactElement | null {
             aria-label="Volume"
           />
         </div>
-        <button type="button" className="icon-button subtle" onClick={() => setExpanded(true)} title="Now playing">
-          <ListMusic size={18} />
-        </button>
         <button type="button" className="icon-button subtle expand-button" onClick={() => setExpanded(true)} title="Open now playing">
           <ChevronUp size={18} />
         </button>

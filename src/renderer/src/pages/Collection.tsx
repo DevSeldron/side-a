@@ -1,10 +1,10 @@
 import { useMemo, useState, type ReactElement } from 'react'
-import { ArrowDownToLine, BadgeCheck, Library, Loader2, Search, Shuffle, SlidersHorizontal, X } from 'lucide-react'
+import { ArrowDownToLine, Library, Loader2, Search, Shuffle, SlidersHorizontal, X } from 'lucide-react'
 import { useApp } from '../store/app'
 import { usePlayer } from '../store/player'
 import { AlbumCard } from '../components/AlbumCard'
 import { EmptyState, PageIntro } from '../components/Page'
-import { cx, parseBandcampDate, plural } from '../lib/format'
+import { parseBandcampDate, plural } from '../lib/format'
 
 type SortKey = 'purchased' | 'added' | 'artist' | 'title'
 
@@ -16,14 +16,12 @@ export function Collection(): ReactElement {
   const shuffleLoading = usePlayer((state) => state.shuffleLoading)
   const [query, setQuery] = useState('')
   const [sort, setSort] = useState<SortKey>('purchased')
-  const [purchasedOnly, setPurchasedOnly] = useState(false)
 
   const collection = snapshot?.collection ?? []
 
   const filtered = useMemo(() => {
     const term = query.trim().toLowerCase()
     const list = collection.filter((album) => {
-      if (purchasedOnly && !album.purchased) return false
       if (!term) return true
       return album.title.toLowerCase().includes(term) || album.bandName.toLowerCase().includes(term)
     })
@@ -40,7 +38,7 @@ export function Collection(): ReactElement {
       return a.album.bandName.localeCompare(b.album.bandName) || a.album.title.localeCompare(b.album.title)
     })
     return dated.map(({ album }) => album)
-  }, [collection, query, sort, purchasedOnly])
+  }, [collection, query, sort])
 
   const purchased = collection.filter((album) => album.purchased).length
   const artists = new Set(collection.map((album) => album.bandName)).size
@@ -56,13 +54,7 @@ export function Collection(): ReactElement {
   return (
     <div className="page">
       <PageIntro
-        kicker="Your library"
         title="Collection"
-        description={
-          collection.length
-            ? `${plural(collection.length, 'release')} from ${plural(artists, 'artist')}, everything you have bought or added on Bandcamp`
-            : 'Everything you own on Bandcamp will appear here once you sync'
-        }
         actions={
           <>
             <button type="button" className="button ghost" onClick={() => void saveAllPurchased()} disabled={!purchased}>
@@ -85,10 +77,6 @@ export function Collection(): ReactElement {
           <div className="stat">
             <strong>{collection.length}</strong>
             <span>Releases</span>
-          </div>
-          <div className="stat">
-            <strong>{purchased}</strong>
-            <span>Purchased</span>
           </div>
           <div className="stat">
             <strong>{artists}</strong>
@@ -137,15 +125,6 @@ export function Collection(): ReactElement {
               ) : null}
             </div>
             <div className="toolbar-right">
-              <button
-                type="button"
-                className={cx('chip-toggle', purchasedOnly && 'is-on')}
-                onClick={() => setPurchasedOnly((value) => !value)}
-                aria-pressed={purchasedOnly}
-              >
-                <BadgeCheck size={14} />
-                Purchased only
-              </button>
               <label className="select-wrap">
                 <SlidersHorizontal size={14} />
                 <select value={sort} onChange={(event) => setSort(event.target.value as SortKey)} aria-label="Sort collection">
@@ -162,10 +141,10 @@ export function Collection(): ReactElement {
             <EmptyState
               icon={<Search size={24} />}
               title="Nothing matches that filter"
-              description="Try a different artist or release name, or turn off the purchased filter"
+              description="Try a different artist or release name"
               action={
-                <button type="button" className="button ghost" onClick={() => { setQuery(''); setPurchasedOnly(false) }}>
-                  Clear filters
+                <button type="button" className="button ghost" onClick={() => setQuery('')}>
+                  Clear filter
                 </button>
               }
             />

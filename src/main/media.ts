@@ -1,5 +1,5 @@
 import { createReadStream, existsSync, statSync } from 'node:fs'
-import { stat } from 'node:fs/promises'
+import { readFile, stat } from 'node:fs/promises'
 import { Readable } from 'node:stream'
 import { extname } from 'node:path'
 import { randomUUID } from 'node:crypto'
@@ -8,6 +8,9 @@ import type { Library } from './library'
 import type { BandcampClient } from './bandcamp'
 import type { Store } from './store'
 import type { StreamTicket } from '@shared/types'
+
+/** Whole-track buffering is capped so a huge file cannot exhaust memory. */
+const MAX_BUFFER_BYTES = 96 * 1024 * 1024
 
 interface TicketEntry {
   url: string
@@ -191,6 +194,27 @@ export class MediaGateway {
     const expiresAt = Date.now() + 3 * 60 * 60 * 1000
     this.tickets.set(token, { url: resolved.url, albumKey, trackId, expiresAt })
     return { url: `${MEDIA_SCHEME}://stream/${token}`, expiresAt }
+  }
+
+  /**
+   * The entire track as bytes. Decoding it locally lets the player schedule the
+   * next song on the audio clock instead of waiting for a stream to open.
+   */
+  async buffer(albumKey: string, trackId: number): Promise<ArrayBuffer> {
+    const resolved = await this.library.resolveStream(albumKey, trackId)
+    if (resolved.kind === 'local') {
+      const data = await readFile(resolved.path)
+      return data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength) as ArrayBuffer
+    }
+    const response = await this.client.fetchRaw(resolved.url, {
+      headers: { Accept: '*/*', Referer: 'https://bandcamp.com/' }
+    })
+    if (!response.ok) throw new Error(`Could not buffer this track (${response.status})`)
+    const length = Number(response.headers.get('content-length') ?? 0)
+    if (length > MAX_BUFFER_BYTES) throw new Error('This track is too large to buffer')
+    const data = new Uint8Array(await response.arrayBuffer())
+    if (data.byteLength > MAX_BUFFER_BYTES) throw new Error('This track is too large to buffer')
+    return data.buffer as ArrayBuffer
   }
 
   /**

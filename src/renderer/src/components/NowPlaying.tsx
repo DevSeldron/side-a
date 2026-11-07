@@ -1,8 +1,9 @@
-import type { ReactElement } from 'react'
+import { useEffect, useRef, useState, type ReactElement } from 'react'
 import { ChevronDown, Disc3 } from 'lucide-react'
 import { usePlayer } from '../store/player'
 import { Artwork } from './Artwork'
 import { PlaybackControls, WaveScrubber } from './Playback'
+import { LikeButton, likedFromPlayer } from './LikeButton'
 import { cx, formatDuration } from '../lib/format'
 
 export function NowPlaying(): ReactElement | null {
@@ -13,6 +14,25 @@ export function NowPlaying(): ReactElement | null {
   const setExpanded = usePlayer((state) => state.setExpanded)
   const loadAt = usePlayer((state) => state.loadAt)
   const loading = usePlayer((state) => state.loading)
+  const [closing, setClosing] = useState(false)
+  const closeTimer = useRef<number | null>(null)
+
+  useEffect(() => {
+    return () => {
+      if (closeTimer.current) window.clearTimeout(closeTimer.current)
+    }
+  }, [])
+
+  // Play the panel out before unmounting it, so closing the full-screen view
+  // animates instead of cutting straight to the page underneath.
+  const close = (): void => {
+    if (closing) return
+    setClosing(true)
+    closeTimer.current = window.setTimeout(() => {
+      setExpanded(false)
+      setClosing(false)
+    }, 260)
+  }
 
   // A queue spanning several releases reads better numbered by position.
   const mixedRelease = new Set(queue.map((entry) => entry.albumKey)).size > 1
@@ -20,7 +40,7 @@ export function NowPlaying(): ReactElement | null {
   if (!expanded || !track) return null
 
   return (
-    <div className="now-playing">
+    <div className={cx('now-playing', closing && 'is-closing')}>
       <div className="now-backdrop" style={{ backgroundImage: `url(${track.coverUrl})` }} aria-hidden="true" />
       <div className="now-grain" aria-hidden="true" />
 
@@ -29,7 +49,7 @@ export function NowPlaying(): ReactElement | null {
           <span className="now-kicker">Now playing</span>
           <span className="now-album">{track.albumTitle}</span>
         </div>
-        <button type="button" className="icon-button now-close" onClick={() => setExpanded(false)} title="Close now playing">
+        <button type="button" className="icon-button now-close" onClick={close} title="Close now playing">
           <ChevronDown size={22} />
         </button>
       </header>
@@ -45,6 +65,7 @@ export function NowPlaying(): ReactElement | null {
             <p>
               {track.artist} <span>/</span> {track.albumTitle}
             </p>
+            <LikeButton track={likedFromPlayer(track)} size={20} className="now-like" />
           </div>
           <WaveScrubber />
           <PlaybackControls size="lg" />

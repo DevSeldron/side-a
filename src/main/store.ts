@@ -5,6 +5,7 @@ import type {
   AlbumDetail,
   AuthState,
   IntegrationsConfig,
+  LikedTrack,
   OfflineEntry,
   PurchaseDownload,
   Settings,
@@ -35,6 +36,7 @@ export interface PersistedState {
   settings: Settings
   integrations: IntegrationsConfig
   trackDownloads: Record<string, TrackDownload>
+  liked: Record<string, LikedTrack>
   redownloads: Record<string, string>
 }
 
@@ -52,6 +54,7 @@ export function defaultSettings(downloadDir: string): Settings {
     mountainBackdrop: false,
     coverBackdrop: false,
     solidBlack: false,
+    beatGlow: false,
     rainbow: false,
     rainbowUnlocked: false,
     showWishlist: true,
@@ -118,6 +121,7 @@ function defaults(downloadDir: string): PersistedState {
     settings: defaultSettings(downloadDir),
     integrations: defaultIntegrations(),
     trackDownloads: {},
+    liked: {},
     redownloads: {}
   }
 }
@@ -154,6 +158,7 @@ export class Store {
         offline: parsed.offline ?? {},
         purchases: parsed.purchases ?? {},
         trackDownloads: parsed.trackDownloads ?? {},
+        liked: parsed.liked ?? {},
         collection: (parsed.collection ?? []).map((album) => withPurchaseLink(album, redownloads)),
         wishlist: (parsed.wishlist ?? []).map((album) => withPurchaseLink(album, redownloads)),
         redownloads
@@ -166,6 +171,15 @@ export class Store {
 
   get(): PersistedState {
     return this.state
+  }
+
+  /** Adds a liked track, or removes it when it is already liked. */
+  toggleLiked(track: LikedTrack): Record<string, LikedTrack> {
+    this.update((state) => {
+      if (state.liked[track.key]) delete state.liked[track.key]
+      else state.liked[track.key] = { ...track, likedAt: Date.now() }
+    })
+    return this.state.liked
   }
 
   update(mutator: (state: PersistedState) => void): PersistedState {

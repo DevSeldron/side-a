@@ -229,13 +229,7 @@ export function Local(): ReactElement {
   return (
     <div className="page local-page">
       <PageIntro
-        kicker="On this device"
         title="Local"
-        description={
-          tracks.length
-            ? `${plural(tracks.length, 'track')} from ${plural(artists, 'artist')} across ${plural(albumCount, 'album')}, ${formatLongDuration(local.totalDuration)} of music`
-            : 'Play the music you already own, then add any folder of MP3, FLAC, WAV, Ogg, AAC, AIFF, ALAC or other supported audio files'
-        }
         actions={
           <>
             <button type="button" className="button ghost" onClick={() => void rescanLocal()} disabled={scanning || !folders.length}>

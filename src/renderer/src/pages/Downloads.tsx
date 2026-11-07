@@ -1,4 +1,4 @@
-import { useState, type ReactElement } from 'react'
+import { useEffect, useRef, useState, type ReactElement } from 'react'
 import { AlertCircle, ArrowDownToLine, BadgeCheck, CheckCircle2, FolderOpen, Info, Loader2, Package, Settings2 } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import type { Album } from '@shared/types'
@@ -8,17 +8,62 @@ import { EmptyState, PageIntro, ProgressBar } from '../components/Page'
 import { FormatPicker } from '../components/FormatPicker'
 import { coverUrl, formatBytes, shortPath } from '../lib/format'
 
+const ACK_KEY = 'sidea.trackDownloadsSeen'
+
+function loadAcknowledged(): Set<string> {
+  try {
+    const parsed: unknown = JSON.parse(localStorage.getItem(ACK_KEY) ?? '[]')
+    return new Set(Array.isArray(parsed) ? parsed.filter((id): id is string => typeof id === 'string') : [])
+  } catch {
+    return new Set()
+  }
+}
+
+/** Completed track downloads already read, remembered across launches so the
+ * panel does not greet the same file again after a restart. */
+const acknowledgedTrackDownloads = loadAcknowledged()
+
+function acknowledge(ids: string[]): void {
+  if (!ids.length) return
+  for (const id of ids) acknowledgedTrackDownloads.add(id)
+  localStorage.setItem(ACK_KEY, JSON.stringify([...acknowledgedTrackDownloads].slice(-200)))
+}
+
 export function Downloads(): ReactElement {
   const snapshot = useApp((state) => state.snapshot)
   const chooseDownloadDir = useApp((state) => state.chooseDownloadDir)
   const [picked, setPicked] = useState<Album | null>(null)
+  const [dismissed, setDismissed] = useState<string[]>([])
+  const shown = useRef<string[]>([])
+
+  // Leaving the page counts as having read the panel, so coming back does not
+  // bring the same finished downloads with it. A later download still shows.
+  useEffect(() => {
+    return () => {
+      acknowledge(shown.current)
+    }
+  }, [])
 
   if (!snapshot) return <div className="page" />
 
   const purchased = snapshot.collection.filter((album) => album.purchased)
   const downloadable = purchased.filter((album) => album.purchaseDownloadable)
   const downloads = Object.values(snapshot.purchases)
-  const trackDownloads = Object.values(snapshot.trackDownloads).sort((a, b) => b.startedAt - a.startedAt).slice(0, 8)
+  const trackDownloads = Object.values(snapshot.trackDownloads)
+    .filter(
+      (entry) =>
+        entry.status === 'downloading' ||
+        (!acknowledgedTrackDownloads.has(entry.id) && !dismissed.includes(entry.id))
+    )
+    .sort((a, b) => b.startedAt - a.startedAt)
+    .slice(0, 8)
+  shown.current = trackDownloads.map((entry) => entry.id)
+
+  const revealTrack = (id: string): void => {
+    setDismissed((current) => [...current, id])
+    acknowledge([id])
+    void window.sideA.downloads.reveal(id).catch(() => undefined)
+  }
   const active = downloads.filter((entry) => entry.status === 'preparing' || entry.status === 'downloading' || entry.status === 'queued')
   const completed = downloads.filter((entry) => entry.status === 'done')
   const totalBytes = completed.reduce((sum, entry) => sum + entry.bytes, 0)
@@ -26,9 +71,7 @@ export function Downloads(): ReactElement {
   return (
     <div className="page">
       <PageIntro
-        kicker="Original files"
         title="Downloads"
-        description="Keep the files you paid for, or grab a single track, purchases download the exact format Bandcamp stores, FLAC, WAV, AIFF, MP3 and more, individual tracks save as MP3 in the quality you pick in Settings"
         actions={
           <button type="button" className="button ghost" onClick={() => void chooseDownloadDir()}>
             <FolderOpen size={16} />
@@ -96,7 +139,7 @@ export function Downloads(): ReactElement {
                 {entry.status === 'downloading' ? <ProgressBar value={entry.progress} /> : null}
               </div>
               {entry.status === 'done' ? (
-                <button type="button" className="button small ghost" onClick={() => void window.sideA.downloads.reveal(entry.id)}>
+                <button type="button" className="button small ghost" onClick={() => revealTrack(entry.id)}>
                   Show file
                 </button>
               ) : (

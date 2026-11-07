@@ -27,7 +27,6 @@ export function Sidebar(): ReactElement {
   const activeDownloads = Object.values(snapshot.purchases).filter(
     (entry) => entry.status === 'preparing' || entry.status === 'downloading' || entry.status === 'queued'
   ).length
-  const purchased = snapshot.collection.filter((album) => album.purchased).length
   const username = snapshot.auth.username ?? 'Bandcamp'
 
   const doLogout = async (): Promise<void> => {
@@ -62,6 +61,11 @@ export function Sidebar(): ReactElement {
             <span>Wishlist</span>
             <em>{snapshot.wishlist.length}</em>
           </NavLink>
+          <NavLink to="/liked" className={({ isActive }) => cx('nav-item', isActive && 'is-active')}>
+            <Heart size={18} />
+            <span>Liked</span>
+            <em>{Object.keys(snapshot.liked).length}</em>
+          </NavLink>
           <NavLink to="/offline" className={({ isActive }) => cx('nav-item', isActive && 'is-active')}>
             <HardDrive size={18} />
             <span>Offline</span>
@@ -78,16 +82,6 @@ export function Sidebar(): ReactElement {
             <em>{snapshot.local.tracks.length}</em>
           </NavLink>
         </nav>
-
-        <p className="nav-label">Listening</p>
-        <div className="side-note">
-          <span className="side-note-kicker">In your crate</span>
-          <strong>{purchased}</strong>
-          <span>purchased releases</span>
-          <div className="side-note-line">
-            <span style={{ width: `${Math.min(100, purchased ? (purchased / Math.max(1, snapshot.collection.length)) * 100 : 0)}%` }} />
-          </div>
-        </div>
 
         {snapshot.demo ? (
           <div className="demo-card">

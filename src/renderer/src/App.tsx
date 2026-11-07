@@ -2,8 +2,8 @@ import { useEffect, useLayoutEffect, useRef, useState, type ReactElement } from 
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { AlertTriangle, RefreshCw } from 'lucide-react'
 import { useApp } from './store/app'
-import { usePlayer } from './store/player'
-import { useLocalPlayer } from './store/localPlayer'
+import { playerBeatLevel, usePlayer } from './store/player'
+import { localBeatLevel, useLocalPlayer } from './store/localPlayer'
 import { startIntegrations } from './lib/integrations'
 import { useAudioFocus } from './lib/audioFocus'
 import {
@@ -12,6 +12,7 @@ import {
   applyMountainBackdrop,
   applySolidBlack,
   applyTheme,
+  resetAccentVars,
   FALLBACK_ACCENT
 } from './lib/theme'
 import { Sidebar } from './components/Sidebar'
@@ -22,12 +23,13 @@ import { LocalNowPlaying } from './components/LocalNowPlaying'
 import { NowPlaying } from './components/NowPlaying'
 import { CommandPalette } from './components/CommandPalette'
 import { Toasts } from './components/Toasts'
+import { WhatsNew } from './components/WhatsNew'
 import { MountainBackdrop } from './components/MountainBackdrop'
 import { CoverBackdrop } from './components/CoverBackdrop'
-import { StartupSplash } from './components/StartupSplash'
 import { Welcome } from './pages/Welcome'
 import { Collection } from './pages/Collection'
 import { Wishlist } from './pages/Wishlist'
+import { Liked } from './pages/Liked'
 import { AlbumPage } from './pages/Album'
 import { Offline } from './pages/Offline'
 import { Downloads } from './pages/Downloads'
@@ -70,14 +72,15 @@ export default function App(): ReactElement {
   const coverTheme = snapshot?.settings.coverTheme ?? false
   const backgroundGradient = snapshot?.settings.backgroundGradient ?? false
   const gradientPosition = snapshot?.settings.gradientPosition ?? 'bottom'
-  const mountainBackdrop = snapshot?.settings.mountainBackdrop ?? false
+  // The mountains are drawn for the blurred themes only, so a plain dark or
+  // light room never picks up a sky it has no glass to show through.
+  const mountainBackdrop =
+    (snapshot?.settings.mountainBackdrop ?? false) && (theme === 'blurred-dark' || theme === 'blurred-light')
   const coverBackdrop = snapshot?.settings.coverBackdrop ?? false
   const solidBlack = snapshot?.settings.solidBlack ?? false
   const reduceMotion = snapshot?.settings.reduceMotion ?? false
+  const beatGlow = snapshot?.settings.beatGlow ?? false
   const [coverAccent, setCoverAccent] = useState<string | null>(null)
-  const [showSplash, setShowSplash] = useState(true)
-  const [splashLeaving, setSplashLeaving] = useState(false)
-  const splashStarted = useRef(Date.now())
   const coverUrl = track?.coverUrl ?? ''
   // The backdrop follows whichever player owns the audio, so local files show
   // their own artwork rather than the last streamed release.
@@ -120,28 +123,62 @@ export default function App(): ReactElement {
   }, [solidBlack])
 
   useEffect(() => {
+    const root = document.documentElement
+    if (!beatGlow || reduceMotion) {
+      delete root.dataset.beat
+      root.style.setProperty('--beat', '0')
+      return
+    }
+    root.dataset.beat = 'true'
+    let frame = 0
+    let smooth = 0
+    let accent: [number, number, number] = [102, 224, 204]
+    let ticks = 0
+    const tick = (): void => {
+      // Follow whichever player owns the audio, so local files pulse too.
+      const local = useAudioFocus.getState().source === 'local'
+      const playing = local ? useLocalPlayer.getState().playing : usePlayer.getState().playing
+      const level = playing ? (local ? localBeatLevel() : playerBeatLevel()) : 0
+      // Quick but softened attack, longer release: kicks land, fades stay silky.
+      smooth += (level - smooth) * (level > smooth ? 0.7 : 0.25)
+      // Rainbow themes move the accent, so refresh it a few times a second.
+      if (ticks % 20 === 0) {
+        const raw = getComputedStyle(root).getPropertyValue('--accent-rgb')
+        const parts = raw.split(',').map((part) => Number(part.trim()))
+        accent = [parts[0] ?? 102, parts[1] ?? 224, parts[2] ?? 204]
+      }
+      ticks += 1
+      const target = root.dataset.theme === 'light' ? 0 : 255
+      // Light rooms deepen the accent so the pulse stays visible, dark rooms
+      // lift it. Only the glow colour moves, text keeps its own contrast.
+      const mix = Math.min(0.55, 0.02 + smooth * 0.53)
+      const rgb = accent.map((channel) => Math.round(channel + (target - channel) * mix))
+      const channels = rgb.join(', ')
+      root.style.setProperty('--beat-rgb', channels)
+      root.style.setProperty('--beat', smooth.toFixed(3))
+      // Drive the same tokens every accent surface already reads, so the whole
+      // room pulses: text, tints, borders, glows and focus rings together.
+      root.style.setProperty('--accent-text', `rgb(${channels})`)
+      root.style.setProperty('--accent-soft', `rgba(${channels}, ${(0.14 + smooth * 0.1).toFixed(3)})`)
+      root.style.setProperty('--accent-line', `rgba(${channels}, ${(0.36 + smooth * 0.22).toFixed(3)})`)
+      frame = requestAnimationFrame(tick)
+    }
+    frame = requestAnimationFrame(tick)
+    return () => {
+      cancelAnimationFrame(frame)
+      delete root.dataset.beat
+      root.style.setProperty('--beat', '0')
+      resetAccentVars()
+    }
+  }, [beatGlow, reduceMotion])
+
+  useEffect(() => {
     applyTheme(coverTheme && coverAccent ? coverAccent : accent, theme, rainbow)
   }, [accent, coverAccent, coverTheme, theme, rainbow])
 
   useEffect(() => {
     document.documentElement.dataset.motion = reduceMotion ? 'reduced' : 'full'
   }, [reduceMotion])
-
-  useEffect(() => {
-    if (!ready || !showSplash) return
-    let exitTimer: number | undefined
-    // Let the reveal finish on fast launches without making slower ones wait
-    // longer than they already do.
-    const delay = reduceMotion ? 120 : Math.max(0, 1600 - (Date.now() - splashStarted.current))
-    const timer = window.setTimeout(() => {
-      setSplashLeaving(true)
-      exitTimer = window.setTimeout(() => setShowSplash(false), reduceMotion ? 20 : 480)
-    }, delay)
-    return () => {
-      window.clearTimeout(timer)
-      if (exitTimer) window.clearTimeout(exitTimer)
-    }
-  }, [ready, reduceMotion, showSplash])
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent): void => {
@@ -154,9 +191,8 @@ export default function App(): ReactElement {
     return () => window.removeEventListener('keydown', onKey)
   }, [setPaletteOpen])
 
-  if (!ready || showSplash) {
-    return <StartupSplash leaving={splashLeaving} />
-  }
+  // The window opens straight into the app, with no intro to sit through.
+  if (!ready) return <></>
 
   if (loadingError) {
     return (
@@ -196,6 +232,7 @@ export default function App(): ReactElement {
           <Routes>
             <Route path="/" element={<Collection />} />
             <Route path="/wishlist" element={<Wishlist />} />
+            <Route path="/liked" element={<Liked />} />
             <Route path="/album/:key" element={<AlbumPage />} />
             <Route path="/offline" element={<Offline />} />
             <Route path="/downloads" element={<Downloads />} />
@@ -211,6 +248,7 @@ export default function App(): ReactElement {
       <NowPlaying />
       <LocalNowPlaying />
       <CommandPalette />
+      <WhatsNew />
       <Toasts />
     </div>
   )

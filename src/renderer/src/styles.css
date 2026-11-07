@@ -10,9 +10,9 @@
   --line: rgba(246, 242, 232, 0.075);
   --line-strong: rgba(246, 242, 232, 0.14);
   --text: #f4f1e9;
-  --text-soft: #c7c3ba;
-  --muted: #8d8a93;
-  --muted-dim: #66646d;
+  --text-soft: #d6d2c9;
+  --muted: #b0adb6;
+  --muted-dim: #939099;
   --cream: #f1e9d7;
   --cream-ink: #191612;
   --danger: #ff7a6b;
@@ -53,9 +53,9 @@
   --line: rgba(24, 24, 28, 0.09);
   --line-strong: rgba(24, 24, 28, 0.17);
   --text: #17171b;
-  --text-soft: #3c3c45;
-  --muted: #6b6b76;
-  --muted-dim: #8b8b96;
+  --text-soft: #303038;
+  --muted: #52525c;
+  --muted-dim: #6d6d78;
   --tint: 24, 24, 28;
   --shade: 255, 255, 255;
   --cream: #efe6d3;
@@ -69,9 +69,9 @@
 
 :root[data-theme='light'] .now-playing {
   --text: #f4f1e9;
-  --text-soft: #c7c3ba;
-  --muted: #8d8a93;
-  --muted-dim: #66646d;
+  --text-soft: #d6d2c9;
+  --muted: #b0adb6;
+  --muted-dim: #939099;
   --tint: 244, 241, 233;
   --shade: 8, 8, 11;
 }
@@ -1174,12 +1174,11 @@ code {
   place-items: center;
   width: 20px;
   height: 20px;
-  border-radius: 50%;
+  background: none;
   color: var(--muted);
 }
 
 .toolbar-clear:hover {
-  background: rgba(var(--tint), 0.08);
   color: var(--text);
 }
 
@@ -2371,6 +2370,88 @@ code {
   color: var(--muted-dim);
 }
 
+/* Collapsed groups sit flush with the card edge, so shutting one does not
+   leave a band of empty space behind it. */
+.settings-collapse {
+  margin-top: 2px;
+  border-top: 1px solid var(--line);
+}
+
+.settings-collapse-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
+  padding: 13px 0 12px;
+  text-align: left;
+  color: var(--text);
+}
+
+.settings-collapse.is-open .settings-collapse-trigger {
+  padding-bottom: 0;
+}
+
+.settings-collapse-copy {
+  min-width: 0;
+}
+
+.settings-collapse-title {
+  display: block;
+  font-size: 12px;
+  font-weight: 560;
+  line-height: 1.4;
+}
+
+.settings-collapse-summary {
+  display: block;
+  margin-top: 3px;
+  overflow-wrap: anywhere;
+  font-size: 10.5px;
+  line-height: 1.5;
+  color: var(--muted-dim);
+}
+
+.settings-collapse-trigger:hover .settings-collapse-title {
+  color: var(--accent-text);
+}
+
+.settings-collapse-chevron {
+  flex: 0 0 auto;
+  color: var(--muted);
+  transition: transform 0.2s var(--motion-ease), color 0.2s ease;
+}
+
+.settings-collapse.is-open .settings-collapse-chevron {
+  transform: rotate(180deg);
+  color: var(--accent-text);
+}
+
+.settings-collapse-body {
+  display: grid;
+  grid-template-rows: 0fr;
+  visibility: hidden;
+  transition:
+    grid-template-rows 0.3s var(--motion-ease),
+    visibility 0s linear 0.3s;
+}
+
+.settings-collapse-body.is-open {
+  grid-template-rows: 1fr;
+  visibility: visible;
+  transition:
+    grid-template-rows 0.3s var(--motion-ease),
+    visibility 0s;
+}
+
+/* The padding and negative margin keep focus rings clear of the clipping edge. */
+.settings-collapse-inner {
+  min-height: 0;
+  overflow: hidden;
+  padding: 2px 3px 0;
+  margin: 0 -3px;
+}
+
 .account-row {
   display: flex;
   align-items: center;
@@ -2479,8 +2560,12 @@ code {
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  padding: 12px 0;
+  padding: 14px 0;
   border-top: 1px solid var(--line);
+}
+
+.settings-card > .setting-row:last-child {
+  padding-bottom: 0;
 }
 
 .setting-row:first-of-type {
@@ -2495,14 +2580,15 @@ code {
   display: block;
   font-size: 12px;
   font-weight: 560;
+  line-height: 1.4;
 }
 
 .setting-copy span {
   display: block;
-  margin-top: 2px;
+  margin-top: 4px;
   overflow-wrap: anywhere;
   font-size: 10.5px;
-  line-height: 1.45;
+  line-height: 1.5;
   color: var(--muted-dim);
 }
 
@@ -2897,6 +2983,16 @@ code {
   to { opacity: 1; transform: none; }
 }
 
+.now-playing.is-closing {
+  pointer-events: none;
+  animation: now-out 0.26s cubic-bezier(0.4, 0, 1, 1) both;
+}
+
+@keyframes now-out {
+  from { opacity: 1; transform: none; }
+  to { opacity: 0; transform: scale(0.985); }
+}
+
 .now-backdrop {
   position: absolute;
   inset: -20%;
@@ -3135,6 +3231,9 @@ code {
 .now-queue-number {
   width: 20px;
   flex: 0 0 auto;
+  /* Centre the glyph so the playing arrow sits off the accent bar instead of
+     hugging it, while the track numbers stay put. */
+  text-align: center;
   font-size: 10px;
   font-variant-numeric: tabular-nums;
   color: var(--muted-dim);

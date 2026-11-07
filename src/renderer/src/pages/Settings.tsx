@@ -1,7 +1,8 @@
-import { useRef, useState, type FormEvent, type ReactElement } from 'react'
+import { useRef, useState, type FormEvent, type ReactElement, type ReactNode } from 'react'
 import {
   ArrowDownToLine,
   Check,
+  ChevronDown,
   ExternalLink,
   FolderOpen,
   Gamepad2,
@@ -74,12 +75,22 @@ export function Settings(): ReactElement {
   if (!snapshot) return <div className="page" />
 
   const settings = snapshot.settings
+  const blurredTheme = settings.theme === 'blurred-dark' || settings.theme === 'blurred-light'
   const offline = Object.values(snapshot.offline).filter((entry) => entry.status === 'ready')
   const offlineBytes = offline.reduce((total, entry) => total + entry.bytes, 0)
   const username = snapshot.auth.username ?? 'bandcamp'
   const isDemo = snapshot.demo
 
   const { lastfm, discord } = snapshot.integrations
+  const customisationCount = [
+    settings.coverTheme,
+    settings.rainbow,
+    settings.backgroundGradient,
+    settings.mountainBackdrop,
+    settings.coverBackdrop,
+    settings.solidBlack,
+    settings.beatGlow
+  ].filter(Boolean).length
 
   const chooseAccent = (value: string): void => {
     void updateSettings({ accent: value, rainbow: false, coverTheme: false })
@@ -199,12 +210,12 @@ export function Settings(): ReactElement {
   return (
     <div className="page settings-page">
       <PageIntro
-        kicker="Side A"
         title="Settings"
-        description="Account, appearance, downloads and local data, all stored on your device"
+        description="Account, appearance, downloads and local data"
       />
 
       <div className="settings-grid">
+        <h2 className="settings-group-title">Account</h2>
         <section className="settings-card">
           <header className="settings-head">
             <span className="settings-icon"><UserRound size={17} /></span>
@@ -248,6 +259,7 @@ export function Settings(): ReactElement {
           </div>
         </section>
 
+        <h2 className="settings-group-title">Appearance</h2>
         <section className="settings-card">
           <header className="settings-head">
             <span className="settings-icon" onClick={tapAppearance}><Palette size={17} /></span>
@@ -263,7 +275,14 @@ export function Settings(): ReactElement {
                 key={mode.id}
                 className={cx('theme-choice', settings.theme === mode.id && 'is-active')}
                 aria-pressed={settings.theme === mode.id}
-                onClick={() => void updateSettings({ theme: mode.id })}
+                onClick={() => {
+                  // The mountain backdrop is drawn for the blurred themes only, so
+                  // leaving them clears it instead of leaving a dead toggle on.
+                  void updateSettings({
+                    theme: mode.id,
+                    ...(mode.id.startsWith('blurred') ? {} : { mountainBackdrop: false })
+                  })
+                }}
               >
                 <span className={cx('theme-preview', `is-${mode.id}`)} />
                 <span className="theme-choice-label">{mode.label}</span>
@@ -301,6 +320,14 @@ export function Settings(): ReactElement {
               </button>
             ))}
           </div>
+          <Collapsible
+            title="Customisation"
+            summary={
+              customisationCount
+                ? `${customisationCount} of 7 options on`
+                : 'Backdrops, motion and theme extras'
+            }
+          >
           <SettingToggle
             title="Match cover art"
             description="Use the artwork of the current release for the accent colour"
@@ -340,9 +367,14 @@ export function Settings(): ReactElement {
           ) : null}
           <SettingToggle
             title="Mountain backdrop"
-            description="A starry sky over simplified mountains in your accent colour"
+            description={
+              blurredTheme
+                ? 'A starry sky over simplified mountains in your accent colour'
+                : 'Only available with Blurred Dark or Blurred Light'
+            }
             checked={settings.mountainBackdrop}
             onChange={toggleMountainBackdrop}
+            disabled={!blurredTheme}
           />
           <SettingToggle
             title="Album cover backdrop"
@@ -356,6 +388,13 @@ export function Settings(): ReactElement {
             checked={settings.solidBlack}
             onChange={toggleSolidBlack}
           />
+          <SettingToggle
+            title="Beat colour"
+            description="Shift the accent lighter and darker with the bass of the track, light rooms deepen it automatically so it stays readable"
+            checked={settings.beatGlow}
+            onChange={(value) => void updateSettings({ beatGlow: value })}
+          />
+          </Collapsible>
           <SettingToggle
             title="Reduce motion"
             description="Tone down transitions, backdrop drift and artwork movement"
@@ -413,6 +452,7 @@ export function Settings(): ReactElement {
           </div>
         </section>
 
+        <h2 className="settings-group-title">Connections</h2>
         <section className="settings-card">
           <header className="settings-head">
             <span className="settings-icon"><Radio size={17} /></span>
@@ -608,6 +648,7 @@ export function Settings(): ReactElement {
           </div>
         </section>
 
+        <h2 className="settings-group-title">Files &amp; storage</h2>
         <section className="settings-card">
           <header className="settings-head">
             <span className="settings-icon"><FolderOpen size={17} /></span>
@@ -671,6 +712,7 @@ export function Settings(): ReactElement {
           </p>
         </section>
 
+        <h2 className="settings-group-title">About</h2>
         <section className="settings-card about-card">
           <header className="settings-head">
             <span className="settings-icon"><Info size={17} /></span>
@@ -703,19 +745,52 @@ export function Settings(): ReactElement {
   )
 }
 
+function Collapsible({
+  title,
+  summary,
+  children
+}: {
+  title: string
+  summary: string
+  children: ReactNode
+}): ReactElement {
+  const [open, setOpen] = useState(false)
+  return (
+    <div className={cx('settings-collapse', open && 'is-open')}>
+      <button
+        type="button"
+        className="settings-collapse-trigger"
+        aria-expanded={open}
+        onClick={() => setOpen(!open)}
+      >
+        <span className="settings-collapse-copy">
+          <strong className="settings-collapse-title">{title}</strong>
+          <span className="settings-collapse-summary">{summary}</span>
+        </span>
+        <ChevronDown size={16} className="settings-collapse-chevron" />
+      </button>
+      <div className={cx('settings-collapse-body', open && 'is-open')}>
+        <div className="settings-collapse-inner">{children}</div>
+      </div>
+    </div>
+  )
+}
+
 function SettingToggle({
   title,
   description,
   checked,
-  onChange
+  onChange,
+  disabled = false
 }: {
   title: string
   description: string
   checked: boolean
   onChange: (value: boolean) => void
+  disabled?: boolean
 }): ReactElement {
   return (
-    <div className="setting-row">
+    <div className={cx('setting-row', disabled && 'is-disabled')}>
       <div className="setting-copy">
         <strong>{title}</strong>
         <span>{description}</span>
@@ -726,6 +801,8 @@ function SettingToggle({
         role="switch"
         aria-checked={checked}
         aria-label={title}
+        disabled={disabled}
+        aria-disabled={disabled}
         onClick={() => onChange(!checked)}
       >
         <span />

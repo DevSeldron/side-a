@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import type { AlbumDetail } from '@shared/types'
+import { DETAILS_VERSION, type AlbumDetail } from '@shared/types'
 import { useApp } from '../store/app'
 import { errorMessage } from './format'
 
@@ -11,7 +11,8 @@ interface AlbumDetailState {
 }
 
 export function useAlbumDetail(key: string | undefined, force = false): AlbumDetailState {
-  const cached = useApp((state) => (key ? state.snapshot?.details[key] : undefined))
+  const stored = useApp((state) => (key ? state.snapshot?.details[key] : undefined))
+  const cached = stored?.version === DETAILS_VERSION ? stored : undefined
   const [detail, setDetail] = useState<AlbumDetail | undefined>(cached)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)

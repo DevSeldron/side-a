@@ -4,6 +4,7 @@ import type {
   DiscordPatch,
   IntegrationsState,
   LibrarySnapshot,
+  LikedTrack,
   LocalLibrarySnapshot,
   LocalScanState,
   OfflineEntry,
@@ -67,6 +68,7 @@ interface AppState {
   applyOffline: (entry: OfflineEntry) => void
   applyPurchase: (entry: PurchaseDownload) => void
   applyTrackDownload: (entry: TrackDownload) => void
+  applyLikes: (liked: Record<string, LikedTrack>) => void
   applySettings: (settings: Settings) => void
   applyIntegrations: (integrations: IntegrationsState) => void
   applyLocal: (snapshot: LocalLibrarySnapshot) => void
@@ -103,6 +105,7 @@ export const useApp = create<AppState>()((set, get) => ({
       window.sideA.on(IPC.eventOffline, (entry) => get().applyOffline(entry))
       window.sideA.on(IPC.eventPurchase, (entry) => get().applyPurchase(entry))
       window.sideA.on(IPC.eventDownload, (entry) => get().applyTrackDownload(entry))
+      window.sideA.on(IPC.eventLikes, (liked) => get().applyLikes(liked))
       window.sideA.on(IPC.eventSettings, (settings) => get().applySettings(settings))
       window.sideA.on(IPC.eventIntegration, (integrations) => get().applyIntegrations(integrations))
       window.sideA.on(IPC.eventLocal, (snapshot) => get().applyLocal(snapshot))
@@ -552,6 +555,10 @@ export const useApp = create<AppState>()((set, get) => ({
         tone: 'success'
       })
     }
+  },
+
+  applyLikes: (liked) => {
+    set((state) => ({ ...withSnapshot(state, (snapshot) => ({ ...snapshot, liked })) }))
   },
 
   applySettings: (settings) => {

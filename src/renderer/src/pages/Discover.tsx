@@ -163,9 +163,8 @@ export function Discover(): ReactElement {
   return (
     <div className="page discover-page">
       <PageIntro
-        kicker="Browse"
         title="Discover"
-        description="Search all of Bandcamp, open an artist's discography, and listen to anything with a stream, no purchase needed"
+        description="Search the entirety of Bandcamp and stream unpurchased releases"
       />
 
       <form className="discover-search" onSubmit={(event) => event.preventDefault()}>

@@ -1,9 +1,11 @@
 import { app, BrowserWindow, dialog, ipcMain, shell } from 'electron'
 import { existsSync } from 'node:fs'
-import { mkdir } from 'node:fs/promises'
+import { appendFile, mkdir } from 'node:fs/promises'
+import { join } from 'node:path'
 import type {
   IntegrationsState,
   LibrarySnapshot,
+  LikedTrack,
   OfflineEntry,
   PresenceInput,
   ScrobbleInput,
@@ -120,6 +122,7 @@ export function registerIpc(context: IpcContext): void {
       offline,
       purchases: state.purchases,
       trackDownloads: state.trackDownloads,
+      liked: state.liked,
       sync: state.sync,
       settings: state.settings,
       integrations: integrationState(lastfm, discord),
@@ -235,6 +238,18 @@ export function registerIpc(context: IpcContext): void {
     return media.ticket(albumKey, trackId)
   })
 
+  ipcMain.handle(IPC.playbackBuffer, async (_event, albumKey: unknown, trackId: unknown) => {
+    if (typeof albumKey !== 'string' || !/^[pt]\d+$/.test(albumKey)) throw new Error('Invalid release id')
+    if (typeof trackId !== 'number' || !Number.isFinite(trackId)) throw new Error('Invalid track id')
+    return media.buffer(albumKey, trackId)
+  })
+
+  ipcMain.handle(IPC.playbackLog, async (_event, event: unknown, detail: unknown) => {
+    if (typeof event !== 'string') return
+    const line = `${new Date().toISOString()} ${event} ${detail === undefined ? '' : JSON.stringify(detail)}\n`
+    await appendFile(join(app.getPath('userData'), 'playback.log'), line).catch(() => undefined)
+  })
+
   ipcMain.handle(IPC.offlineSave, async (_event, key: unknown) => {
     if (typeof key !== 'string' || !/^[pt]\d+$/.test(key)) throw new Error('Invalid release id')
     const entry = await library.saveOffline(key)
@@ -272,6 +287,32 @@ export function registerIpc(context: IpcContext): void {
     await trackDownloads.reveal(id)
   })
 
+  ipcMain.handle(IPC.likesToggle, (_event, input: unknown) => {
+    if (!input || typeof input !== 'object') throw new Error('Invalid track')
+    const track = input as Partial<LikedTrack>
+    if (typeof track.albumKey !== 'string' || !/^[a-z]\d+$/.test(track.albumKey)) throw new Error('Invalid release')
+    if (typeof track.id !== 'number' || !Number.isFinite(track.id) || track.id <= 0) throw new Error('Invalid track id')
+    if (track.key !== `${track.albumKey}:${track.id}`) throw new Error('Invalid track key')
+    for (const field of ['title', 'artist', 'bandName', 'albumTitle', 'coverUrl'] as const) {
+      if (typeof track[field] !== 'string') throw new Error('Invalid track details')
+    }
+    const liked = store.toggleLiked({
+      key: track.key,
+      albumKey: track.albumKey,
+      id: track.id,
+      title: String(track.title).slice(0, 300),
+      artist: String(track.artist).slice(0, 300),
+      bandName: String(track.bandName).slice(0, 300),
+      albumTitle: String(track.albumTitle).slice(0, 300),
+      coverUrl: String(track.coverUrl).slice(0, 2048),
+      itemUrl: typeof track.itemUrl === 'string' ? track.itemUrl.slice(0, 2048) : undefined,
+      duration: typeof track.duration === 'number' && Number.isFinite(track.duration) ? Math.max(0, track.duration) : 0,
+      likedAt: Date.now()
+    })
+    broadcast(IPC.eventLikes, liked)
+    return liked
+  })
+
   ipcMain.handle(IPC.settingsUpdate, async (_event, patch: unknown) => {
     if (!patch || typeof patch !== 'object') throw new Error('Invalid settings')
     const input = patch as Record<string, unknown>
@@ -301,6 +342,7 @@ export function registerIpc(context: IpcContext): void {
     if (typeof input.mountainBackdrop === 'boolean') allowed.mountainBackdrop = input.mountainBackdrop
     if (typeof input.coverBackdrop === 'boolean') allowed.coverBackdrop = input.coverBackdrop
     if (typeof input.solidBlack === 'boolean') allowed.solidBlack = input.solidBlack
+    if (typeof input.beatGlow === 'boolean') allowed.beatGlow = input.beatGlow
     if (typeof input.rainbow === 'boolean') allowed.rainbow = input.rainbow
     if (typeof input.rainbowUnlocked === 'boolean') allowed.rainbowUnlocked = input.rainbowUnlocked
     if (input.trackQuality === 'mp3-128' || input.trackQuality === 'mp3-v0' || input.trackQuality === 'mp3-320') {
