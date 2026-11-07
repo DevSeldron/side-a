@@ -32,11 +32,9 @@ function acknowledge(ids: string[]): void {
 export function Downloads(): ReactElement {
   const snapshot = useApp((state) => state.snapshot)
   const chooseDownloadDir = useApp((state) => state.chooseDownloadDir)
+  const downloadTrack = useApp((state) => state.downloadTrack)
   const [picked, setPicked] = useState<Album | null>(null)
   const [dismissed, setDismissed] = useState<string[]>([])
-  // Files leave disk (deleted by hand, or left behind after a folder change),
-  // so the main process reports which saved files are still there.
-  const [saved, setSaved] = useState<{ purchases: Set<string>; tracks: Set<string> } | null>(null)
   const shown = useRef<string[]>([])
 
   // Leaving the page counts as having read the panel, so coming back does not
@@ -47,28 +45,20 @@ export function Downloads(): ReactElement {
     }
   }, [])
 
+  // Ask the main process to re-check the saved files when the page opens and
+  // when the window comes back into focus, since files may have been deleted.
   useEffect(() => {
-    let alive = true
-    const load = (): void => {
-      void window.sideA.downloads
-        .saved()
-        .then((result) => {
-          if (alive) setSaved({ purchases: new Set(result.purchases), tracks: new Set(result.tracks) })
-        })
-        .catch(() => undefined)
+    const check = (): void => {
+      void window.sideA.downloads.check().catch(() => undefined)
     }
-    load()
-    window.addEventListener('focus', load)
-    return () => {
-      alive = false
-      window.removeEventListener('focus', load)
-    }
+    check()
+    window.addEventListener('focus', check)
+    return () => window.removeEventListener('focus', check)
   }, [])
 
   if (!snapshot) return <div className="page" />
 
   const purchased = snapshot.collection.filter((album) => album.purchased)
-  const downloadable = purchased.filter((album) => album.purchaseDownloadable)
   const downloads = Object.values(snapshot.purchases)
   const trackDownloads = Object.values(snapshot.trackDownloads)
     .filter(
@@ -86,8 +76,10 @@ export function Downloads(): ReactElement {
     void window.sideA.downloads.reveal(id).catch(() => undefined)
   }
   const active = downloads.filter((entry) => entry.status === 'preparing' || entry.status === 'downloading' || entry.status === 'queued')
-  const completed = downloads.filter((entry) => entry.status === 'done')
-  const totalBytes = completed.reduce((sum, entry) => sum + entry.bytes, 0)
+  // Only files that are actually in the current download folder count as kept;
+  // ones left behind by a folder change should not inflate these numbers.
+  const kept = downloads.filter((entry) => entry.status === 'done' && !entry.fileMissing)
+  const totalBytes = kept.reduce((sum, entry) => sum + entry.bytes, 0)
 
   return (
     <div className="page">
@@ -108,10 +100,8 @@ export function Downloads(): ReactElement {
           </Link>
         </div>
         <div className="stat-row">
-          <div className="stat"><strong>{purchased.length}</strong><span>Purchased</span></div>
-          <div className="stat"><strong>{downloadable.length}</strong><span>Downloadable</span></div>
-          <div className="stat"><strong>{completed.length}</strong><span>Files kept</span></div>
-          <div className="stat"><strong>{formatBytes(totalBytes)}</strong><span>Downloaded</span></div>
+          <div className="stat"><strong>{kept.length}</strong><span>Files kept</span></div>
+          <div className="stat"><strong>{formatBytes(totalBytes)}</strong><span>On disk</span></div>
         </div>
       </PageIntro>
 
@@ -159,16 +149,24 @@ export function Downloads(): ReactElement {
                 </span>
                 {entry.status === 'downloading' ? <ProgressBar value={entry.progress} /> : null}
               </div>
-              {entry.status === 'done' ? (
-                saved && !saved.tracks.has(entry.id) ? (
-                  <span className="download-muted">File missing</span>
-                ) : (
-                  <button type="button" className="button small ghost" onClick={() => revealTrack(entry.id)}>
-                    Show file
-                  </button>
-                )
-              ) : (
+              {entry.status !== 'done' ? (
                 <span className="download-format">{entry.quality.replace('mp3-', 'MP3 ').toUpperCase()}</span>
+              ) : entry.fileMissing ? (
+                <button
+                  type="button"
+                  className="button small ghost"
+                  onClick={() => {
+                    setDismissed((current) => [...current, entry.id])
+                    acknowledge([entry.id])
+                    void downloadTrack(entry.albumKey, entry.trackId, entry.quality)
+                  }}
+                >
+                  Download
+                </button>
+              ) : (
+                <button type="button" className="button small ghost" onClick={() => revealTrack(entry.id)}>
+                  Show file
+                </button>
               )}
             </div>
           ))}
@@ -212,6 +210,9 @@ export function Downloads(): ReactElement {
             const done = purchase?.status === 'done'
             const failed = purchase?.status === 'error'
             const busy = purchase?.status === 'downloading' || purchase?.status === 'preparing'
+            // A finished download whose file was deleted or left behind counts
+            // as not saved, so the row offers Download again.
+            const stored = done && !purchase?.fileMissing
             return (
               <div key={album.key} className="download-row">
                 <div className="download-release">
@@ -225,7 +226,7 @@ export function Downloads(): ReactElement {
                 </div>
                 <span className="download-format">{purchase?.format?.toUpperCase() ?? '--'}</span>
                 <span className="download-state">
-                  {done ? (
+                  {stored ? (
                     <><CheckCircle2 size={14} /> {formatBytes(purchase.bytes)}</>
                   ) : failed ? (
                     <><AlertCircle size={14} /> {purchase.error ?? 'Failed'}</>
@@ -238,14 +239,10 @@ export function Downloads(): ReactElement {
                   )}
                 </span>
                 <div className="download-actions">
-                  {done ? (
-                    saved && !saved.purchases.has(album.key) ? (
-                      <span className="download-muted">File missing</span>
-                    ) : (
-                      <button type="button" className="button small ghost" onClick={() => void window.sideA.purchases.reveal(album.key)}>
-                        Show file
-                      </button>
-                    )
+                  {stored ? (
+                    <button type="button" className="button small ghost" onClick={() => void window.sideA.purchases.reveal(album.key)}>
+                      Show file
+                    </button>
                   ) : album.purchaseDownloadable ? (
                     <button type="button" className="button small primary" onClick={() => setPicked(album)} disabled={busy}>
                       {busy ? <Loader2 size={14} className="spin" /> : <ArrowDownToLine size={14} />}

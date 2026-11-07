@@ -19,7 +19,7 @@ export const IPC = {
   purchaseReveal: 'purchase:reveal',
   trackDownload: 'download:track',
   trackReveal: 'download:reveal',
-  downloadsSaved: 'downloads:saved',
+  downloadsCheck: 'downloads:check',
   likesToggle: 'likes:toggle',
   eventDownload: 'download:changed',
   eventLikes: 'likes:changed',

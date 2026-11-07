@@ -141,6 +141,9 @@ export function registerIpc(context: IpcContext): void {
     return snapshot()
   }
 
+  purchases.markMissing()
+  trackDownloads.markMissing()
+
   ipcMain.handle(IPC.getState, () => snapshot())
   ipcMain.handle(IPC.updatesCheck, () => checkForUpdates())
   ipcMain.handle(IPC.updatesState, () => updateState())
@@ -288,10 +291,11 @@ export function registerIpc(context: IpcContext): void {
     if (typeof id !== 'string' || !/^[pt]\d+:\d+$/.test(id)) throw new Error('Invalid download id')
     await trackDownloads.reveal(id)
   })
-  ipcMain.handle(IPC.downloadsSaved, () => ({
-    purchases: purchases.savedKeys(),
-    tracks: trackDownloads.savedIds()
-  }))
+  ipcMain.handle(IPC.downloadsCheck, () => {
+    purchases.markMissing()
+    trackDownloads.markMissing()
+    broadcastEvent(IPC.eventLibrary, {})
+  })
 
   ipcMain.handle(IPC.likesToggle, (_event, input: unknown) => {
     if (!input || typeof input !== 'object') throw new Error('Invalid track')
@@ -357,8 +361,16 @@ export function registerIpc(context: IpcContext): void {
     if (typeof input.downloadDir === 'string' && input.downloadDir.length > 0) {
       allowed.downloadDir = input.downloadDir
     }
+    const previousDir = store.get().settings.downloadDir
     const settings = store.setSettings(allowed)
     if (allowed.downloadDir) await mkdir(allowed.downloadDir, { recursive: true }).catch(() => undefined)
+    if (settings.downloadDir !== previousDir) {
+      // Files already saved stay put; the folder only decides where the next
+      // download goes. Re-check them so a deleted file offers Download again.
+      purchases.markMissing()
+      trackDownloads.markMissing()
+      broadcastEvent(IPC.eventLibrary, {})
+    }
     broadcast(IPC.eventSettings, settings)
     return settings
   })
@@ -377,6 +389,9 @@ export function registerIpc(context: IpcContext): void {
     if (result.canceled || !result.filePaths[0]) return null
     const settings = store.setSettings({ downloadDir: result.filePaths[0] })
     await mkdir(settings.downloadDir, { recursive: true }).catch(() => undefined)
+    purchases.markMissing()
+    trackDownloads.markMissing()
+    broadcastEvent(IPC.eventLibrary, {})
     broadcast(IPC.eventSettings, settings)
     return settings.downloadDir
   })

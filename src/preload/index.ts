@@ -35,7 +35,7 @@ const api: SideAAPI = {
   downloads: {
     track: (albumKey, trackId, quality) => ipcRenderer.invoke(IPC.trackDownload, albumKey, trackId, quality),
     reveal: (id) => ipcRenderer.invoke(IPC.trackReveal, id),
-    saved: () => ipcRenderer.invoke(IPC.downloadsSaved)
+    check: () => ipcRenderer.invoke(IPC.downloadsCheck)
   },
   likes: {
     toggle: (track) => ipcRenderer.invoke(IPC.likesToggle, track)

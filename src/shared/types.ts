@@ -167,6 +167,8 @@ export interface PurchaseDownload {
   error?: string
   startedAt: number
   completedAt?: number
+  /** True when the saved file is gone from disk, so Download is offered again. */
+  fileMissing?: boolean
 }
 
 export type SyncStatus = 'idle' | 'syncing' | 'ready' | 'error'
@@ -206,6 +208,8 @@ export interface TrackDownload {
   error?: string
   startedAt: number
   completedAt?: number
+  /** True when the saved file is gone from disk, so Download is offered again. */
+  fileMissing?: boolean
 }
 
 export interface LocalTrack {
@@ -475,8 +479,8 @@ export interface SideAAPI {
   downloads: {
     track: (albumKey: string, trackId: number, quality: TrackQuality) => Promise<TrackDownload>
     reveal: (id: string) => Promise<void>
-    /** Keys and ids whose saved file is still on disk. */
-    saved: () => Promise<{ purchases: string[]; tracks: string[] }>
+    /** Re-checks the saved files on disk and refreshes the library snapshot. */
+    check: () => Promise<void>
   }
   settings: {
     update: (patch: Partial<Settings>) => Promise<Settings>

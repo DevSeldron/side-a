@@ -8,6 +8,7 @@ import type { BandcampClient } from './bandcamp'
 import type { Library } from './library'
 import type { Store } from './store'
 import { findRedownload } from './redownloads'
+import { savedFileMissing } from './downloadPath'
 
 export interface PurchaseEvents {
   onPurchaseChanged: (entry: PurchaseDownload) => void
@@ -241,11 +242,16 @@ export class PurchaseManager {
     shell.showItemInFolder(entry.filePath)
   }
 
-  /** Keys of finished purchases whose file is still on disk. */
-  savedKeys(): string[] {
-    return Object.values(this.store.get().purchases)
-      .filter((entry) => entry.status === 'done' && entry.filePath && existsSync(entry.filePath))
-      .map((entry) => entry.key)
+  /** Flags finished downloads whose file is gone, without emitting events. */
+  markMissing(): void {
+    const directory = this.store.get().settings.downloadDir
+    for (const entry of Object.values(this.store.get().purchases)) {
+      if (entry.status !== 'done') continue
+      const missing = savedFileMissing(directory, entry.filePath)
+      if (missing !== Boolean(entry.fileMissing)) {
+        this.store.setPurchase(entry.key, { ...entry, fileMissing: missing })
+      }
+    }
   }
 
   private set(entry: PurchaseDownload): void {

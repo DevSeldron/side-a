@@ -545,7 +545,9 @@ export const useApp = create<AppState>()((set, get) => ({
         purchases: { ...snapshot.purchases, [entry.key]: entry }
       }))
     }))
-    if (entry.status === 'done') {
+    // Folder moves and startup checks rewrite finished entries; only a fresh
+    // finish deserves a notification.
+    if (entry.status === 'done' && entry.completedAt && Date.now() - entry.completedAt < 15000) {
       get().pushToast('Purchase downloaded', {
         description: entry.filePath ? entry.filePath.split('/').pop() : undefined,
         tone: 'success'
@@ -566,7 +568,7 @@ export const useApp = create<AppState>()((set, get) => ({
         trackDownloads: { ...snapshot.trackDownloads, [entry.id]: entry }
       }))
     }))
-    if (entry.status === 'done') {
+    if (entry.status === 'done' && entry.completedAt && Date.now() - entry.completedAt < 15000) {
       get().pushToast('Track saved', {
         description: `${entry.artist}, ${entry.title} / ${entry.actualQuality ?? entry.quality}`,
         tone: 'success'

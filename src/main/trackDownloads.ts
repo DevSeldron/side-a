@@ -7,6 +7,7 @@ import type { TrackDownload, TrackQuality } from '@shared/types'
 import type { BandcampClient } from './bandcamp'
 import type { Library } from './library'
 import type { Store } from './store'
+import { savedFileMissing } from './downloadPath'
 
 export interface TrackDownloadEvents {
   onChanged: (entry: TrackDownload) => void
@@ -117,11 +118,16 @@ export class TrackDownloadManager {
     shell.showItemInFolder(entry.filePath)
   }
 
-  /** Ids of finished track downloads whose file is still on disk. */
-  savedIds(): string[] {
-    return Object.values(this.store.get().trackDownloads)
-      .filter((entry) => entry.status === 'done' && entry.filePath && existsSync(entry.filePath))
-      .map((entry) => entry.id)
+  /** Flags finished downloads whose file is gone, without emitting events. */
+  markMissing(): void {
+    const directory = this.store.get().settings.downloadDir
+    for (const entry of Object.values(this.store.get().trackDownloads)) {
+      if (entry.status !== 'done') continue
+      const missing = savedFileMissing(directory, entry.filePath)
+      if (missing !== Boolean(entry.fileMissing)) {
+        this.store.setTrackDownload(entry.id, { ...entry, fileMissing: missing })
+      }
+    }
   }
 
   private set(entry: TrackDownload): void {

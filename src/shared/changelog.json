@@ -1,5 +1,24 @@
 [
   {
+    "version": "4.0.6",
+    "title": "Side A 4.0.6",
+    "intro": "Downloads that follow what is actually on disk",
+    "highlights": [
+      {
+        "title": "Downloads come back when files go",
+        "description": "A saved file that was deleted, or that sits in an older folder, now offers Download again instead of a Show file button that opens nothing"
+      },
+      {
+        "title": "Folder changes leave files alone",
+        "description": "Picking a new folder only changes where the next download goes, existing files stay put and no longer count as saved"
+      },
+      {
+        "title": "Honest numbers",
+        "description": "Files kept and On disk count only what is in the current folder, and the Purchased and Downloadable figures are gone"
+      }
+    ]
+  },
+  {
     "version": "4.0.5",
     "title": "Side A 4.0.5",
     "intro": "Downloads that stay honest about the files on disk",
