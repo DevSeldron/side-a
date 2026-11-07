@@ -299,6 +299,8 @@ export function registerIpc(context: IpcContext): void {
       allowed.gradientPosition = input.gradientPosition
     }
     if (typeof input.mountainBackdrop === 'boolean') allowed.mountainBackdrop = input.mountainBackdrop
+    if (typeof input.coverBackdrop === 'boolean') allowed.coverBackdrop = input.coverBackdrop
+    if (typeof input.solidBlack === 'boolean') allowed.solidBlack = input.solidBlack
     if (typeof input.rainbow === 'boolean') allowed.rainbow = input.rainbow
     if (typeof input.rainbowUnlocked === 'boolean') allowed.rainbowUnlocked = input.rainbowUnlocked
     if (input.trackQuality === 'mp3-128' || input.trackQuality === 'mp3-v0' || input.trackQuality === 'mp3-320') {

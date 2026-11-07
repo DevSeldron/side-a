@@ -93,12 +93,33 @@ export function Settings(): ReactElement {
     void updateSettings({ rainbow: value, ...(value ? { coverTheme: false } : {}) })
   }
 
+  // The canvas only has room for one backdrop, so turning one on clears the rest.
   const toggleBackgroundGradient = (value: boolean): void => {
-    void updateSettings({ backgroundGradient: value, ...(value ? { mountainBackdrop: false } : {}) })
+    void updateSettings({
+      backgroundGradient: value,
+      ...(value ? { mountainBackdrop: false, coverBackdrop: false, solidBlack: false } : {})
+    })
   }
 
   const toggleMountainBackdrop = (value: boolean): void => {
-    void updateSettings({ mountainBackdrop: value, ...(value ? { backgroundGradient: false } : {}) })
+    void updateSettings({
+      mountainBackdrop: value,
+      ...(value ? { backgroundGradient: false, coverBackdrop: false, solidBlack: false } : {})
+    })
+  }
+
+  const toggleCoverBackdrop = (value: boolean): void => {
+    void updateSettings({
+      coverBackdrop: value,
+      ...(value ? { backgroundGradient: false, mountainBackdrop: false, solidBlack: false } : {})
+    })
+  }
+
+  const toggleSolidBlack = (value: boolean): void => {
+    void updateSettings({
+      solidBlack: value,
+      ...(value ? { backgroundGradient: false, mountainBackdrop: false, coverBackdrop: false } : {})
+    })
   }
 
   const tapAppearance = (): void => {
@@ -322,6 +343,18 @@ export function Settings(): ReactElement {
             description="A starry sky over simplified mountains in your accent colour"
             checked={settings.mountainBackdrop}
             onChange={toggleMountainBackdrop}
+          />
+          <SettingToggle
+            title="Album cover backdrop"
+            description="Blur the playing release's artwork into the background at a low opacity"
+            checked={settings.coverBackdrop}
+            onChange={toggleCoverBackdrop}
+          />
+          <SettingToggle
+            title="Solid black background"
+            description="Drop the gray canvas for a flat black room, other backdrops are hidden"
+            checked={settings.solidBlack}
+            onChange={toggleSolidBlack}
           />
           <SettingToggle
             title="Reduce motion"

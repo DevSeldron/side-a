@@ -6,7 +6,14 @@ import { usePlayer } from './store/player'
 import { useLocalPlayer } from './store/localPlayer'
 import { startIntegrations } from './lib/integrations'
 import { useAudioFocus } from './lib/audioFocus'
-import { applyBackgroundGradient, applyMountainBackdrop, applyTheme, FALLBACK_ACCENT } from './lib/theme'
+import {
+  applyBackgroundGradient,
+  applyCoverBackdrop,
+  applyMountainBackdrop,
+  applySolidBlack,
+  applyTheme,
+  FALLBACK_ACCENT
+} from './lib/theme'
 import { Sidebar } from './components/Sidebar'
 import { TopBar } from './components/TopBar'
 import { PlayerBar, PlayerSpacer } from './components/PlayerBar'
@@ -16,6 +23,7 @@ import { NowPlaying } from './components/NowPlaying'
 import { CommandPalette } from './components/CommandPalette'
 import { Toasts } from './components/Toasts'
 import { MountainBackdrop } from './components/MountainBackdrop'
+import { CoverBackdrop } from './components/CoverBackdrop'
 import { StartupSplash } from './components/StartupSplash'
 import { Welcome } from './pages/Welcome'
 import { Collection } from './pages/Collection'
@@ -36,6 +44,7 @@ export default function App(): ReactElement {
   const snapshot = useApp((state) => state.snapshot)
   const setPaletteOpen = useApp((state) => state.setPaletteOpen)
   const track = usePlayer((state) => state.queue[state.index])
+  const localTrack = useLocalPlayer((state) => state.queue[state.index])
   const audioSource = useAudioFocus((state) => state.source)
   const location = useLocation()
   const mainRef = useRef<HTMLElement>(null)
@@ -62,12 +71,17 @@ export default function App(): ReactElement {
   const backgroundGradient = snapshot?.settings.backgroundGradient ?? false
   const gradientPosition = snapshot?.settings.gradientPosition ?? 'bottom'
   const mountainBackdrop = snapshot?.settings.mountainBackdrop ?? false
+  const coverBackdrop = snapshot?.settings.coverBackdrop ?? false
+  const solidBlack = snapshot?.settings.solidBlack ?? false
   const reduceMotion = snapshot?.settings.reduceMotion ?? false
   const [coverAccent, setCoverAccent] = useState<string | null>(null)
   const [showSplash, setShowSplash] = useState(true)
   const [splashLeaving, setSplashLeaving] = useState(false)
   const splashStarted = useRef(Date.now())
   const coverUrl = track?.coverUrl ?? ''
+  // The backdrop follows whichever player owns the audio, so local files show
+  // their own artwork rather than the last streamed release.
+  const backdropCover = (audioSource === 'local' ? localTrack?.coverUrl : track?.coverUrl) ?? ''
 
   useEffect(() => {
     if (!coverTheme || !coverUrl) {
@@ -96,6 +110,14 @@ export default function App(): ReactElement {
   useEffect(() => {
     applyMountainBackdrop(mountainBackdrop)
   }, [mountainBackdrop])
+
+  useEffect(() => {
+    applyCoverBackdrop(coverBackdrop)
+  }, [coverBackdrop])
+
+  useEffect(() => {
+    applySolidBlack(solidBlack)
+  }, [solidBlack])
 
   useEffect(() => {
     applyTheme(coverTheme && coverAccent ? coverAccent : accent, theme, rainbow)
@@ -166,6 +188,7 @@ export default function App(): ReactElement {
   return (
     <div className="app-shell">
       <MountainBackdrop />
+      {coverBackdrop ? <CoverBackdrop url={backdropCover} /> : null}
       <Sidebar />
       <div className="app-body">
         <TopBar />

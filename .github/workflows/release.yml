@@ -42,6 +42,28 @@ jobs:
       - name: Package
         run: npx electron-builder ${{ matrix.args }} --publish never
 
+      # A DMG that fails to mount is useless, and the failure only shows up on
+      # the user's Mac, so mount every image here and stop the release instead.
+      - name: Verify macOS images
+        if: runner.os == 'macOS'
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          images=(release/*.dmg)
+          if [ ${#images[@]} -eq 0 ]; then
+            echo "electron-builder produced no DMG"
+            exit 1
+          fi
+          for image in "${images[@]}"; do
+            hdiutil verify "$image"
+            mountpoint=$(mktemp -d)
+            hdiutil attach -nobrowse -readonly -mountpoint "$mountpoint" "$image"
+            test -d "$mountpoint/Side A.app"
+            hdiutil detach "$mountpoint"
+            rmdir "$mountpoint"
+            echo "mounted and verified $image"
+          done
+
       - uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.label }}
@@ -80,13 +102,23 @@ jobs:
           } | sed -E '/Generated with Codebuff/d' > notes.md
           cat notes.md
 
-      - name: Create release
+      - name: Checksums
+        run: |
+          cd artifacts
+          sha256sum * > SHA256SUMS.txt
+          cat SHA256SUMS.txt
+
+      # Drafted first and published at the very end: a release page that exists
+      # while its 128 MB assets are still uploading hands anyone who clicks a
+      # half-written file, which macOS reports as a corrupted disk image.
+      - name: Create draft release
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ github.ref_name }}
         run: |
           ls -lh artifacts
           gh release create "$TAG" \
+            --draft \
             --title "Side A $TAG" \
             --notes-file notes.md
 
@@ -95,3 +127,26 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ github.ref_name }}
         run: gh release upload "$TAG" artifacts/* --clobber
+
+      # Read every asset back from GitHub and compare it with the file the build
+      # job verified, so a truncated upload fails here instead of on a user's Mac.
+      - name: Verify uploaded assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          mkdir -p published
+          (cd published && gh release download "$TAG" --clobber)
+          for asset in artifacts/*; do
+            name=$(basename "$asset")
+            # GitHub rewrites spaces in uploaded asset names to dots.
+            cmp "$asset" "published/${name// /.}"
+            echo "intact: $name"
+          done
+
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: gh release edit "$TAG" --draft=false --latest

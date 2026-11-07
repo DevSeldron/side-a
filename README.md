@@ -37,7 +37,9 @@ and Intel** and **Windows 10 and newer (x64)**.
   the whole interface between a dark and a light room. Tints are derived from the
   accent you choose, a background gradient can fade from gray or white into it, a
   starry mountain backdrop is drawn in the same accent, and the cover-art theme
-  borrows the accent from the release you are playing.
+  borrows the accent from the release you are playing. The playing cover can also
+  be blurred into the background at a low opacity, and a solid black toggle drops
+  the gray canvas entirely.
 - **Demo mode** — load a public Bandcamp fan collection to explore the app without
   connecting an account.
 

@@ -351,6 +351,10 @@ export interface Settings {
   backgroundGradient: boolean
   gradientPosition: 'top' | 'bottom'
   mountainBackdrop: boolean
+  /** Blur the playing release's artwork behind the app. */
+  coverBackdrop: boolean
+  /** Flat black canvas, independent of the light/dark theme. */
+  solidBlack: boolean
   rainbow: boolean
   rainbowUnlocked: boolean
   showWishlist: boolean

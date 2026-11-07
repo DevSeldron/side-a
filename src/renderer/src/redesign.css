@@ -2382,3 +2382,109 @@ body::before {
 :root[data-motion='reduced'] body::before {
   transition: none;
 }
+
+/* Album cover backdrop. The playing release's artwork is blurred and dimmed
+   behind the app, so the canvas stays the plain gray it always was and the
+   cover only tints it. Two layers ping-pong, and the incoming cover fades in
+   over the previous one, so a track change is a crossfade rather than a flash. */
+
+.cover-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.6s ease;
+}
+
+:root[data-cover-backdrop='true'] .app-shell {
+  position: relative;
+  isolation: isolate;
+  background: transparent;
+}
+
+:root[data-cover-backdrop='true'] .app-main {
+  background: transparent;
+}
+
+/* Low enough that body copy keeps its contrast against the gray canvas. */
+:root[data-cover-backdrop='true'] .cover-backdrop {
+  opacity: 0.2;
+}
+
+.cover-backdrop-frame {
+  position: absolute;
+  /* Overhang the blur so its soft edges never reveal the viewport bounds. */
+  inset: -8%;
+  width: 116%;
+  height: 116%;
+  object-fit: cover;
+  filter: blur(56px) saturate(1.15);
+  transform: translateZ(0);
+  animation: cover-backdrop-in 1.1s ease both;
+}
+
+@keyframes cover-backdrop-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+:root[data-cover-backdrop='true'] .sidebar {
+  background: color-mix(in srgb, var(--bg-elevated) 86%, transparent);
+}
+
+:root[data-cover-backdrop='true'] .topbar {
+  background: color-mix(in srgb, var(--bg) 82%, transparent);
+}
+
+:root[data-cover-backdrop='true'] .player-bar {
+  background: color-mix(in srgb, var(--bg-elevated) 88%, transparent);
+}
+
+:root[data-motion='reduced'] .cover-backdrop {
+  transition: none;
+}
+
+:root[data-motion='reduced'] .cover-backdrop-frame {
+  animation: none;
+}
+
+/* Solid black. Wins over the theme tokens and every backdrop, so the window is
+   one flat black room while text and accent colours stay as they are. */
+
+:root[data-black='true'] {
+  color-scheme: dark;
+  --bg: #000000;
+  --bg-elevated: #000000;
+  --panel: #080808;
+  --panel-soft: #101010;
+  --panel-hover: #181818;
+  --line: rgba(255, 255, 255, 0.09);
+  --line-strong: rgba(255, 255, 255, 0.18);
+  --text: #ededed;
+  --text-soft: #cfcfcf;
+  --muted: #9a9a9a;
+  --muted-dim: #777777;
+  --tint: 237, 237, 237;
+  --shade: 0, 0, 0;
+  --bar: rgba(0, 0, 0, 0.98);
+  --overlay-panel: rgba(8, 8, 8, 0.99);
+}
+
+:root[data-black='true'] body,
+:root[data-black='true'] .app-shell,
+:root[data-black='true'] .app-main,
+:root[data-black='true'] .welcome {
+  background: #000000;
+}
+
+:root[data-black='true'] body::before {
+  visibility: hidden;
+  opacity: 0;
+}
+
+:root[data-black='true'] .mountain-backdrop,
+:root[data-black='true'] .cover-backdrop {
+  display: none;
+}

@@ -82,6 +82,20 @@ export function applyMountainBackdrop(enabled: boolean): void {
   else delete root.dataset.backdrop
 }
 
+/** Reveals the blurred artwork layer the CoverBackdrop component draws into. */
+export function applyCoverBackdrop(enabled: boolean): void {
+  const root = document.documentElement
+  if (enabled) root.dataset.coverBackdrop = 'true'
+  else delete root.dataset.coverBackdrop
+}
+
+/** The flat black canvas overrides the theme tokens and hides every backdrop. */
+export function applySolidBlack(enabled: boolean): void {
+  const root = document.documentElement
+  if (enabled) root.dataset.black = 'true'
+  else delete root.dataset.black
+}
+
 export function applyTheme(accent: string, theme: ThemeMode, rainbow = false): void {
   const root = document.documentElement
   const hex = normalizeAccent(accent)
