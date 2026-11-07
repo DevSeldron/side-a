@@ -1,0 +1,87 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: ${{ matrix.label }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            label: macOS arm64
+            args: --mac --arm64
+          - os: macos-latest
+            label: macOS x64 Intel
+            args: --mac --x64
+          - os: windows-latest
+            label: Windows x64
+            args: --win --x64
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build main and renderer
+        run: npm run build
+
+      - name: Package
+        run: npx electron-builder ${{ matrix.args }} --publish never
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.label }}
+          path: |
+            release/*.dmg
+            release/*.zip
+            release/*.exe
+          if-no-files-found: error
+
+  release:
+    name: Publish release
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+
+      - name: Generate notes
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          gh api "repos/${{ github.repository }}/releases/generate-notes" \
+            -f tag_name="$TAG" \
+            --jq .body | sed -E 's/.*Generated with Codebuff.*//' > notes.md
+
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          ls -lh artifacts
+          gh release create "$TAG" \
+            --title "Side A $TAG" \
+            --notes-file notes.md
+
+      - name: Upload installers
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: gh release upload "$TAG" artifacts/* --clobber
