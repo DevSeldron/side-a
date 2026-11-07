@@ -1,5 +1,16 @@
 [
   {
+    "version": "4.0.1",
+    "title": "Side A 4.0.1",
+    "intro": "A small patch, mostly for the Downloads page",
+    "highlights": [
+      {
+        "title": "Square covers",
+        "description": "Release artwork in Downloads is square again instead of rounded"
+      }
+    ]
+  },
+  {
     "version": "4.0.0",
     "title": "Side A 4",
     "intro": "A big one, here is what changed",
