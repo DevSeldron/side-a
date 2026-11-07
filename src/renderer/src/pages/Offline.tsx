@@ -53,6 +53,16 @@ export function Offline(): ReactElement {
         </div>
       </PageIntro>
 
+      <div className="storage-card offline-storage">
+        <div className="storage-icon">
+          <HardDrive size={17} />
+        </div>
+        <div className="storage-copy">
+          <strong>{formatBytes(bytes)}</strong>
+          <span>{ready.length === 1 ? '1 release offline' : `${ready.length} releases offline`}</span>
+        </div>
+      </div>
+
       {entries.length === 0 ? (
         <EmptyState
           icon={<HardDrive size={26} />}

@@ -200,6 +200,20 @@ h4 {
   object-fit: cover;
 }
 
+.topbar-avatar-link {
+  display: inline-flex;
+  border-radius: 50%;
+}
+
+.topbar-avatar-link:hover .topbar-avatar {
+  border-color: rgba(var(--accent-rgb), 0.55);
+}
+
+.topbar-avatar-link:focus-visible {
+  outline: 2px solid rgba(var(--accent-rgb), 0.5);
+  outline-offset: 2px;
+}
+
 .brand-name {
   font-family: var(--font-ui);
   font-size: 15px;
@@ -373,13 +387,17 @@ h4 {
 }
 
 .sidebar-brand {
-  padding-top: 20px;
-  padding-bottom: 16px;
-  min-height: 68px;
+  padding-top: 10px;
+  padding-bottom: 2px;
+  min-height: 38px;
+}
+
+.sidebar-scroll {
+  padding-top: 2px;
 }
 
 .nav-label {
-  padding: 18px 12px 8px;
+  padding: 12px 12px 8px;
   font-size: 9px;
   font-weight: 600;
   letter-spacing: 0.14em;
@@ -416,6 +434,11 @@ h4 {
 
 .storage-card {
   background: transparent;
+}
+
+.offline-storage {
+  max-width: 360px;
+  margin: 2px 0 18px;
 }
 
 .storage-icon {

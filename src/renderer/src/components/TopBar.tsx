@@ -125,11 +125,17 @@ export function TopBar(): ReactElement {
         <Link to="/settings" className="icon-button no-drag" title="Settings">
           <Settings size={18} />
         </Link>
-        <UserAvatar
-          className="topbar-avatar"
-          src={snapshot.auth.photoUrl}
-          name={snapshot.auth.displayName ?? snapshot.auth.username}
-        />
+        <Link
+          to="/settings"
+          className="topbar-avatar-link no-drag"
+          title={snapshot.auth.username ? `@${snapshot.auth.username}, account settings` : 'Account settings'}
+        >
+          <UserAvatar
+            className="topbar-avatar"
+            src={snapshot.auth.photoUrl}
+            name={snapshot.auth.displayName ?? snapshot.auth.username}
+          />
+        </Link>
       </div>
     </header>
   )

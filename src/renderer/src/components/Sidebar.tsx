@@ -13,8 +13,7 @@ import {
 import { useApp } from '../store/app'
 import { usePlayer } from '../store/player'
 import { useLocalPlayer } from '../store/localPlayer'
-import { UserAvatar } from './UserAvatar'
-import { cx, formatBytes } from '../lib/format'
+import { cx } from '../lib/format'
 
 export function Sidebar(): ReactElement {
   const snapshot = useApp((state) => state.snapshot)
@@ -98,23 +97,12 @@ export function Sidebar(): ReactElement {
       </div>
 
       <div className="sidebar-foot">
-        <div className="storage-card">
-          <div className="storage-icon">
-            <HardDrive size={17} />
-          </div>
-          <div className="storage-copy">
-            <strong>{formatBytes(offlineBytes)}</strong>
-            <span>{offlineEntries.length === 1 ? '1 release offline' : `${offlineEntries.length} releases offline`}</span>
-          </div>
-        </div>
-
         <NavLink to="/settings" className={({ isActive }) => cx('nav-item settings-link', isActive && 'is-active')}>
           <Settings size={18} />
           <span>Settings</span>
         </NavLink>
 
         <div className="user-card">
-          <UserAvatar src={snapshot.auth.photoUrl} name={snapshot.auth.displayName ?? username} />
           <button type="button" className="user-copy" onClick={() => navigate('/settings')}>
             <strong>@{username}</strong>
             <span>{snapshot.demo ? 'Demo mode' : 'Bandcamp connected'}</span>

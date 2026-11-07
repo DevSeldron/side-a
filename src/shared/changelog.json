@@ -1,5 +1,24 @@
 [
   {
+    "version": "4.0.4",
+    "title": "Side A 4.0.4",
+    "intro": "A tidier sidebar and a proper home for your offline library",
+    "highlights": [
+      {
+        "title": "Offline at a glance",
+        "description": "The releases-offline card now sits at the top of the Offline page instead of the sidebar"
+      },
+      {
+        "title": "One profile picture",
+        "description": "The sidebar copy is gone; the avatar in the top bar opens your account settings"
+      },
+      {
+        "title": "Roomier sidebar",
+        "description": "Navigation sits higher, clear of the window controls on macOS"
+      }
+    ]
+  },
+  {
     "version": "4.0.3",
     "title": "Side A 4.0.3",
     "intro": "A small updater fix",
