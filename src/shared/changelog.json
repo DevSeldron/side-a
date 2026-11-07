@@ -1,5 +1,16 @@
 [
   {
+    "version": "4.0.3",
+    "title": "Side A 4.0.3",
+    "intro": "A small updater fix",
+    "highlights": [
+      {
+        "title": "Updates that retry",
+        "description": "A download that fails no longer sits at 0 percent: the pill becomes Retry and Settings says why"
+      }
+    ]
+  },
+  {
     "version": "4.0.2",
     "title": "Side A 4.0.2",
     "intro": "Updates now install themselves, plus the right shortcut keys on Windows",

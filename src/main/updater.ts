@@ -12,6 +12,14 @@ const FIRST_CHECK_DELAY = 8000
 const CHECK_INTERVAL = 6 * 60 * 60 * 1000
 
 /**
+ * Points the updater at a local folder of release files instead of GitHub and,
+ * with SIDEA_UPDATE_AUTOINSTALL=1, installs as soon as the download finishes.
+ * Only set by the update test harness; a normal launch leaves both unset.
+ */
+const testFeed = process.env.SIDEA_UPDATE_FEED
+const testAutoInstall = Boolean(testFeed) && process.env.SIDEA_UPDATE_AUTOINSTALL === '1'
+
+/**
  * Waits for Side A to exit, swaps the bundle with the downloaded one and opens
  * it again. macOS will not install an unsigned build through Squirrel, so an
  * unsigned copy replaces itself after quitting instead of sending the listener
@@ -40,6 +48,7 @@ let notify: ((info: UpdateInfo) => void) | null = null
 let configuring: Promise<void> | null = null
 let canInstallInPlace = process.platform !== 'darwin'
 let checking = false
+let downloading = false
 let downloadedFile: string | null = null
 
 function publish(patch: Partial<UpdateInfo>): UpdateInfo {
@@ -61,11 +70,17 @@ function configure(): Promise<void> {
   if (configuring) return configuring
   configuring = (async () => {
     canInstallInPlace = process.platform !== 'darwin' || (await macBundleSigned())
-    autoUpdater.autoDownload = true
+    // The download is started by hand below so a failure can clear the
+    // progress state instead of leaving the pill spinning at 0%.
+    autoUpdater.autoDownload = false
     autoUpdater.autoInstallOnAppQuit = canInstallInPlace
     autoUpdater.allowPrerelease = false
     autoUpdater.allowDowngrade = false
-    autoUpdater.setFeedURL({ provider: 'github', owner: 'DevSeldron', repo: 'side-a' })
+    autoUpdater.setFeedURL(
+      testFeed
+        ? { provider: 'generic', url: testFeed }
+        : { provider: 'github', owner: 'DevSeldron', repo: 'side-a' }
+    )
 
     autoUpdater.on('checking-for-update', () => {
       if (current.status !== 'ready') publish({ status: 'checking' })
@@ -75,10 +90,9 @@ function configure(): Promise<void> {
         available: true,
         version: info.version,
         name: info.releaseName ?? undefined,
-        status: 'downloading',
-        percent: 0,
         message: undefined
       })
+      void download()
     })
     autoUpdater.on('update-not-available', () => {
       publish({ available: false, status: 'idle', version: undefined, percent: undefined, message: undefined })
@@ -89,9 +103,16 @@ function configure(): Promise<void> {
     autoUpdater.on('update-downloaded', (info) => {
       downloadedFile = info.downloadedFile ?? null
       publish({ available: true, version: info.version, status: 'ready', percent: 1, message: undefined })
+      if (testAutoInstall) setTimeout(() => void installUpdate(), 1500)
     })
     autoUpdater.on('error', (error) => {
-      publish({ message: error.message })
+      // A failed check or download has to stop looking like progress, or the
+      // pill sits at 0% forever with nothing to click.
+      publish({
+        status: current.status === 'ready' ? 'ready' : 'idle',
+        percent: undefined,
+        message: error.message
+      })
     })
 
     const check = (): void => {
@@ -101,6 +122,25 @@ function configure(): Promise<void> {
     setInterval(check, CHECK_INTERVAL).unref()
   })()
   return configuring
+}
+
+async function download(): Promise<void> {
+  if (downloading || current.status === 'ready') return
+  downloading = true
+  publish({ status: 'downloading', percent: 0 })
+  try {
+    const files = await autoUpdater.downloadUpdate()
+    const archive = files.find((file) => /\.(zip|exe|dmg)$/i.test(file)) ?? files[0]
+    if (archive) downloadedFile = archive
+  } catch (error) {
+    publish({
+      status: 'idle',
+      percent: undefined,
+      message: error instanceof Error ? error.message : 'The update could not be downloaded'
+    })
+  } finally {
+    downloading = false
+  }
 }
 
 /** Checks, and downloads in the background when there is something newer. */
@@ -119,8 +159,11 @@ export async function checkForUpdates(): Promise<UpdateInfo> {
       publish({ available: true, version })
     }
   } catch (error) {
-    publish({ message: error instanceof Error ? error.message : 'Could not check for updates' })
-    if (!current.available) publish({ status: 'idle' })
+    publish({
+      status: current.status === 'ready' ? 'ready' : 'idle',
+      percent: undefined,
+      message: error instanceof Error ? error.message : 'Could not check for updates'
+    })
   } finally {
     checking = false
   }

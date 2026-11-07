@@ -61,6 +61,7 @@ export function Settings(): ReactElement {
   const updateDiscord = useApp((state) => state.updateDiscord)
   const retryIntegrations = useApp((state) => state.retryIntegrations)
   const checkUpdate = useApp((state) => state.checkUpdate)
+  const updateState = useApp((state) => state.updateState)
   const pushToast = useApp((state) => state.pushToast)
   const navigate = useNavigate()
   const stopPlayer = usePlayer((state) => state.stop)
@@ -437,7 +438,10 @@ export function Settings(): ReactElement {
           <div className="setting-row">
             <div className="setting-copy">
               <strong>Updates</strong>
-              <span>Side A {snapshot.appVersion} / updates download and install in the background</span>
+              <span>
+                Side A {snapshot.appVersion} / updates download and install in the background
+                {updateState?.message ? ` / ${updateState.message}` : ''}
+              </span>
             </div>
             <button type="button" className="button ghost" onClick={() => void runUpdateCheck()} disabled={checkingUpdate}>
               {checkingUpdate ? <Loader2 size={16} className="spin" /> : <RefreshCw size={16} />}

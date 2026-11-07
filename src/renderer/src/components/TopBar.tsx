@@ -11,6 +11,7 @@ export function TopBar(): ReactElement {
   const setPaletteOpen = useApp((state) => state.setPaletteOpen)
   const update = useApp((state) => state.updateState)
   const installUpdate = useApp((state) => state.installUpdate)
+  const checkUpdate = useApp((state) => state.checkUpdate)
   const location = useLocation()
   // The Command glyph is printed on Mac keyboards only; Windows and Linux
   // listeners press Ctrl.
@@ -73,14 +74,16 @@ export function TopBar(): ReactElement {
           <button
             type="button"
             className="update-pill"
-            onClick={() => void installUpdate()}
+            onClick={() => (update.status === 'ready' ? void installUpdate() : void checkUpdate())}
             disabled={update.status === 'downloading' || update.status === 'installing'}
             title={
               update.status === 'ready'
                 ? 'Restart Side A to finish updating'
                 : update.status === 'downloading'
                   ? `Downloading Side A ${update.version}`
-                  : `Download and install Side A ${update.version}`
+                  : update.message
+                    ? `Update failed: ${update.message}`
+                    : `Download and install Side A ${update.version}`
             }
           >
             {update.status === 'downloading' ? <Loader2 size={14} className="spin" /> : <ArrowUpRight size={15} />}
@@ -89,7 +92,9 @@ export function TopBar(): ReactElement {
                 ? `${Math.round((update.percent ?? 0) * 100)}%`
                 : update.status === 'ready'
                   ? 'Restart'
-                  : update.version}
+                  : update.message
+                    ? 'Retry'
+                    : update.version}
             </span>
           </button>
         ) : null}
