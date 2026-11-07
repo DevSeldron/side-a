@@ -34,6 +34,8 @@ export const IPC = {
   discordPresence: 'discord:presence',
   integrationsRetry: 'integrations:retry',
   updatesCheck: 'updates:check',
+  updatesState: 'updates:state',
+  updatesInstall: 'updates:install',
   artworkAccent: 'artwork:accent',
   discoverSearch: 'discover:search',
   discoverArtist: 'discover:artist',
@@ -53,5 +55,6 @@ export const IPC = {
   eventIntegration: 'integration:changed',
   eventLibrary: 'library:changed',
   eventLocal: 'local:changed',
-  eventLocalScan: 'local:scan'
+  eventLocalScan: 'local:scan',
+  eventUpdate: 'update:changed'
 } as const

@@ -222,7 +222,7 @@ if (!gotLock) {
     void discord.ensureConnected()
     void lastfm.flush().catch(() => undefined)
     await createWindow()
-    startAutoUpdater()
+    startAutoUpdater((info) => broadcastEvent(IPC.eventUpdate, info))
 
     if (process.env.SIDEA_DEMO === '1') {
       setTimeout(() => {

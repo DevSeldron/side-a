@@ -48,7 +48,9 @@ const api: SideAAPI = {
     accent: (url) => ipcRenderer.invoke(IPC.artworkAccent, url)
   },
   update: {
-    check: () => ipcRenderer.invoke(IPC.updatesCheck)
+    check: () => ipcRenderer.invoke(IPC.updatesCheck),
+    state: () => ipcRenderer.invoke(IPC.updatesState),
+    install: () => ipcRenderer.invoke(IPC.updatesInstall)
   },
   discover: {
     search: (query) => ipcRenderer.invoke(IPC.discoverSearch, query),

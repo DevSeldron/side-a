@@ -46,6 +46,12 @@ export interface UpdateInfo {
   version?: string
   url?: string
   name?: string
+  /** What the updater is doing right now, so the UI can follow along. */
+  status?: 'idle' | 'checking' | 'downloading' | 'ready' | 'installing'
+  /** Download progress from 0 to 1 while status is downloading. */
+  percent?: number
+  /** Human-readable reason when a check or install could not finish. */
+  message?: string
 }
 
 export type DiscoverKind = 'artist' | 'album' | 'track'
@@ -428,6 +434,7 @@ export interface LibraryEventMap {
   'library:changed': { collectionCount: number; wishlistCount: number; lastSyncedAt?: number }
   'local:changed': LocalLibrarySnapshot
   'local:scan': LocalScanState
+  'update:changed': UpdateInfo
 }
 
 export type LibraryEvent = keyof LibraryEventMap
@@ -478,7 +485,12 @@ export interface SideAAPI {
     accent: (url: string) => Promise<string | null>
   }
   update: {
+    /** Starts a real check; a newer release downloads in the background. */
     check: () => Promise<UpdateInfo>
+    /** Current updater status, for a window that just opened. */
+    state: () => Promise<UpdateInfo>
+    /** Installs the downloaded release and restarts Side A. */
+    install: () => Promise<void>
   }
   discover: {
     search: (query: string) => Promise<DiscoverResult[]>

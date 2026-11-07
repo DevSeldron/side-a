@@ -24,7 +24,7 @@ import type { PurchaseManager } from './purchases'
 import type { Store, } from './store'
 import { normalizeAccent } from './store'
 import { TRACK_QUALITIES, type TrackDownloadManager } from './trackDownloads'
-import { checkForUpdate } from './updates'
+import { checkForUpdates, installUpdate, updateState } from './updater'
 import { artworkAccent } from './artwork'
 
 interface IpcContext {
@@ -142,7 +142,9 @@ export function registerIpc(context: IpcContext): void {
   }
 
   ipcMain.handle(IPC.getState, () => snapshot())
-  ipcMain.handle(IPC.updatesCheck, () => checkForUpdate())
+  ipcMain.handle(IPC.updatesCheck, () => checkForUpdates())
+  ipcMain.handle(IPC.updatesState, () => updateState())
+  ipcMain.handle(IPC.updatesInstall, () => installUpdate())
   ipcMain.handle(IPC.artworkAccent, async (_event, url: unknown) => {
     if (typeof url !== 'string' || url.length > 2048) throw new Error('Invalid artwork URL')
     return artworkAccent(url, client, library)

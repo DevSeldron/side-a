@@ -9,9 +9,12 @@ export function TopBar(): ReactElement {
   const snapshot = useApp((state) => state.snapshot)
   const sync = useApp((state) => state.sync)
   const setPaletteOpen = useApp((state) => state.setPaletteOpen)
-  const update = useApp((state) => state.update)
-  const dismissUpdate = useApp((state) => state.dismissUpdate)
+  const update = useApp((state) => state.updateState)
+  const installUpdate = useApp((state) => state.installUpdate)
   const location = useLocation()
+  // The Command glyph is printed on Mac keyboards only; Windows and Linux
+  // listeners press Ctrl.
+  const isMac = window.sideA.platform === 'darwin'
   if (!snapshot) return <header className="topbar" />
 
   const albumKey = /^\/album\/([^/]+)/.exec(location.pathname)?.[1]
@@ -70,14 +73,24 @@ export function TopBar(): ReactElement {
           <button
             type="button"
             className="update-pill"
-            onClick={() => {
-              if (update.url) void window.sideA.library.openExternal(update.url)
-              dismissUpdate()
-            }}
-            title={update.name ?? `Version ${update.version} is available`}
+            onClick={() => void installUpdate()}
+            disabled={update.status === 'downloading' || update.status === 'installing'}
+            title={
+              update.status === 'ready'
+                ? 'Restart Side A to finish updating'
+                : update.status === 'downloading'
+                  ? `Downloading Side A ${update.version}`
+                  : `Download and install Side A ${update.version}`
+            }
           >
-            <ArrowUpRight size={15} />
-            <span>{update.version}</span>
+            {update.status === 'downloading' ? <Loader2 size={14} className="spin" /> : <ArrowUpRight size={15} />}
+            <span>
+              {update.status === 'downloading'
+                ? `${Math.round((update.percent ?? 0) * 100)}%`
+                : update.status === 'ready'
+                  ? 'Restart'
+                  : update.version}
+            </span>
           </button>
         ) : null}
         <button
@@ -94,12 +107,15 @@ export function TopBar(): ReactElement {
           </span>
           {syncing ? <span className="sync-progress" style={{ width: `${Math.max(6, state.progress * 100)}%` }} /> : null}
         </button>
-        <button type="button" className="search-trigger no-drag" onClick={() => setPaletteOpen(true)} title="Search (⌘K)">
+        <button
+          type="button"
+          className="search-trigger no-drag"
+          onClick={() => setPaletteOpen(true)}
+          title={isMac ? 'Search (⌘K)' : 'Search (Ctrl+K)'}
+        >
           <Search size={16} />
           <span>Search</span>
-          <kbd>
-            <Command size={11} /> K
-          </kbd>
+          <kbd>{isMac ? <><Command size={11} /> K</> : 'Ctrl K'}</kbd>
         </button>
         <Link to="/settings" className="icon-button no-drag" title="Settings">
           <Settings size={18} />

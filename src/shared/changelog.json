@@ -1,5 +1,20 @@
 [
   {
+    "version": "4.0.2",
+    "title": "Side A 4.0.2",
+    "intro": "Updates now install themselves, plus the right shortcut keys on Windows",
+    "highlights": [
+      {
+        "title": "Updates install in the app",
+        "description": "New releases download in the background and finish with a restart button in the top bar, so there is no trip to GitHub"
+      },
+      {
+        "title": "Windows shortcut keys",
+        "description": "Search shows Ctrl K instead of the Mac Command key"
+      }
+    ]
+  },
+  {
     "version": "4.0.1",
     "title": "Side A 4.0.1",
     "intro": "A small patch, mostly for the Downloads page",

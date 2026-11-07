@@ -437,7 +437,7 @@ export function Settings(): ReactElement {
           <div className="setting-row">
             <div className="setting-copy">
               <strong>Updates</strong>
-              <span>Side A {snapshot.appVersion} / checks GitHub releases on launch</span>
+              <span>Side A {snapshot.appVersion} / updates download and install in the background</span>
             </div>
             <button type="button" className="button ghost" onClick={() => void runUpdateCheck()} disabled={checkingUpdate}>
               {checkingUpdate ? <Loader2 size={16} className="spin" /> : <RefreshCw size={16} />}

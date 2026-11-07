@@ -2,7 +2,6 @@ import { useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboa
 import { useNavigate } from 'react-router-dom'
 import {
   ArrowDownToLine,
-  Command,
   FolderOpen,
   HardDrive,
   Heart,
@@ -260,9 +259,7 @@ export function CommandPalette(): ReactElement | null {
                 {item.sub ? <span>{item.sub}</span> : null}
               </span>
               {index === active && item.id !== 'no-results' ? (
-                <span className="palette-hint">
-                  <Command size={11} /> ↵
-                </span>
+                <span className="palette-hint">↵</span>
               ) : null}
             </button>
           ))}

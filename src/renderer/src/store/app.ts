@@ -34,6 +34,7 @@ interface AppState {
   toasts: ToastItem[]
   paletteOpen: boolean
   update: UpdateInfo | null
+  updateState: UpdateInfo | null
   init: () => Promise<void>
   refresh: () => Promise<void>
   sync: () => Promise<void>
@@ -61,6 +62,7 @@ interface AppState {
   pushToast: (title: string, options?: { description?: string; tone?: ToastTone }) => void
   dismissToast: (id: number) => void
   checkUpdate: () => Promise<UpdateInfo>
+  installUpdate: () => Promise<void>
   dismissUpdate: () => void
   setPaletteOpen: (open: boolean) => void
   applyAuth: (auth: AuthState) => void
@@ -94,6 +96,7 @@ export const useApp = create<AppState>()((set, get) => ({
   toasts: [],
   paletteOpen: false,
   update: null,
+  updateState: null,
 
   init: async () => {
     if (initialized) return
@@ -110,6 +113,9 @@ export const useApp = create<AppState>()((set, get) => ({
       window.sideA.on(IPC.eventIntegration, (integrations) => get().applyIntegrations(integrations))
       window.sideA.on(IPC.eventLocal, (snapshot) => get().applyLocal(snapshot))
       window.sideA.on(IPC.eventLocalScan, (scan) => get().applyLocalScan(scan))
+      window.sideA.on(IPC.eventUpdate, (info) =>
+        set({ update: info.available ? info : null, updateState: info })
+      )
       window.sideA.on(IPC.eventLibrary, () => {
         void get().refresh()
       })
@@ -463,11 +469,22 @@ export const useApp = create<AppState>()((set, get) => ({
   checkUpdate: async () => {
     try {
       const info = await window.sideA.update.check()
-      set({ update: info.available ? info : null })
+      set({ update: info.available ? info : null, updateState: info })
       return info
     } catch {
       // Launching offline just means there is no update to mention.
       return { available: false }
+    }
+  },
+
+  installUpdate: async () => {
+    try {
+      await window.sideA.update.install()
+    } catch (error) {
+      get().pushToast('Could not install the update', {
+        description: errorMessage(error),
+        tone: 'error'
+      })
     }
   },
 
